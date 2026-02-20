@@ -558,9 +558,12 @@
             card.addEventListener('click', () => loadModule(card.dataset.launch));
         });
 
-        // ─── INIT LUCIDE ICONS ───────────────────────────────────────────────
+        // ─── INIT LUCIDE ICONS & LOAD DEFAULT TAB ───────────────────────────
         document.addEventListener('DOMContentLoaded', () => {
             if (typeof lucide !== 'undefined') lucide.createIcons();
+
+            // Cargar "Resumen Ejecutivo" por defecto al inicio
+            loadModule('resumen');
         });
     </script>
 </body>
