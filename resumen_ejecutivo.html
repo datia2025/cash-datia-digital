@@ -1,0 +1,1242 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <!-- Anti-flash: oculta header/nav ANTES del primer render si está en iframe -->
+    <script>if (window.self !== window.top) { document.documentElement.classList.add('in-iframe'); }</script>
+    <style>
+        .in-iframe #main-header,
+        .in-iframe #main-nav {
+            display: none !important;
+        }
+    </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Financiero - Resumen Ejecutivo</title>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Swiper.js CDN -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* ── Normalización global (identica a solvencia.html) ── */
+        html {
+            scrollbar-gutter: stable;
+            overflow-y: scroll;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background-color: #F8FAFC;
+            overflow-x: hidden;
+        }
+
+        #main-header {
+            min-height: 120px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        /* ── Design Tokens (Datia) ── */
+        :root {
+            --datia-navy: #1E2A5E;
+            --datia-navy-light: #2B3F8E;
+            --datia-orange: #FF6B2B;
+            --datia-orange-hover: #E55A1F;
+            --datia-text: #1E293B;
+            --datia-text-secondary: #64748B;
+            --datia-bg: #F8FAFC;
+            --datia-card-border: #E2E8F0;
+            --color-liquidez: #3b82f6;
+            --color-rentab: #10b981;
+            --color-solvencia: #8b5cf6;
+            --color-estructura: #f59e0b;
+            --color-actividad: #ef4444;
+            --color-resumen: #FF6B2B;
+            --color-success-bg: #f0fdf4;
+            --color-success-bd: #bbf7d0;
+            --color-warning-bg: #fffbeb;
+            --color-warning-bd: #fde68a;
+            --color-danger-bg: #fff5f5;
+            --color-danger-bd: #fca5a5;
+        }
+
+        /* ── Badges & chips de score ── */
+        .score-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 16px;
+            border-radius: 999px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            background: var(--datia-orange);
+            color: #ffffff;
+            border: none;
+            box-shadow: 0 2px 8px rgba(255, 107, 43, 0.3);
+        }
+
+        .score-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #ffffff;
+            animation: pulse-dot 2s infinite;
+            flex-shrink: 0;
+        }
+
+        @keyframes pulse-dot {
+
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 0.5;
+                transform: scale(1.4);
+            }
+        }
+
+        /* ── Card base ── */
+        .exec-card {
+            background: #ffffff;
+            border-radius: 20px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+            border: 1px solid var(--datia-card-border);
+            padding: 22px 24px;
+        }
+
+        .exec-card-title {
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+            color: var(--datia-navy);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 14px;
+            text-wrap: balance;
+        }
+
+        /* ── Visual Polish & Micro-interactions ── */
+        .exec-card {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .exec-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 24px -4px rgba(30, 42, 94, 0.1);
+        }
+
+        /* ── Dynamic Slider: Swiper ── */
+        .swiper {
+            width: 100%;
+            padding: 10px 0 40px 0 !important;
+        }
+
+        .swiper-slide {
+            height: auto;
+            transition: transform 0.3s ease;
+        }
+
+        .timeline-grid {
+            display: none;
+        }
+
+        /* Ocultar grid estático */
+
+        .tl-item {
+            border-radius: 16px;
+            padding: 16px;
+            border: 1.5px solid;
+        }
+
+        .tl-year {
+            font-size: 1.2rem;
+            font-weight: 800;
+            line-height: 1;
+            color: var(--datia-navy);
+            font-variant-numeric: tabular-nums;
+        }
+
+        .tl-titulo {
+            font-size: 0.83rem;
+            font-weight: 700;
+            margin: 4px 0 2px;
+        }
+
+        .tl-sub {
+            font-size: 0.7rem;
+            font-weight: 600;
+            opacity: 0.7;
+            margin-bottom: 8px;
+        }
+
+        .tl-hitos {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .tl-hitos li {
+            font-size: 0.72rem;
+            color: #374151;
+            display: flex;
+            align-items: flex-start;
+            gap: 5px;
+            line-height: 1.45;
+        }
+
+        .tl-hitos li::before {
+            content: '›';
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .tl-conclusion {
+            margin-top: 10px;
+            font-size: 0.71rem;
+            font-style: italic;
+            color: #4b5563;
+            border-top: 1px solid #e5e7eb;
+            padding-top: 8px;
+            line-height: 1.5;
+        }
+
+        /* ── Tabs for KPIs ── */
+        .kpi-tabs-nav {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 24px;
+            background: #F1F5F9;
+            padding: 5px;
+            border-radius: 16px;
+            /* Allow tooltips to show above */
+            padding-top: 10px;
+            position: relative;
+        }
+
+        .kpi-tabs-nav::-webkit-scrollbar {
+            display: none;
+        }
+
+        .kpi-tab-btn {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 9px 14px;
+            border-radius: 12px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: var(--datia-text-secondary);
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .kpi-tab-btn:hover {
+            background: rgba(0, 0, 0, 0.05);
+            color: #374151;
+        }
+
+        .kpi-tab-btn.active {
+            background: #ffffff;
+            color: var(--datia-navy);
+            box-shadow: 0 2px 8px rgba(30, 42, 94, 0.1);
+        }
+
+        /* ── Custom Tooltip ── */
+        [data-tooltip] {
+            position: relative;
+            cursor: help;
+        }
+
+        [data-tooltip]::before {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%) translateY(10px);
+            background: var(--datia-navy);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 10.5px;
+            font-weight: 500;
+            white-space: pre-wrap;
+            width: max-content;
+            max-width: 220px;
+            text-align: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+            z-index: 1000;
+            pointer-events: none;
+            line-height: 1.4;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        [data-tooltip]::after {
+            content: '';
+            position: absolute;
+            bottom: 110%;
+            left: 50%;
+            transform: translateX(-50%) translateY(10px);
+            border: 6px solid transparent;
+            border-top-color: var(--datia-navy);
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.2s ease;
+            z-index: 100;
+            pointer-events: none;
+        }
+
+        [data-tooltip]:hover::before,
+        [data-tooltip]:hover::after {
+            opacity: 1;
+            visibility: visible;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .kpi-content-pane {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .kpi-content-pane.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(4px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ── Accordion ── */
+        .accordion-item {
+            border-bottom: 1px solid #f3f4f6;
+        }
+
+        .accordion-item:last-child {
+            border-bottom: none;
+        }
+
+        .accordion-header {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 0;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .accordion-item.active .accordion-content {
+            max-height: 1000px;
+            padding-bottom: 12px;
+        }
+
+        .accordion-chevron {
+            transition: transform 0.3s ease;
+        }
+
+        .accordion-item.active .accordion-chevron {
+            transform: rotate(180deg);
+        }
+
+        .score-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 2px 8px;
+            border-radius: 999px;
+            font-size: 0.67rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        /* ── Dictamen style for timeline ── */
+        .tl-item {
+            background: rgba(30, 42, 94, 0.03);
+            border-color: rgba(30, 42, 94, 0.08) !important;
+            padding: 20px;
+            transition: all 0.2s ease;
+        }
+
+        .tl-item:hover {
+            background: #ffffff;
+            box-shadow: 0 12px 24px rgba(30, 42, 94, 0.1);
+            transform: translateY(-5px);
+            border-color: var(--datia-orange) !important;
+        }
+
+        .tl-year-box {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 8px 12px;
+            box-shadow: 0 2px 8px rgba(30, 42, 94, 0.05);
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-width: 60px;
+        }
+
+        /* ── Scorecard módulos ── */
+        .module-scores-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+        }
+
+        .ms-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            padding: 14px 8px;
+            border-radius: 16px;
+            border: 1.5px solid;
+        }
+
+        .ms-name {
+            font-size: 0.65rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: #6b7280;
+            margin: 6px 0 4px;
+        }
+
+        .ms-score {
+            font-size: 1.5rem;
+            font-weight: 800;
+            line-height: 1;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .ms-label {
+            font-size: 0.6rem;
+            font-weight: 600;
+            opacity: 0.7;
+            margin-top: 2px;
+        }
+
+        /* ── KPI rows ── */
+        .kpi-section {
+            margin-bottom: 10px;
+        }
+
+        .kpi-mod-header {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 8px;
+        }
+
+        .kpi-mod-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .kpi-mod-name {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #1f2937;
+        }
+
+        .kpi-list {
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+        }
+
+        .kpi-row {
+            display: grid;
+            grid-template-columns: 1fr auto auto auto;
+            align-items: center;
+            gap: 6px;
+            padding: 10px 12px;
+            border-radius: 12px;
+            background: #F8FAFC;
+            border: 1px solid var(--datia-card-border);
+            transition: background 0.15s ease;
+        }
+
+        .kpi-row:hover {
+            background: #f0f9ff;
+        }
+
+        .kpi-name {
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .kpi-desc {
+            font-size: 0.62rem;
+            color: #9ca3af;
+            margin-top: 1px;
+        }
+
+        .kpi-val {
+            font-size: 0.85rem;
+            font-weight: 800;
+            white-space: nowrap;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .kpi-status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        /* ── Alertas ── */
+        .alert-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .alert-item {
+            padding: 12px 14px;
+            border-radius: 14px;
+            border-left: 3px solid;
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        .alert-item:hover {
+            transform: translateX(2px);
+        }
+
+        .alert-icon {
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+
+        .alert-title {
+            font-size: 0.73rem;
+            font-weight: 700;
+            margin-bottom: 2px;
+        }
+
+        .alert-text {
+            font-size: 0.67rem;
+            color: #4b5563;
+            line-height: 1.5;
+        }
+
+        .alert-accion {
+            font-size: 0.64rem;
+            font-weight: 600;
+            margin-top: 4px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            display: inline-block;
+        }
+
+        .alert-danger {
+            background: #fff5f5;
+            border-color: #ef4444;
+        }
+
+        .alert-warning {
+            background: #fffbeb;
+            border-color: #f59e0b;
+        }
+
+        .alert-info {
+            background: #f0f9ff;
+            border-color: #0ea5e9;
+        }
+
+        .alert-danger .alert-title {
+            color: #dc2626;
+        }
+
+        .alert-warning .alert-title {
+            color: #d97706;
+        }
+
+        .alert-info .alert-title {
+            color: #0284c7;
+        }
+
+        .alert-danger .alert-accion {
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+
+        .alert-warning .alert-accion {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .alert-info .alert-accion {
+            background: #e0f2fe;
+            color: #0369a1;
+        }
+
+        /* ── Fortalezas ── */
+        .fortalezas-list {
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+        }
+
+        .fortaleza-item {
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+            padding: 10px 12px;
+            border-radius: 14px;
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            transition: background 0.15s ease;
+        }
+
+        .fortaleza-item:hover {
+            background: #dcfce7;
+        }
+
+        .fortaleza-title {
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: #15803d;
+            margin-bottom: 2px;
+        }
+
+        .fortaleza-text {
+            font-size: 0.67rem;
+            color: #374151;
+            line-height: 1.5;
+        }
+
+        /* ── Dictamen ── */
+        .dictamen-card {
+            background: linear-gradient(135deg, #F0F4FF 0%, #F8FAFC 100%);
+            border-color: var(--datia-card-border) !important;
+        }
+
+        .dictamen-body {
+            font-size: 0.73rem;
+            color: #334155;
+            line-height: 1.75;
+            white-space: pre-line;
+        }
+
+        .dictamen-recs {
+            margin-top: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .rec-item {
+            display: flex;
+            gap: 8px;
+            align-items: flex-start;
+            font-size: 0.69rem;
+            font-weight: 600;
+            color: var(--datia-navy);
+        }
+
+        .rec-num {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--datia-navy);
+            color: white;
+            font-size: 0.6rem;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        /* ── Focus visible (A11y) ── */
+        :focus-visible {
+            outline: 2px solid var(--datia-orange);
+            outline-offset: 4px;
+        }
+
+        button:active,
+        .kpi-tab-btn:active {
+            transform: scale(0.98);
+        }
+
+        /* ── Sidebar Glosario ── */
+        #glossary-overlay {
+            transition: opacity 0.25s ease;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50">
+    <div id="dashboard-container">
+
+        <!-- ══════════════════ ENCABEZADO PRINCIPAL ══════════════════ -->
+        <div id="main-header" style="background: linear-gradient(135deg, #1E2A5E 0%, #2B3F8E 100%);"
+            class="text-white p-8 shadow-lg">
+            <div class="flex items-start justify-between">
+                <div>
+                    <div class="flex items-center gap-3 mb-2">
+                        <span style="font-weight:800; font-size:1.7rem; letter-spacing:-0.02em;">datia.</span>
+                    </div>
+                    <h1 class="text-3xl font-bold mb-1" style="letter-spacing:-0.01em;">Dashboard Financiero</h1>
+                    <p style="color:#bfcfff;">Resumen Ejecutivo Integral · 2023 – 2025</p>
+                    <p class="text-sm mt-1" style="color:#94a8d8;">Monitoreo y Auditoría Financiera</p>
+                </div>
+                <div class="score-badge mt-1" id="header-score-badge">
+                    <div class="score-dot"></div>
+                    <span id="badge-score">Cargando…</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ══════════════════ NAVEGACIÓN DE PESTAÑAS ══════════════════ -->
+        <nav id="main-nav" class="bg-white flex overflow-x-auto" role="navigation" aria-label="Módulos del dashboard"
+            style="border-bottom: 1px solid #E2E8F0; position: sticky; top: 0; z-index: 30;">
+            <a href="resumen_ejecutivo.html" class="px-6 py-3 font-semibold transition-all whitespace-nowrap"
+                style="color: #1E2A5E; border-bottom: 3px solid #FF6B2B; background: rgba(255,107,43,0.06);">
+                <i data-lucide="file-text" class="w-4 h-4 inline-block mr-1"></i>
+                Resumen Ejecutivo
+            </a>
+            <a href="index.html" class="px-6 py-3 font-semibold transition-all whitespace-nowrap hover:bg-gray-50"
+                style="color: #64748B; border-bottom: 3px solid transparent;">
+                <i data-lucide="droplets" class="w-4 h-4 inline-block mr-1"></i>
+                Liquidez
+            </a>
+            <a href="rentabilidad.html"
+                class="px-6 py-3 font-semibold transition-all whitespace-nowrap hover:bg-gray-50"
+                style="color: #64748B; border-bottom: 3px solid transparent;">
+                <i data-lucide="trending-up" class="w-4 h-4 inline-block mr-1"></i>
+                Rentabilidad
+            </a>
+            <a href="solvencia.html" class="px-6 py-3 font-semibold transition-all whitespace-nowrap hover:bg-gray-50"
+                style="color: #64748B; border-bottom: 3px solid transparent;">
+                <i data-lucide="landmark" class="w-4 h-4 inline-block mr-1"></i>
+                Solvencia
+            </a>
+            <a href="estructura.html" class="px-6 py-3 font-semibold transition-all whitespace-nowrap hover:bg-gray-50"
+                style="color: #64748B; border-bottom: 3px solid transparent;">
+                <i data-lucide="layers" class="w-4 h-4 inline-block mr-1"></i>
+                Estructura
+            </a>
+            <a href="actividad.html" class="px-6 py-3 font-semibold transition-all whitespace-nowrap hover:bg-gray-50"
+                style="color: #64748B; border-bottom: 3px solid transparent;">
+                <i data-lucide="activity" class="w-4 h-4 inline-block mr-1"></i>
+                Actividad
+            </a>
+        </nav>
+
+        <!-- ══════════════════ CONTENIDO PRINCIPAL ══════════════════ -->
+        <main id="resumen-content" class="p-6 space-y-6">
+
+            <!-- ── 1. HISTORIA 2023–2025 (Slider) ── -->
+            <section class="exec-card overflow-hidden" aria-labelledby="title-historia">
+                <div class="exec-card-title" id="title-historia">
+                    <i data-lucide="git-branch" style="width:13px;height:13px;"></i>
+                    Historia de la Compañía · 2023 – 2025
+                </div>
+                <!-- Swiper container -->
+                <div class="swiper timeline-swiper">
+                    <div class="swiper-wrapper" id="timeline-container">
+                        <!-- JS renderiza los slides aquí -->
+                    </div>
+                    <!-- Add Pagination -->
+                    <div class="swiper-pagination"></div>
+                </div>
+            </section>
+
+            <!-- ── 2. FILA: KPIs + (Scores · Fortalezas) ── -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+                <!-- KPIs (2/3 del ancho) - TABS -->
+                <section class="exec-card md:col-span-2 flex flex-col" aria-labelledby="title-kpis">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="exec-card-title mb-0" id="title-kpis">
+                            <i data-lucide="bar-chart-2" style="width:13px;height:13px;"></i>
+                            Indicadores Clave por Indicador Financiero · Cierre 2025
+                        </div>
+                    </div>
+
+                    <!-- Tab Navigation for KPIs -->
+                    <div class="kpi-tabs-nav" id="kpi-tabs-nav">
+                        <!-- JS renderiza los botones de pestañas aquí -->
+                    </div>
+
+                    <!-- Tab Content Panes -->
+                    <div id="kpis-container" class="flex-1 flex flex-col">
+                        <!-- JS renderiza los paneles aquí -->
+                    </div>
+                </section>
+
+                <!-- Score módulos + Fortalezas (1/3) -->
+                <div class="flex flex-col gap-6">
+                    <section class="exec-card" aria-labelledby="title-scores">
+                        <div class="exec-card-title" id="title-scores">
+                            <i data-lucide="gauge" style="width:13px;height:13px;"></i>
+                            Score por Indicador 2025
+                        </div>
+                        <div class="module-scores-grid" id="scores-container">
+                            <!-- JS renderiza -->
+                        </div>
+                    </section>
+
+                    <section class="exec-card" aria-labelledby="title-fortalezas">
+                        <div class="exec-card-title" id="title-fortalezas">
+                            <i data-lucide="shield-check" style="width:13px;height:13px;"></i>
+                            Fortalezas Detectadas
+                        </div>
+                        <div class="fortalezas-list space-y-1" id="fortalezas-container">
+                            <!-- JS renderiza -->
+                        </div>
+                    </section>
+                </div>
+            </div>
+
+            <!-- ── 3. FILA: Alertas + Dictamen ── -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+                <!-- Alertas (2/3) -->
+                <section class="exec-card md:col-span-2" aria-labelledby="title-alertas">
+                    <div class="exec-card-title" id="title-alertas">
+                        <i data-lucide="alert-triangle" style="width:13px;height:13px;"></i>
+                        Señales de Alerta y Riesgos
+                    </div>
+                    <div class="alert-list space-y-1" id="alertas-container">
+                        <!-- JS renderiza -->
+                    </div>
+                </section>
+
+                <!-- Dictamen Ejecutivo (1/3) -->
+                <section class="exec-card dictamen-card" aria-labelledby="title-dictamen">
+                    <div class="exec-card-title" id="title-dictamen">
+                        <i data-lucide="award" style="width:13px;height:13px;"></i>
+                        Dictamen Ejecutivo
+                    </div>
+                    <div id="dictamen-container">
+                        <!-- JS renderiza -->
+                    </div>
+                </section>
+
+            </div>
+        </main>
+
+    </div><!-- /#dashboard-container -->
+
+    <!-- ══════════════════ BOTÓN FLOTANTE / GLOSARIO ══════════════════ -->
+    <button id="glossary-btn"
+        class="fixed bottom-6 right-6 z-50 text-white rounded-full p-4 shadow-lg transition-all duration-300 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:ring-offset-2"
+        style="background: #FF6B2B; box-shadow: 0 4px 16px rgba(255,107,43,0.35);"
+        onmouseover="this.style.background='#E55A1F'" onmouseout="this.style.background='#FF6B2B'"
+        aria-label="Abrir glosario de indicadores">
+        <i data-lucide="book-open" class="w-6 h-6"></i>
+    </button>
+
+    <!-- Overlay oscuro -->
+    <div id="glossary-overlay"
+        class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden opacity-0 transition-opacity duration-300"></div>
+
+    <!-- Sidebar de Glosario -->
+    <div id="glossary-sidebar"
+        class="fixed top-0 right-0 h-full w-80 bg-white shadow-2xl z-50 transform translate-x-full transition-transform duration-300 ease-in-out overflow-hidden flex flex-col"
+        role="dialog" aria-modal="true" aria-label="Glosario Técnico">
+
+        <div style="background: linear-gradient(135deg, #1E2A5E, #2B3F8E);" class="text-white p-4">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="book-marked" class="w-5 h-5"></i>
+                    <h2 class="text-lg font-bold">Glosario Técnico</h2>
+                </div>
+                <button id="glossary-close"
+                    class="hover:bg-blue-600 rounded-full p-1 transition-colors focus:outline-none focus:ring-2 focus:ring-white"
+                    aria-label="Cerrar glosario">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <p class="text-blue-200 text-xs mt-1">Indicadores Financieros</p>
+        </div>
+
+        <div class="p-4 border-b border-gray-200">
+            <label class="block text-sm font-semibold text-gray-700 mb-2" for="glossary-select">
+                Seleccione un indicador:
+            </label>
+            <select id="glossary-select"
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 text-sm">
+                <option value="">-- Elija un término --</option>
+            </select>
+        </div>
+
+        <div id="glossary-detail" class="flex-1 overflow-y-auto p-4">
+            <div id="glossary-placeholder" class="text-center text-gray-400 py-8">
+                <i data-lucide="info" class="w-12 h-12 mx-auto mb-2 opacity-50"></i>
+                <p class="text-sm">Seleccione un indicador para ver su información.</p>
+            </div>
+            <div id="glossary-content" class="hidden space-y-4">
+                <div class="bg-blue-50 rounded-lg p-3 border-l-4 border-blue-600">
+                    <div class="flex items-center gap-2 text-blue-800 font-semibold text-xs uppercase mb-1">
+                        <i data-lucide="lightbulb" class="w-4 h-4"></i> Definición
+                    </div>
+                    <p id="glossary-definicion" class="text-gray-700 text-sm leading-relaxed"></p>
+                </div>
+                <div class="bg-purple-50 rounded-lg p-3 border-l-4 border-purple-600">
+                    <div class="flex items-center gap-2 text-purple-800 font-semibold text-xs uppercase mb-1">
+                        <i data-lucide="calculator" class="w-4 h-4"></i> Fórmula
+                    </div>
+                    <p id="glossary-formula" class="text-gray-700 text-sm font-mono bg-white px-2 py-1 rounded"></p>
+                </div>
+                <div class="bg-green-50 rounded-lg p-3 border-l-4 border-green-600">
+                    <div class="flex items-center gap-2 text-green-800 font-semibold text-xs uppercase mb-1">
+                        <i data-lucide="target" class="w-4 h-4"></i> Margen Recomendado
+                    </div>
+                    <p id="glossary-margen" class="text-gray-700 text-lg font-bold"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════════════ DATOS ══════════════════ -->
+    <script src="data_resumen.js"></script>
+
+    <!-- ══════════════════ LÓGICA DE RENDERIZADO ══════════════════ -->
+    <script>
+        // ─── HELPERS ────────────────────────────────────────────────────────────
+        function icon(name, size = 14, color = 'currentColor') {
+            return `<i data-lucide="${name}" style="width:${size}px;height:${size}px;color:${color};flex-shrink:0;"></i>`;
+        }
+        function statusColor(s) {
+            return s === 'success' ? '#16a34a' : s === 'warning' ? '#d97706' : '#dc2626';
+        }
+        function trendIcon(t) {
+            return t === 'up'
+                ? icon('trending-up', 14, '#16a34a')
+                : icon('trending-down', 14, '#dc2626');
+        }
+
+        // ─── 1. HEADER DINÁMICO ─────────────────────────────────────────────────
+        document.getElementById('header-score-badge').querySelector('p, span') ??
+            document.getElementById('badge-score');   // sólo por seguridad
+
+        const ul = scoreHistorico[scoreHistorico.length - 1];
+        document.getElementById('badge-score').textContent =
+            `Score ${ul.year}: ${ul.score} / 10 — ${ul.label}`;
+
+        // ─── 2. TIMELINE (Swiper) ───────────────────────────────────────────────
+        function renderTimeline() {
+            const container = document.getElementById('timeline-container');
+            container.innerHTML = historiaNarrativa.map(h => {
+                const sd = scoreHistorico.find(s => s.year === h.año);
+                const chipStyle = `background:${sd.color}15;color:${sd.color};border:1px solid ${sd.color}30;`;
+                const hitos = h.hitos.map(hi => `<li>${hi}</li>`).join('');
+
+                // Iconos sobrios según riesgo (se pueden ajustar via data_resumen.js si se desea)
+                const riskIcon = sd.score < 4 ? 'alert-triangle' : sd.score < 7 ? 'minus-circle' : 'check-circle';
+
+                return `
+                <div class="swiper-slide">
+                    <div class="tl-item rounded-2xl border">
+                        <div class="flex justify-between items-start mb-4">
+                             <div class="tl-year-box">
+                                <span class="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Año</span>
+                                <div class="tl-year">${h.año}</div>
+                             </div>
+                             <div class="score-chip shadow-none" style="${chipStyle}">
+                                ${icon(riskIcon, 12, sd.color)}
+                                <span class="ml-1">Score: ${sd.score}/10</span>
+                             </div>
+                        </div>
+                        <div class="tl-titulo text-lg text-gray-800 leading-tight">${h.titulo}</div>
+                        <div class="tl-sub text-[10px] text-gray-500 mb-4">${h.subtitulo || ''}</div>
+                        <ul class="tl-hitos flex-grow border-l-2 border-gray-100 pl-4 py-1 space-y-2 mb-4">${hitos}</ul>
+                        <div class="tl-conclusion bg-white/50 p-2 rounded-lg border border-gray-100 italic">${h.conclusion}</div>
+                    </div>
+                </div>`;
+            }).join('');
+
+            new Swiper('.timeline-swiper', {
+                slidesPerView: 1,
+                spaceBetween: 20,
+                centeredSlides: true,
+                pagination: { el: '.swiper-pagination', clickable: true },
+                breakpoints: {
+                    768: { slidesPerView: 2, centeredSlides: false },
+                    1024: { slidesPerView: 3, centeredSlides: false }
+                }
+            });
+        }
+
+        // ─── 3. KPIs CON PESTAÑAS ──────────────────────────────────────────────
+        function renderKPIs() {
+            const tabsNav = document.getElementById('kpi-tabs-nav');
+            const container = document.getElementById('kpis-container');
+
+            tabsNav.innerHTML = kpisPorModulo.map((mod, i) => `
+                <button class="kpi-tab-btn ${i === 0 ? 'active' : ''}" data-mod="${mod.modulo}" data-tooltip="${mod.definicion}">
+                    <div class="w-2 h-2 rounded-full" style="background:${mod.color}"></div>
+                    ${mod.modulo}
+                </button>
+            `).join('');
+
+            container.innerHTML = kpisPorModulo.map((mod, i) => {
+                const rows = mod.kpis.map(k => {
+                    const sc = statusColor(k.status);
+                    const tagColor = k.etiqueta === 'Motor' ? '#1E2A5E' : '#FF6B2B';
+                    const tagBg = k.etiqueta === 'Motor' ? 'rgba(30,42,94,0.06)' : 'rgba(255,107,43,0.06)';
+
+                    return `
+                    <div class="kpi-row group px-4 py-4 hover:bg-gray-50 rounded-xl border border-transparent hover:border-gray-100 transition-all cursor-help flex items-start gap-4">
+                        <div class="flex-grow">
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="text-[9px] font-black uppercase px-2 py-0.5 rounded-full" 
+                                      style="background:${tagBg}; color:${tagColor}; border:1px solid ${tagColor}20;">
+                                    ${k.etiqueta}
+                                </span>
+                                <div class="kpi-name text-sm font-bold text-gray-800">${k.nombre}</div>
+                            </div>
+                            <div class="kpi-desc text-[11px] text-gray-500 leading-tight">${k.descripcion}</div>
+                        </div>
+                        <div class="flex flex-col items-end gap-1">
+                            <div class="text-[10px] text-gray-400">2023: <span class="font-medium text-gray-600">${k.valor2023}</span></div>
+                            <div class="kpi-val text-lg font-black leading-none" style="color:${sc};">${k.valor2025}</div>
+                            <div class="text-[9px] font-bold text-gray-400 opacity-80 uppercase tracking-tighter">Meta: ${k.benchmark}</div>
+                        </div>
+                        <div class="flex flex-col items-center justify-center pt-1">
+                            ${trendIcon(k.tendencia)}
+                            <div class="w-1.5 h-1.5 rounded-full mt-1.5" style="background:${sc};"></div>
+                        </div>
+                    </div>`;
+                }).join('');
+
+                return `
+                <div class="kpi-content-pane flex-1 h-full ${i === 0 ? 'active' : ''}" data-content="${mod.modulo}">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 h-full content-start">
+                        ${rows}
+                    </div>
+                </div>`;
+            }).join('');
+
+            // Eventos de pestañas
+            document.querySelectorAll('.kpi-tab-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.kpi-tab-btn').forEach(b => b.classList.remove('active'));
+                    document.querySelectorAll('.kpi-content-pane').forEach(p => p.classList.remove('active'));
+                    btn.classList.add('active');
+                    document.querySelector(`[data-content="${btn.dataset.mod}"]`).classList.add('active');
+                });
+            });
+        }
+
+        // ─── 4. SCORES POR MÓDULO ───────────────────────────────────────────────
+        function renderScores() {
+            const moduleScoreData = [
+                { nombre: 'Liquidez', score: 9.6, icono: 'droplets', color: '#3b82f6', status: 'success' },
+                { nombre: 'Rentab.', score: 7.8, icono: 'trending-up', color: '#10b981', status: 'success' },
+                { nombre: 'Solvencia', score: 6.4, icono: 'landmark', color: '#8b5cf6', status: 'warning' },
+                { nombre: 'Estructura', score: 6.9, icono: 'layers', color: '#f59e0b', status: 'warning' },
+                { nombre: 'Actividad', score: 5.8, icono: 'activity', color: '#ef4444', status: 'warning' },
+            ];
+            document.getElementById('scores-container').innerHTML =
+                moduleScoreData.map(m => {
+                    const bg = m.status === 'success' ? '#f0fdf4' : '#fffbeb';
+                    const bc = m.status === 'success' ? '#bbf7d0' : '#fde68a';
+                    const sc = statusColor(m.status);
+                    return `
+                    <div class="ms-card p-3 rounded-xl border flex flex-col items-center justify-center transition-all hover:scale-105" 
+                         style="background:${bg};border-color:${bc};" aria-label="${m.nombre}: ${m.score}/10">
+                        ${icon(m.icono, 18, m.color)}
+                        <div class="text-[10px] font-bold text-gray-500 mt-1 uppercase tracking-tight">${m.nombre}</div>
+                        <div class="text-lg font-black leading-none mt-1" style="color:${sc};">${m.score}<span class="text-[10px] font-normal opacity-60">/10</span></div>
+                    </div>`;
+                }).join('');
+        }
+
+        // ─── 5. ACORDEONES (Alertas y Fortalezas) ───────────────────────────────
+        function renderAccordions() {
+            // Alertas
+            document.getElementById('alertas-container').innerHTML = senalesAlerta.map((a, i) => {
+                const clrI = a.tipo === 'danger' ? '#ef4444' : a.tipo === 'warning' ? '#d97706' : '#0ea5e9';
+                const bg = a.tipo === 'danger' ? '#fef2f2' : a.tipo === 'warning' ? '#fffbeb' : '#f0f9ff';
+                return `
+                <div class="accordion-item ${i === 0 ? 'active' : ''}">
+                    <div class="accordion-header px-3 hover:bg-gray-50 rounded-lg" onclick="this.parentElement.classList.toggle('active')">
+                        <div class="flex items-center gap-3">
+                            <div class="p-1.5 rounded-lg" style="background:${bg}">${icon(a.icono, 14, clrI)}</div>
+                            <span class="text-sm font-bold text-gray-700">${a.titulo}</span>
+                        </div>
+                        <i data-lucide="chevron-down" class="accordion-chevron w-4 h-4 text-gray-400"></i>
+                    </div>
+                    <div class="accordion-content px-3 space-y-2">
+                        <div class="text-xs text-gray-600 leading-relaxed">${a.descripcion}</div>
+                        <div class="bg-white p-2 rounded border border-dashed border-gray-200 text-xs font-bold" style="color:${clrI}">
+                            Recomendación: <span class="font-normal text-gray-700">${a.accion}</span>
+                        </div>
+                    </div>
+                </div>`;
+            }).join('');
+
+            // Fortalezas
+            document.getElementById('fortalezas-container').innerHTML = fortalezas.map((f, i) => `
+                <div class="accordion-item">
+                    <div class="accordion-header px-3 hover:bg-gray-50 rounded-lg" onclick="this.parentElement.classList.toggle('active')">
+                        <div class="flex items-center gap-3">
+                            <div class="p-1.5 rounded-lg bg-green-50">${icon(f.icono, 14, '#16a34a')}</div>
+                            <span class="text-sm font-bold text-gray-700">${f.titulo}</span>
+                        </div>
+                        <i data-lucide="chevron-down" class="accordion-chevron w-4 h-4 text-gray-400"></i>
+                    </div>
+                    <div class="accordion-content px-3">
+                        <div class="text-xs text-gray-600 leading-relaxed">${f.descripcion}</div>
+                    </div>
+                </div>`).join('');
+        }
+
+        // ─── 6. DICTAMEN EJECUTIVO ──────────────────────────────────────────────
+        function renderDictamen() {
+            const paragraphs = dictamenEjecutivo.texto.split('\n\n');
+            const icons = ['award', 'trending-up', 'flag'];
+
+            const html = paragraphs.map((text, i) => `
+                <div class="flex items-start gap-3 p-3 rounded-xl border mb-3 last:mb-0 transition-all hover:bg-white" 
+                     style="background:rgba(30,42,94,0.03); border-color:rgba(30,42,94,0.08);">
+                    <div class="flex-shrink-0 p-2 rounded-lg bg-white shadow-sm border border-gray-100" style="color:var(--datia-navy);">
+                        ${icon(icons[i] || 'info', 16)}
+                    </div>
+                    <div class="text-xs text-gray-700 leading-relaxed italic">
+                        ${text.trim()}
+                    </div>
+                </div>
+            `).join('');
+
+            document.getElementById('dictamen-container').innerHTML = `
+                <div class="space-y-1">${html}</div>`;
+        }
+
+        // ─── INITIALIZE ALL ─────────────────────────────────────────────────────
+        function initAll() {
+            renderTimeline();
+            renderKPIs();
+            renderScores();
+            renderAccordions();
+            renderDictamen();
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        }
+
+        initAll();
+    </script>
+
+    <!-- ══════════════════ LÓGICA DE GLOSARIO ══════════════════ -->
+    <script src="glossaryData.js"></script>
+    <script>
+        (function () {
+            const btn = document.getElementById('glossary-btn');
+            const overlay = document.getElementById('glossary-overlay');
+            const sidebar = document.getElementById('glossary-sidebar');
+            const closeBtn = document.getElementById('glossary-close');
+            const select = document.getElementById('glossary-select');
+            const placeholder = document.getElementById('glossary-placeholder');
+            const content = document.getElementById('glossary-content');
+            const defEl = document.getElementById('glossary-definicion');
+            const formEl = document.getElementById('glossary-formula');
+            const margEl = document.getElementById('glossary-margen');
+
+            if (typeof glossaryData !== 'undefined') {
+                glossaryData.forEach((item, index) => {
+                    const opt = document.createElement('option');
+                    opt.value = index;
+                    opt.textContent = item.indicador;
+                    select.appendChild(opt);
+                });
+            }
+
+            function openSidebar() {
+                overlay.classList.remove('hidden');
+                setTimeout(() => overlay.classList.remove('opacity-0'), 10);
+                sidebar.classList.remove('translate-x-full');
+                closeBtn.focus();
+            }
+            function closeSidebar() {
+                overlay.classList.add('opacity-0');
+                sidebar.classList.add('translate-x-full');
+                setTimeout(() => overlay.classList.add('hidden'), 300);
+                btn.focus();
+            }
+
+            btn.addEventListener('click', openSidebar);
+            closeBtn.addEventListener('click', closeSidebar);
+            overlay.addEventListener('click', closeSidebar);
+
+            // Cerrar con Escape
+            document.addEventListener('keydown', e => {
+                if (e.key === 'Escape' && !sidebar.classList.contains('translate-x-full')) closeSidebar();
+            });
+
+            select.addEventListener('change', function () {
+                const idx = this.value;
+                if (idx === '' || typeof glossaryData === 'undefined') {
+                    placeholder.classList.remove('hidden');
+                    content.classList.add('hidden');
+                    return;
+                }
+                const item = glossaryData[parseInt(idx)];
+                if (item) {
+                    defEl.textContent = item.definicion;
+                    formEl.textContent = item.formula;
+                    margEl.textContent = item.margen;
+                    placeholder.classList.add('hidden');
+                    content.classList.remove('hidden');
+                }
+            });
+
+            document.addEventListener('DOMContentLoaded', () => {
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+
+                // Ocultar header y nav si está en iframe
+                if (window.self !== window.top) {
+                    const header = document.getElementById('main-header');
+                    const nav = document.getElementById('main-nav');
+                    if (header) header.style.display = 'none';
+                    if (nav) nav.style.display = 'none';
+                }
+            });
+        })();
+    </script>
+
+</body>
+
+</html>

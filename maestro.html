@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Financiero - Indicadores de Gestión</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* ===== RESET Y BASE ===== */
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html,
+        body {
+            height: 100%;
+            overflow: hidden;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: #0f172a;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ===== LAYOUT PRINCIPAL ===== */
+        #app {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        /* ===== HEADER ===== */
+        #master-header {
+            background: linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 50%, #0ea5e9 100%);
+            padding: 12px 24px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        #master-header .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        #master-header .brand-icon {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 10px;
+            padding: 8px;
+            display: flex;
+            align-items: center;
+        }
+
+        #master-header h1 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: white;
+            letter-spacing: 0.02em;
+        }
+
+        #master-header .subtitle {
+            font-size: 0.72rem;
+            color: #bfdbfe;
+            margin-top: 2px;
+        }
+
+        /* ===== BARRA DE PESTAÑAS ===== */
+        #tab-bar {
+            background: #ffffff;
+            border-bottom: 1px solid #d1d5db;
+            display: flex;
+            align-items: stretch;
+            overflow-x: auto;
+            flex-shrink: 0;
+            scrollbar-width: none;
+        }
+
+        #tab-bar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .tab-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 0 22px;
+            height: 48px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #374151;
+            background: transparent;
+            border: none;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .tab-btn:hover {
+            color: #111827;
+            background: rgba(0, 0, 0, 0.04);
+        }
+
+        .tab-btn.active {
+            color: #111827;
+            border-bottom-color: #f97316;
+            /* naranja */
+            background: rgba(249, 115, 22, 0.08);
+        }
+
+        .tab-btn .tab-icon {
+            width: 16px;
+            height: 16px;
+            opacity: 0.8;
+        }
+
+        .tab-btn.active .tab-icon {
+            opacity: 1;
+        }
+
+        /* Pastilla de color por módulo */
+        .tab-btn::before {
+            content: '';
+            display: block;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: currentColor;
+            opacity: 0.5;
+            flex-shrink: 0;
+        }
+
+        .tab-btn.active::before {
+            opacity: 1;
+        }
+
+        /* Colores de acento por módulo */
+        .tab-btn[data-tab="liquidez"].active {
+            border-bottom-color: #3b82f6;
+            background: rgba(59, 130, 246, 0.08);
+        }
+
+        .tab-btn[data-tab="rentabilidad"].active {
+            border-bottom-color: #10b981;
+            background: rgba(16, 185, 129, 0.08);
+        }
+
+        .tab-btn[data-tab="solvencia"].active {
+            border-bottom-color: #8b5cf6;
+            background: rgba(139, 92, 246, 0.08);
+        }
+
+        .tab-btn[data-tab="estructura"].active {
+            border-bottom-color: #f59e0b;
+            background: rgba(245, 158, 11, 0.08);
+        }
+
+        .tab-btn[data-tab="actividad"].active {
+            border-bottom-color: #ef4444;
+            background: rgba(239, 68, 68, 0.08);
+        }
+
+        .tab-btn[data-tab="resumen"].active {
+            border-bottom-color: #06b6d4;
+            background: rgba(6, 182, 212, 0.08);
+        }
+
+        .tab-btn[data-tab="consultoria"].active {
+            border-bottom-color: #f97316;
+            background: rgba(249, 115, 22, 0.08);
+        }
+
+        /* ===== ÁREA DE CONTENIDO (IFRAME) ===== */
+        #iframe-container {
+            flex: 1;
+            position: relative;
+            background: #f8fafc;
+            overflow: hidden;
+        }
+
+        #report-frame {
+            width: 100%;
+            height: 100%;
+            border: none;
+            display: block;
+        }
+
+        /* ===== PANTALLA DE BIENVENIDA ===== */
+        #welcome-screen {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(145deg, #0f172a, #1e293b);
+            color: white;
+            text-align: center;
+            gap: 16px;
+            transition: opacity 0.3s ease;
+            z-index: 10;
+        }
+
+        #welcome-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        /* ===== FOOTER ===== */
+        #master-footer {
+            background: linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 50%, #0ea5e9 100%);
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 8px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+            font-size: 0.72rem;
+            color: #bfdbfe;
+            z-index: 100;
+            box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .footer-disclaimer {
+            font-style: italic;
+            max-width: 75%;
+            text-align: right;
+            line-height: 1.4;
+            opacity: 0.9;
+        }
+
+        .footer-brand {
+            font-weight: 700;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            letter-spacing: 0.01em;
+        }
+
+        #welcome-screen .logo {
+            width: 80px;
+            height: 80px;
+            border-radius: 20px;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            padding: 10px;
+        }
+
+        #welcome-screen .logo img {
+            width: 100%;
+            height: auto;
+        }
+
+        #welcome-screen h2 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #e2e8f0;
+        }
+
+        #welcome-screen p {
+            color: #64748b;
+            font-size: 0.95rem;
+            max-width: 360px;
+        }
+
+        .module-cards {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 12px;
+        }
+
+        .module-card {
+            padding: 8px 18px;
+            border-radius: 20px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1px solid;
+            transition: all 0.2s ease;
+        }
+
+        .module-card:hover {
+            transform: translateY(-2px);
+            filter: brightness(1.2);
+        }
+
+        .card-liquidez {
+            color: #60a5fa;
+            border-color: #3b82f6;
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .card-rentabilidad {
+            color: #34d399;
+            border-color: #10b981;
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        .card-solvencia {
+            color: #a78bfa;
+            border-color: #8b5cf6;
+            background: rgba(139, 92, 246, 0.1);
+        }
+
+        .card-estructura {
+            color: #fbbf24;
+            border-color: #f59e0b;
+            background: rgba(245, 158, 11, 0.1);
+        }
+
+        .card-actividad {
+            color: #f87171;
+            border-color: #ef4444;
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        /* ===== INDICADOR DE CARGA ===== */
+        #loading-overlay {
+            position: absolute;
+            inset: 0;
+            background: #f8fafc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 5;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+        }
+
+        #loading-overlay.visible {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #e2e8f0;
+            border-top-color: #1d4ed8;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* ===== BADGE MÓDULO ACTIVO EN HEADER ===== */
+        #active-badge {
+            display: none;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            background: rgba(255, 255, 255, 0.12);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        #active-badge.visible {
+            display: flex;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app">
+
+        <!-- ENCABEZADO MAESTRO -->
+        <header id="master-header">
+            <div class="brand">
+                <div class="brand-icon"
+                    style="background: white; padding: 4px 12px; border-radius: 8px; display: flex; align-items: center; gap: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.15);">
+                    <img src="https://datia.digital/assets/logo-CL9oxSYp.png" alt="Datia Logo"
+                        style="height: 18px; width: auto;">
+                    <div style="width: 1px; height: 16px; background: #e2e8f0;"></div>
+                    <img src="assets/logo_mas.png" alt="MAS Consulta Logo" style="height: 20px; width: auto;">
+                </div>
+                <div>
+                    <h1>Dashboard Financiero</h1>
+                    <div class="subtitle">Análisis Integral de Indicadores · Monitoreo y Auditoría</div>
+                </div>
+            </div>
+            <div id="active-badge">
+                <i id="badge-icon" data-lucide="circle" style="width:14px;height:14px;"></i>
+                <span id="badge-label">—</span>
+            </div>
+        </header>
+
+        <!-- BARRA DE PESTAÑAS -->
+        <nav id="tab-bar" role="tablist">
+            <button class="tab-btn" data-tab="resumen" data-src="resumen_ejecutivo.html" role="tab"
+                aria-selected="false">
+                <i data-lucide="file-text" class="tab-icon"></i> Resumen Ejecutivo
+            </button>
+            <button class="tab-btn" data-tab="liquidez" data-src="index.html" role="tab" aria-selected="false">
+                <i data-lucide="droplets" class="tab-icon"></i> Liquidez
+            </button>
+            <button class="tab-btn" data-tab="rentabilidad" data-src="rentabilidad.html" role="tab"
+                aria-selected="false">
+                <i data-lucide="trending-up" class="tab-icon"></i> Rentabilidad
+            </button>
+            <button class="tab-btn" data-tab="solvencia" data-src="solvencia.html" role="tab" aria-selected="false">
+                <i data-lucide="landmark" class="tab-icon"></i> Solvencia
+            </button>
+            <button class="tab-btn" data-tab="estructura" data-src="estructura.html" role="tab" aria-selected="false">
+                <i data-lucide="layers" class="tab-icon"></i> Estructura
+            </button>
+            <button class="tab-btn" data-tab="actividad" data-src="actividad.html" role="tab" aria-selected="false">
+                <i data-lucide="activity" class="tab-icon"></i> Actividad
+            </button>
+            <button class="tab-btn" data-tab="consultoria" data-src="consultoria.html" role="tab" aria-selected="false">
+                <i data-lucide="briefcase" class="tab-icon"></i> Plan de acción 2026
+            </button>
+        </nav>
+
+        <!-- ÁREA DE CONTENIDO -->
+        <div id="iframe-container">
+
+            <!-- Pantalla de bienvenida (visible al inicio) -->
+            <div id="welcome-screen">
+                <div class="logo"
+                    style="width: auto; height: auto; padding: 16px 24px; border-radius: 20px; display: flex; align-items: center; gap: 20px;">
+                    <img src="https://datia.digital/assets/logo-CL9oxSYp.png" alt="Datia Logo"
+                        style="height: 32px; width: auto;">
+                    <div style="width: 1px; height: 32px; background: #e2e8f0;"></div>
+                    <img src="assets/logo_mas.png" alt="MAS Consulta Logo" style="height: 36px; width: auto;">
+                </div>
+                <h2>Dashboard Financiero</h2>
+                <p>Selecciona un módulo en la barra superior para comenzar el análisis.</p>
+                <div class="module-cards">
+                    <div class="module-card" style="color:#22d3ee;border-color:#06b6d4;background:rgba(6,182,212,0.1);"
+                        data-launch="resumen">📋 Resumen Ejecutivo</div>
+                    <div class="module-card card-liquidez" data-launch="liquidez">💧 Liquidez</div>
+                    <div class="module-card card-rentabilidad" data-launch="rentabilidad">📈 Rentabilidad</div>
+                    <div class="module-card card-solvencia" data-launch="solvencia">🏛️ Solvencia</div>
+                    <div class="module-card card-estructura" data-launch="estructura">🗂️ Estructura</div>
+                    <div class="module-card card-actividad" data-launch="actividad">⚡ Actividad</div>
+                    <div class="module-card"
+                        style="color:#f97316;border-color:#f97316;background:rgba(249, 115, 22, 0.1);"
+                        data-launch="consultoria">� Plan de acción 2026</div>
+                </div>
+            </div>
+
+            <!-- Spinner de carga -->
+            <div id="loading-overlay">
+                <div class="spinner"></div>
+            </div>
+
+            <!-- iframe principal -->
+            <iframe id="report-frame" src="" title="Módulo financiero"
+                sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>
+        </div>
+
+        <!-- FOOTER MAESTRO -->
+        <footer id="master-footer">
+            <div class="footer-brand">
+                Diseñado por Datia &copy; 2026
+            </div>
+            <div class="footer-disclaimer">
+                Disclaimer: La información presentada en este dashboard es para fines de análisis interno. Datia no se
+                hace responsable por decisiones tomadas basadas exclusivamente en estos datos.
+            </div>
+        </footer>
+
+    </div>
+
+    <script>
+        // ─── CONFIG DE MÓDULOS ──────────────────────────────────────────────────
+        const MODULES = {
+            resumen: { label: 'Resumen Ejecutivo', icon: 'file-text', src: 'resumen_ejecutivo.html' },
+            liquidez: { label: 'Liquidez', icon: 'droplets', src: 'index.html' },
+            rentabilidad: { label: 'Rentabilidad', icon: 'trending-up', src: 'rentabilidad.html' },
+            solvencia: { label: 'Solvencia', icon: 'landmark', src: 'solvencia.html' },
+            estructura: { label: 'Estructura', icon: 'layers', src: 'estructura.html' },
+            actividad: { label: 'Activity', icon: 'activity', src: 'actividad.html' },
+            consultoria: { label: 'Plan de acción 2026', icon: 'briefcase', src: 'consultoria.html' },
+        };
+
+        // ─── REFERENCIAS DOM ────────────────────────────────────────────────────
+        const tabs = document.querySelectorAll('.tab-btn');
+        const frame = document.getElementById('report-frame');
+        const welcomeScreen = document.getElementById('welcome-screen');
+        const loadingOverlay = document.getElementById('loading-overlay');
+        const activeBadge = document.getElementById('active-badge');
+        const badgeLabel = document.getElementById('badge-label');
+        const badgeIcon = document.getElementById('badge-icon');
+
+        let currentTab = null;
+
+        // ─── FUNCIÓN PRINCIPAL: CARGAR MÓDULO ───────────────────────────────────
+        function loadModule(key) {
+            if (currentTab === key) return; // ya activo
+            currentTab = key;
+
+            const mod = MODULES[key];
+            if (!mod) return;
+
+            // 1. Actualizar pestañas
+            tabs.forEach(btn => {
+                const isActive = btn.dataset.tab === key;
+                btn.classList.toggle('active', isActive);
+                btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
+            });
+
+            // 2. Badge en header
+            badgeLabel.textContent = mod.label;
+            badgeIcon.setAttribute('data-lucide', mod.icon);
+            activeBadge.classList.add('visible');
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+
+            // 3. Ocultar bienvenida, mostrar loading
+            welcomeScreen.classList.add('hidden');
+            loadingOverlay.classList.add('visible');
+
+            // 4. Cargar iframe
+            frame.src = '';                      // forzar recarga limpia
+            requestAnimationFrame(() => {
+                frame.src = mod.src;
+            });
+        }
+
+        // ─── OCULTAR LOADING CUANDO IFRAME TERMINA ──────────────────────────────
+        frame.addEventListener('load', () => {
+            loadingOverlay.classList.remove('visible');
+        });
+
+        // ─── TAB CLICKS ───────────────────────────────────────────────────────
+        tabs.forEach(btn => {
+            btn.addEventListener('click', () => loadModule(btn.dataset.tab));
+        });
+
+        // ─── CARDS DE BIENVENIDA ──────────────────────────────────────────────
+        document.querySelectorAll('.module-card[data-launch]').forEach(card => {
+            card.addEventListener('click', () => loadModule(card.dataset.launch));
+        });
+
+        // ─── INIT LUCIDE ICONS ───────────────────────────────────────────────
+        document.addEventListener('DOMContentLoaded', () => {
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        });
+    </script>
+</body>
+
+</html>

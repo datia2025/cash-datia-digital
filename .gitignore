@@ -1,0 +1,12 @@
+# Optimization: Ignore large data files that tax the language server
+insights_rentabilidad.js
+insights_solvencia.js
+insights.js
+
+# General ignores
+node_modules/
+.DS_Store
+*.log
+tmp/
+temp/
+.gemini/

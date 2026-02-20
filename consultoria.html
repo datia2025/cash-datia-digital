@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <!-- Anti-flash: oculta header/nav ANTES del primer render si está en iframe -->
+    <script>if (window.self !== window.top) { document.documentElement.classList.add('in-iframe'); }</script>
+    <style>
+        .in-iframe #main-header,
+        .in-iframe #main-nav {
+            display: none !important;
+        }
+    </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Financiero - Plan de Consultoría 2026</title>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* ── Normalización global ── */
+        html {
+            scrollbar-gutter: stable;
+            overflow-y: scroll;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background-color: #F8FAFC;
+            overflow-x: hidden;
+        }
+
+        #main-header {
+            min-height: 120px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        /* ── Design Tokens (Datia) ── */
+        :root {
+            --datia-navy: #1E2A5E;
+            --datia-navy-light: #2B3F8E;
+            --datia-orange: #FF6B2B;
+            --datia-orange-hover: #E55A1F;
+            --datia-text: #1E293B;
+            --datia-text-secondary: #64748B;
+            --datia-bg: #F8FAFC;
+            --datia-card-border: #E2E8F0;
+        }
+
+        /* ── Card base ── */
+        .exec-card {
+            background: #ffffff;
+            border-radius: 20px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+            border: 1px solid var(--datia-card-border);
+            padding: 22px 24px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .exec-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 24px -4px rgba(30, 42, 94, 0.1);
+        }
+
+        .exec-card-title {
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+            color: var(--datia-navy);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 14px;
+            text-wrap: balance;
+        }
+
+        /* ── Section headers ── */
+        .section-phase-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 14px;
+            border-radius: 999px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: white;
+        }
+
+        /* ── Focus visible (A11y) ── */
+        :focus-visible {
+            outline: 2px solid var(--datia-orange);
+            outline-offset: 4px;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50">
+    <div id="dashboard-container">
+
+        <!-- ══════════════════ ENCABEZADO PRINCIPAL ══════════════════ -->
+        <div id="main-header" style="background: linear-gradient(135deg, #1E2A5E 0%, #2B3F8E 100%);"
+            class="text-white p-8 shadow-lg">
+            <div class="flex items-start justify-between">
+                <div>
+                    <div class="flex items-center gap-3 mb-2">
+                        <span style="font-weight:800; font-size:1.7rem; letter-spacing:-0.02em;">datia.</span>
+                    </div>
+                    <h1 class="text-3xl font-bold mb-1" style="letter-spacing:-0.01em;">Plan de Consultoría Financiera
+                    </h1>
+                    <p style="color:#bfcfff;">Estrategia de Valor y Resiliencia · 2026</p>
+                    <p class="text-sm mt-1" style="color:#94a8d8;">Informe Ejecutivo de Recomendaciones</p>
+                </div>
+                <div class="mt-1 inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold"
+                    style="background: #FF6B2B; box-shadow: 0 2px 8px rgba(255,107,43,0.3);">
+                    <div
+                        style="width:8px;height:8px;border-radius:50%;background:#fff;animation:pulse-dot 2s infinite;">
+                    </div>
+                    Plan 2026
+                </div>
+            </div>
+        </div>
+        <style>
+            @keyframes pulse-dot {
+
+                0%,
+                100% {
+                    opacity: 1;
+                    transform: scale(1);
+                }
+
+                50% {
+                    opacity: 0.5;
+                    transform: scale(1.4);
+                }
+            }
+        </style>
+
+        <!-- ══════════════════ NAVEGACIÓN DE PESTAÑAS ══════════════════ -->
+        <nav id="main-nav" class="bg-white flex overflow-x-auto" role="navigation" aria-label="Módulos del dashboard"
+            style="border-bottom: 1px solid #E2E8F0; position: sticky; top: 0; z-index: 30;">
+            <a href="resumen_ejecutivo.html"
+                class="px-6 py-3 font-semibold transition-all whitespace-nowrap hover:bg-gray-50"
+                style="color: #64748B; border-bottom: 3px solid transparent;">
+                <i data-lucide="file-text" class="w-4 h-4 inline-block mr-1"></i>
+                Resumen Ejecutivo
+            </a>
+            <a href="index.html" class="px-6 py-3 font-semibold transition-all whitespace-nowrap hover:bg-gray-50"
+                style="color: #64748B; border-bottom: 3px solid transparent;">
+                <i data-lucide="droplets" class="w-4 h-4 inline-block mr-1"></i>
+                Liquidez
+            </a>
+            <a href="rentabilidad.html"
+                class="px-6 py-3 font-semibold transition-all whitespace-nowrap hover:bg-gray-50"
+                style="color: #64748B; border-bottom: 3px solid transparent;">
+                <i data-lucide="trending-up" class="w-4 h-4 inline-block mr-1"></i>
+                Rentabilidad
+            </a>
+            <a href="solvencia.html" class="px-6 py-3 font-semibold transition-all whitespace-nowrap hover:bg-gray-50"
+                style="color: #64748B; border-bottom: 3px solid transparent;">
+                <i data-lucide="landmark" class="w-4 h-4 inline-block mr-1"></i>
+                Solvencia
+            </a>
+            <a href="estructura.html" class="px-6 py-3 font-semibold transition-all whitespace-nowrap hover:bg-gray-50"
+                style="color: #64748B; border-bottom: 3px solid transparent;">
+                <i data-lucide="layers" class="w-4 h-4 inline-block mr-1"></i>
+                Estructura
+            </a>
+            <a href="actividad.html" class="px-6 py-3 font-semibold transition-all whitespace-nowrap hover:bg-gray-50"
+                style="color: #64748B; border-bottom: 3px solid transparent;">
+                <i data-lucide="activity" class="w-4 h-4 inline-block mr-1"></i>
+                Actividad
+            </a>
+            <a href="consultoria.html" class="px-6 py-3 font-semibold transition-all whitespace-nowrap"
+                style="color: #1E2A5E; border-bottom: 3px solid #FF6B2B; background: rgba(255,107,43,0.06);">
+                <i data-lucide="briefcase" class="w-4 h-4 inline-block mr-1"></i>
+                Consultoría 2026
+            </a>
+        </nav>
+
+        <!-- ══════════════════ CONTENIDO PRINCIPAL ══════════════════ -->
+        <main class="p-6 space-y-6">
+
+            <!-- ── 1. SPIDER CHART + SCORECARD ── -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+                <!-- Spider Chart (2/3) -->
+                <section class="exec-card md:col-span-2 flex flex-col items-center" aria-labelledby="title-spider">
+                    <div class="exec-card-title w-full" id="title-spider">
+                        <i data-lucide="radar" style="width:13px;height:13px;"></i>
+                        Mapa de Salud Financiera · Cierre 2025
+                    </div>
+                    <canvas id="spider-canvas" width="500" height="400" style="max-width:100%;"></canvas>
+                    <p id="spider-insight" class="mt-4 text-xs text-gray-500 leading-relaxed text-center italic px-4"
+                        style="border-top: 1px solid #e2e8f0; padding-top: 14px;">
+                        <!-- JS renderiza -->
+                    </p>
+                </section>
+
+                <!-- Scorecard (1/3) -->
+                <section class="exec-card" aria-labelledby="title-scorecard">
+                    <div class="exec-card-title" id="title-scorecard">
+                        <i data-lucide="gauge" style="width:13px;height:13px;"></i>
+                        Score por Indicador
+                    </div>
+                    <div class="space-y-3" id="scorecard-container">
+                        <!-- JS renderiza -->
+                    </div>
+                </section>
+            </div>
+
+            <!-- ── 2. ENFOQUE METODOLÓGICO ── -->
+            <section class="exec-card" aria-labelledby="title-enfoque">
+                <div class="exec-card-title" id="title-enfoque">
+                    <i data-lucide="compass" style="width:13px;height:13px;"></i>
+                    Enfoque Metodológico · Trifecta de Valor
+                </div>
+                <div id="enfoque-container">
+                    <!-- JS renderiza -->
+                </div>
+            </section>
+
+            <!-- ── 3. DIAGNÓSTICO TRANSVERSAL ── -->
+            <section class="exec-card" aria-labelledby="title-diagnostico">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="exec-card-title mb-0" id="title-diagnostico">
+                        <i data-lucide="search" style="width:13px;height:13px;"></i>
+                        Diagnóstico Transversal · La Paradoja de la "Robustez Frágil"
+                    </div>
+                    <span class="text-[9px] font-bold uppercase px-3 py-1 rounded-full"
+                        style="background: #fef3c7; color: #92400e; border: 1px solid #fde68a;">
+                        Análisis para Alta Dirección
+                    </span>
+                </div>
+                <div id="diagnostico-container">
+                    <!-- JS renderiza -->
+                </div>
+            </section>
+
+            <!-- ── 4. PLAN DE EJECUCIÓN 2026 ── -->
+            <section class="exec-card" aria-labelledby="title-plan">
+                <div class="exec-card-title" id="title-plan">
+                    <i data-lucide="calendar-check" style="width:13px;height:13px;"></i>
+                    Plan de acción 2026
+                </div>
+                <div id="plan-container">
+                    <!-- JS renderiza -->
+                </div>
+            </section>
+
+        </main>
+
+    </div><!-- /#dashboard-container -->
+
+    <!-- ══════════════════ DATOS ══════════════════ -->
+    <script src="data_consultoria.js"></script>
+
+    <!-- ══════════════════ LÓGICA DE RENDERIZADO ══════════════════ -->
+    <script src="app_consultoria.js"></script>
+
+    <script>
+        // Ocultar header y nav si está en iframe
+        if (window.self !== window.top) {
+            const header = document.getElementById('main-header');
+            const nav = document.getElementById('main-nav');
+            if (header) header.style.display = 'none';
+            if (nav) nav.style.display = 'none';
+        }
+    </script>
+
+</body>
+
+</html>

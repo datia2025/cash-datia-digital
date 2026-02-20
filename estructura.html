@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <!-- Anti-flash: oculta header/nav ANTES del primer render si está en iframe -->
+    <script>if (window.self !== window.top) { document.documentElement.classList.add('in-iframe'); }</script>
+    <style>
+        .in-iframe #main-header,
+        .in-iframe #main-nav {
+            display: none !important;
+        }
+    </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Financiero - Estructura de Capital</title>
+    <!-- Tailwind CSS CDN para el estilizado -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script
+        src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+    <!-- Marked library for Markdown parsing -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- Lucide Icons para la sección de análisis -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* Normalización global para consistencia entre pestañas */
+        html {
+            scrollbar-gutter: stable;
+            overflow-y: scroll;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            overflow-x: hidden;
+        }
+
+        #main-header {
+            min-height: 120px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        /* ── Filtros compactos ── */
+        .filter-bar label {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #374151;
+            letter-spacing: 0.02em;
+        }
+
+        .filter-bar select {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            font-size: 0.75rem;
+            padding: 3px 8px 3px 6px;
+            border-radius: 5px;
+            border: 1px solid #d1d5db;
+            color: #111827;
+            background: #fff;
+            cursor: pointer;
+        }
+
+        .filter-bar select:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50">
+    <div id="dashboard-container">
+        <!-- Encabezado Principal -->
+        <div id="main-header" class="bg-gradient-to-r from-blue-700 to-blue-900 text-white p-8 shadow-lg">
+            <h1 class="text-4xl font-bold mb-2">Dashboard Financiero</h1>
+            <p class="text-blue-200">Análisis Estructural de Capital y Apalancamiento</p>
+            <p class="text-sm text-blue-300 mt-2">Monitoreo y Auditoría de Estructura de Capital</p>
+        </div>
+
+        <!-- Navegación de Pestañas -->
+        <div id="main-nav" class="bg-white shadow-md flex overflow-x-auto">
+            <a href="index.html" class="px-6 py-3 font-semibold transition-all bg-white text-blue-600 hover:bg-blue-50">
+                <i data-lucide="droplets" class="w-4 h-4 inline-block mr-1"></i>
+                Liquidez
+            </a>
+            <a href="rentabilidad.html"
+                class="px-6 py-3 font-semibold transition-all bg-white text-blue-600 hover:bg-blue-50">
+                <i data-lucide="trending-up" class="w-4 h-4 inline-block mr-1"></i>
+                Rentabilidad
+            </a>
+            <a href="solvencia.html"
+                class="px-6 py-3 font-semibold transition-all bg-white text-blue-600 hover:bg-blue-50">
+                <i data-lucide="landmark" class="w-4 h-4 inline-block mr-1"></i>
+                Solvencia
+            </a>
+            <button class="px-6 py-3 font-semibold transition-all bg-blue-600 text-white border-b-4 border-orange-500">
+                <i data-lucide="layers" class="w-4 h-4 inline-block mr-1"></i>
+                Estructura
+            </button>
+            <a href="actividad.html"
+                class="px-6 py-3 font-semibold transition-all bg-white text-blue-600 hover:bg-blue-50">
+                <i data-lucide="activity" class="w-4 h-4 inline-block mr-1"></i>
+                Actividad
+            </a>
+        </div>
+
+        <!-- ==================== CONTENIDO: ESTRUCTURA ==================== -->
+        <div id="estructura" class="tab-content">
+            <!-- Controles de filtro -->
+            <div class="bg-white shadow-md p-4">
+                <div class="flex flex-wrap gap-4 items-center filter-bar">
+                    <div class="flex items-center gap-2">
+                        <label class="font-semibold text-gray-700">Año:</label>
+                        <select id="yearFilter"
+                            class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600">
+                            <option value="all">Todos</option>
+                            <option value="2025" selected>2025</option>
+                            <option value="2024">2024</option>
+                            <option value="2023">2023</option>
+                        </select>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <label class="font-semibold text-gray-700">Trimestre:</label>
+                        <select id="quarterFilter"
+                            class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600">
+                            <option value="all" selected>Todos</option>
+                            <option value="1Q">1Q</option>
+                            <option value="2Q">2Q</option>
+                            <option value="3Q">3Q</option>
+                            <option value="4Q">4Q</option>
+                        </select>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <label class="font-semibold text-gray-700">Mes:</label>
+                        <select id="monthFilter"
+                            class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600">
+                            <option value="all" selected>Todos</option>
+                            <option value="1">Enero</option>
+                            <option value="2">Febrero</option>
+                            <option value="3">Marzo</option>
+                            <option value="4">Abril</option>
+                            <option value="5">Mayo</option>
+                            <option value="6">Junio</option>
+                            <option value="7">Julio</option>
+                            <option value="8">Agosto</option>
+                            <option value="9">Septiembre</option>
+                            <option value="10">Octubre</option>
+                            <option value="11">Noviembre</option>
+                            <option value="12">Diciembre</option>
+                        </select>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <label class="font-semibold text-gray-700">Lenguaje:</label>
+                        <select id="languageFilter"
+                            class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600">
+                            <option value="es" selected>Español</option>
+                            <option value="en">English</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Grid de Indicadores (4x2 para 7 indicadores + 1 placeholder) -->
+            <div class="p-8">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- 1. Cobertura de Activos Fijos -->
+                    <div class="bg-white rounded-lg shadow-md p-6 border-t-4 border-blue-800">
+                        <h3 id="chart-title-cobertura_fijos" class="text-xl font-semibold text-blue-900 mb-1">Cobertura
+                            de Activos Fijos</h3>
+                        <div class="text-sm text-gray-500 mb-4">
+                            <span>Patrimonio / Activos fijos</span>
+                            <span class="ml-3">Target: > 1.00 x</span>
+                        </div>
+                        <div>
+                            <div id="no-data-cobertura_fijos" class="text-center py-8 hidden">
+                                <i data-lucide="alert-circle" class="w-12 h-12 mx-auto text-gray-400 mb-2"></i>
+                                <p class="text-gray-500">No hay datos disponibles</p>
+                            </div>
+                            <div class="h-[300px] w-full">
+                                <canvas id="chartCobertura_fijos"></canvas>
+                            </div>
+                        </div>
+                        <div id="analysis-cobertura_fijos" class="mt-4"></div>
+                    </div>
+
+                    <!-- 2. Estructura de la Deuda -->
+                    <div class="bg-white rounded-lg shadow-md p-6 border-t-4 border-green-600">
+                        <h3 id="chart-title-estructura_deuda" class="text-xl font-semibold text-blue-900 mb-1">
+                            Estructura de la Deuda</h3>
+                        <div class="text-sm text-gray-500 mb-4">
+                            <span>Pasivo CP / Pasivo total</span>
+                            <span class="ml-3">Target: < 50%</span>
+                        </div>
+                        <div>
+                            <div id="no-data-estructura_deuda" class="text-center py-8 hidden">
+                                <i data-lucide="alert-circle" class="w-12 h-12 mx-auto text-gray-400 mb-2"></i>
+                                <p class="text-gray-500">No hay datos disponibles</p>
+                            </div>
+                            <div class="h-[300px] w-full">
+                                <canvas id="chartEstructura_deuda"></canvas>
+                            </div>
+                        </div>
+                        <div id="analysis-estructura_deuda" class="mt-4"></div>
+                    </div>
+
+                    <!-- 3. Multiplicador de Capital -->
+                    <div class="bg-white rounded-lg shadow-md p-6 border-t-4 border-orange-500">
+                        <h3 id="chart-title-multiplicador_capital" class="text-xl font-semibold text-blue-900 mb-1">
+                            Multiplicador de Capital</h3>
+                        <div class="text-sm text-gray-500 mb-4">
+                            <span>Activos / Patrimonio</span>
+                            <span class="ml-3">Target: < 2.50 x</span>
+                        </div>
+                        <div>
+                            <div id="no-data-multiplicador_capital" class="text-center py-8 hidden">
+                                <i data-lucide="alert-circle" class="w-12 h-12 mx-auto text-gray-400 mb-2"></i>
+                                <p class="text-gray-500">No hay datos disponibles</p>
+                            </div>
+                            <div class="h-[300px] w-full">
+                                <canvas id="chartMultiplicador_capital"></canvas>
+                            </div>
+                        </div>
+                        <div id="analysis-multiplicador_capital" class="mt-4"></div>
+                    </div>
+
+                    <!-- 4. Ratio de Capitalización -->
+                    <div class="bg-white rounded-lg shadow-md p-6 border-t-4 border-yellow-500">
+                        <h3 id="chart-title-capitalizacion" class="text-xl font-semibold text-blue-900 mb-1">Ratio de
+                            Capitalización</h3>
+                        <div class="text-sm text-gray-500 mb-4">
+                            <span>Deuda LP / (Deuda LP + Patrimonio)</span>
+                            <span class="ml-3">Target: < 40%</span>
+                        </div>
+                        <div>
+                            <div id="no-data-capitalizacion" class="text-center py-8 hidden">
+                                <i data-lucide="alert-circle" class="w-12 h-12 mx-auto text-gray-400 mb-2"></i>
+                                <p class="text-gray-500">No hay datos disponibles</p>
+                            </div>
+                            <div class="h-[300px] w-full">
+                                <canvas id="chartCapitalizacion"></canvas>
+                            </div>
+                        </div>
+                        <div id="analysis-capitalizacion" class="mt-4"></div>
+                    </div>
+
+                    <!-- 5. Ratio de Deuda a Activos Tangibles -->
+                    <div class="bg-white rounded-lg shadow-md p-6 border-t-4 border-red-600">
+                        <h3 id="chart-title-deuda_tangibles" class="text-xl font-semibold text-blue-900 mb-1">Deuda a
+                            Activos Tangibles</h3>
+                        <div class="text-sm text-gray-500 mb-4">
+                            <span>Pasivo total / Activos tangibles</span>
+                            <span class="ml-3">Target: < 60%</span>
+                        </div>
+                        <div>
+                            <div id="no-data-deuda_tangibles" class="text-center py-8 hidden">
+                                <i data-lucide="alert-circle" class="w-12 h-12 mx-auto text-gray-400 mb-2"></i>
+                                <p class="text-gray-500">No hay datos disponibles</p>
+                            </div>
+                            <div class="h-[300px] w-full">
+                                <canvas id="chartDeuda_tangibles"></canvas>
+                            </div>
+                        </div>
+                        <div id="analysis-deuda_tangibles" class="mt-4"></div>
+                    </div>
+
+                    <!-- 6. Ratio de Propiedad / Autonomía -->
+                    <div class="bg-white rounded-lg shadow-md p-6 border-t-4 border-indigo-600">
+                        <h3 id="chart-title-propiedad_autonomia" class="text-xl font-semibold text-blue-900 mb-1">Ratio
+                            de Propiedad</h3>
+                        <div class="text-sm text-gray-500 mb-4">
+                            <span>Patrimonio / Activo total</span>
+                            <span class="ml-3">Target: > 40%</span>
+                        </div>
+                        <div>
+                            <div id="no-data-propiedad_autonomia" class="text-center py-8 hidden">
+                                <i data-lucide="alert-circle" class="w-12 h-12 mx-auto text-gray-400 mb-2"></i>
+                                <p class="text-gray-500">No hay datos disponibles</p>
+                            </div>
+                            <div class="h-[300px] w-full">
+                                <canvas id="chartPropiedad_autonomia"></canvas>
+                            </div>
+                        </div>
+                        <div id="analysis-propiedad_autonomia" class="mt-4"></div>
+                    </div>
+
+                    <!-- 7. Relación Deuda / Patrimonio -->
+                    <div class="bg-white rounded-lg shadow-md p-6 border-t-4 border-purple-600">
+                        <h3 id="chart-title-deuda_patrimonio" class="text-xl font-semibold text-blue-900 mb-1">Relación
+                            Deuda / Patrimonio</h3>
+                        <div class="text-sm text-gray-500 mb-4">
+                            <span>Pasivo total / Patrimonio</span>
+                            <span class="ml-3">Target: < 1.50 x</span>
+                        </div>
+                        <div>
+                            <div id="no-data-deuda_patrimonio" class="text-center py-8 hidden">
+                                <i data-lucide="alert-circle" class="w-12 h-12 mx-auto text-gray-400 mb-2"></i>
+                                <p class="text-gray-500">No hay datos disponibles</p>
+                            </div>
+                            <div class="h-[300px] w-full">
+                                <canvas id="chartDeuda_patrimonio"></canvas>
+                            </div>
+                        </div>
+                        <div id="analysis-deuda_patrimonio" class="mt-4"></div>
+                    </div>
+                </div>
+
+                <!-- SECCIÓN: DICTAMEN DE AUDITORÍA -->
+                <div id="dictamen-container" class="mt-8 hidden">
+                    <!-- Pestaña dinámica generada por app_estructura.js -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Botón flotante de ayuda (Glosario) -->
+        <button id="glossary-btn"
+            class="fixed bottom-6 right-6 z-50 bg-blue-700 hover:bg-blue-800 text-white rounded-full p-4 shadow-lg transition-all duration-300 hover:scale-110">
+            <i data-lucide="book-open" class="w-6 h-6"></i>
+        </button>
+
+        <!-- Overlay y Sidebar de Glosario -->
+        <div id="glossary-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden"></div>
+        <div id="glossary-sidebar"
+            class="fixed top-0 right-0 h-full w-80 bg-white shadow-2xl z-50 transform translate-x-full transition-transform duration-300 overflow-hidden flex flex-col">
+            <div class="bg-gradient-to-r from-blue-700 to-blue-900 text-white p-4">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-lg font-bold">Glosario Avanzado</h2>
+                    <button id="glossary-close"><i data-lucide="x" class="w-5 h-5"></i></button>
+                </div>
+            </div>
+            <div class="p-4 border-b">
+                <select id="glossary-select" class="w-full px-3 py-2 border rounded-lg text-sm">
+                    <option value="">-- Elija un término --</option>
+                </select>
+            </div>
+            <div id="glossary-detail" class="flex-1 overflow-y-auto p-4">
+                <div id="glossary-placeholder" class="text-center text-gray-400 py-8">
+                    <p class="text-sm">Seleccione un indicador para ver su información.</p>
+                </div>
+                <div id="glossary-content" class="hidden space-y-4">
+                    <div class="bg-blue-50 p-3 border-l-4 border-blue-600">
+                        <strong class="text-xs uppercase text-blue-800 block mb-1">Definición</strong>
+                        <p id="glossary-definicion" class="text-gray-700 text-sm"></p>
+                    </div>
+                    <div class="bg-purple-50 p-3 border-l-4 border-purple-600">
+                        <strong class="text-xs uppercase text-purple-800 block mb-1">Fórmula</strong>
+                        <p id="glossary-formula" class="text-gray-700 text-sm font-mono bg-white p-1"></p>
+                    </div>
+                    <div class="bg-green-50 p-3 border-l-4 border-green-600">
+                        <strong class="text-xs uppercase text-green-800 block mb-1">Target</strong>
+                        <p id="glossary-margen" class="text-gray-700 text-lg font-bold"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts de Datos e Inteligencia -->
+    <script src="glossaryData.js"></script>
+    <script src="insights_estructura.js"></script>
+    <script src="data_estructura.js"></script>
+    <script src="app_estructura.js"></script>
+
+    <script>
+        // Lógica mínima de UI para Glosario y Lucide
+        (function () {
+            const btn = document.getElementById('glossary-btn');
+            const overlay = document.getElementById('glossary-overlay');
+            const sidebar = document.getElementById('glossary-sidebar');
+            const closeBtn = document.getElementById('glossary-close');
+            const select = document.getElementById('glossary-select');
+            const placeholder = document.getElementById('glossary-placeholder');
+            const content = document.getElementById('glossary-content');
+            const defEl = document.getElementById('glossary-definicion');
+            const formEl = document.getElementById('glossary-formula');
+            const margEl = document.getElementById('glossary-margen');
+
+            // Populate select options
+            if (typeof glossaryData !== 'undefined') {
+                glossaryData.forEach((item, index) => {
+                    const opt = document.createElement('option');
+                    opt.value = index;
+                    opt.textContent = item.indicador;
+                    select.appendChild(opt);
+                });
+            }
+
+            btn.addEventListener('click', () => {
+                overlay.classList.remove('hidden');
+                sidebar.classList.remove('translate-x-full');
+            });
+            closeBtn.addEventListener('click', () => {
+                overlay.classList.add('hidden');
+                sidebar.classList.add('translate-x-full');
+            });
+            overlay.addEventListener('click', () => {
+                overlay.classList.add('hidden');
+                sidebar.classList.add('translate-x-full');
+            });
+
+            select.addEventListener('change', function () {
+                const idx = this.value;
+                if (idx === '' || typeof glossaryData === 'undefined') {
+                    placeholder.classList.remove('hidden');
+                    content.classList.add('hidden');
+                    return;
+                }
+                const item = glossaryData[parseInt(idx)];
+                if (item) {
+                    defEl.textContent = item.definicion;
+                    formEl.textContent = item.formula;
+                    margEl.textContent = item.margen;
+                    placeholder.classList.add('hidden');
+                    content.classList.remove('hidden');
+                }
+            });
+
+            document.addEventListener('DOMContentLoaded', () => {
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+
+                // Hide header and nav if in iframe
+                if (window.self !== window.top) {
+                    const header = document.getElementById('main-header');
+                    const nav = document.getElementById('main-nav');
+                    if (header) header.style.display = 'none';
+                    if (nav) nav.style.display = 'none';
+                }
+            });
+        })();
+    </script>
+</body>
+
+</html>
