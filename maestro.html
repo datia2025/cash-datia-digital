@@ -5,6 +5,25 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard Financiero - Indicadores de Gestión</title>
+    <script>
+        // Simple session guard
+        (function () {
+            const session = localStorage.getItem('df_session');
+            if (!session) {
+                window.location.href = 'login.html';
+                return;
+            }
+            // Optional: Session expiry (e.g., 24h)
+            const parts = session.split('_');
+            if (parts.length > 1) {
+                const timestamp = parseInt(parts[1]);
+                if (Date.now() - timestamp > 24 * 60 * 60 * 1000) {
+                    localStorage.removeItem('df_session');
+                    window.location.href = 'login.html';
+                }
+            }
+        })();
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
