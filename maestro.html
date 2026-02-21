@@ -402,6 +402,34 @@
         #active-badge.visible {
             display: flex;
         }
+
+        /* ===== LOGOUT BUTTON ===== */
+        .logout-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 16px;
+            border-radius: 12px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: white;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-left: 12px;
+        }
+
+        .logout-btn:hover {
+            background: rgba(239, 68, 68, 0.2);
+            border-color: #ef4444;
+            color: #fecaca;
+        }
+
+        .logout-btn i {
+            width: 14px;
+            height: 14px;
+        }
     </style>
 </head>
 
@@ -423,9 +451,16 @@
                     <div class="subtitle">Análisis Integral de Indicadores · Monitoreo y Auditoría</div>
                 </div>
             </div>
-            <div id="active-badge">
-                <i id="badge-icon" data-lucide="circle" style="width:14px;height:14px;"></i>
-                <span id="badge-label">—</span>
+            <div class="flex items-center gap-4">
+                <div id="active-badge">
+                    <i id="badge-icon" data-lucide="circle" style="width:14px;height:14px;"></i>
+                    <span id="badge-label">—</span>
+                </div>
+
+                <button id="logout-btn" class="logout-btn" title="Cerrar Sesión">
+                    <i data-lucide="log-out"></i>
+                    <span>Salir</span>
+                </button>
             </div>
         </header>
 
@@ -527,8 +562,20 @@
         const activeBadge = document.getElementById('active-badge');
         const badgeLabel = document.getElementById('badge-label');
         const badgeIcon = document.getElementById('badge-icon');
+        const logoutBtn = document.getElementById('logout-btn');
 
         let currentTab = null;
+
+        // ─── LOGOUT LOGIC ───────────────────────────────────────────────────────
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', () => {
+                // Confirmación opcional para evitar cierres accidentales
+                if (confirm('¿Está seguro de que desea cerrar sesión?')) {
+                    localStorage.removeItem('df_session');
+                    window.location.href = 'login.html';
+                }
+            });
+        }
 
         // ─── FUNCIÓN PRINCIPAL: CARGAR MÓDULO ───────────────────────────────────
         function loadModule(key) {
