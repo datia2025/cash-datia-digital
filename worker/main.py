@@ -1,0 +1,661 @@
+"""
+Liquidity Dashboard — Python Worker Service v2.0
+FastAPI service that processes financial data and stores results in PostgreSQL.
+Triggered by NocoDB webhook on "After Insert" in the `cargas` table.
+
+Changes v2.0:
+- PostgreSQL integration via asyncpg (replacing CSV-only output)
+- GET endpoints for dashboard consumption
+- CORS enabled for frontend access
+- Indicator key mapping from display names to DB slugs
+"""
+from fastapi import FastAPI, HTTPException, BackgroundTasks, Query
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+from typing import Optional, List
+import httpx
+import asyncpg
+import os
+import sys
+import json
+import zipfile
+import tempfile
+import shutil
+import traceback
+from datetime import datetime
+from contextlib import asynccontextmanager
+
+# ── Database Pool ──────────────────────────────────────────────
+db_pool: Optional[asyncpg.Pool] = None
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Manage DB connection pool lifecycle."""
+    global db_pool
+    database_url = os.getenv("DATABASE_URL", "")
+    db_schema = os.getenv("DB_SCHEMA", "liquidity")
+    if database_url:
+        try:
+            db_pool = await asyncpg.create_pool(
+                database_url,
+                min_size=2, max_size=10,
+                server_settings={"search_path": db_schema}
+            )
+            print(f"✅ PostgreSQL pool created ({db_schema})")
+        except Exception as e:
+            print(f"⚠️ PostgreSQL connection failed: {e}")
+            db_pool = None
+    yield
+    if db_pool:
+        await db_pool.close()
+        print("PostgreSQL pool closed")
+
+app = FastAPI(
+    title="Liquidity Dashboard Worker",
+    description="Procesa archivos Excel/CSV y genera 33 indicadores financieros",
+    version="2.0.0",
+    lifespan=lifespan
+)
+
+# ── CORS ───────────────────────────────────────────────────────
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# ── Configuration ──────────────────────────────────────────────
+NOCODB_URL = os.getenv("NOCODB_URL", "http://nocodb:8080")
+NOCODB_TOKEN = os.getenv("NOCODB_TOKEN", "")
+TABLE_ID_CARGAS = os.getenv("TABLE_ID_CARGAS", "")
+WORKER_DIR = os.getenv("WORKER_DIR", "/app/workdir")
+
+# ── Indicator Name → DB Key Mapping ────────────────────────────
+# Maps display names from calculate_indicators.py to database slugs
+INDICATOR_KEY_MAP = {
+    # Liquidez
+    'Razón Corriente': 'razon_corriente',
+    'Capital de Trabajo': 'capital_trabajo',
+    'Prueba Ácida': 'prueba_acida',
+    'Ratio de Efectivo': 'ratio_efectivo',
+    # Actividad
+    'Días de Cartera (DSO)': 'dso',
+    'Días de Inventario (DIO)': 'dio',
+    'Días de Proveedores (DPO)': 'dpo',
+    'Ciclo de Conversión de Efectivo': 'ciclo_conversion_efectivo',
+    'Rotación de Activos': 'rotacion_activos',
+    'Rotación de Cartera': 'rotacion_cartera',
+    'Rotación de Inventarios': 'rotacion_inventarios',
+    'Rotación de Proveedores': 'rotacion_proveedores',
+    # Rentabilidad
+    'Margen de Utilidad Bruta': 'margen_bruto',
+    'Margen Operativo': 'margen_operacional',
+    'Margen Neto Utilidad': 'margen_neto',
+    'Margen EBITDA': 'margen_ebitda',
+    'Retorno sobre Patrimonio (ROE)': 'roe',
+    'Retorno sobre Activos (ROA)': 'roa',
+    'Utilidad Acumulada': 'ebitda',
+    'Patrimonio': 'patrimonio_relativo',
+    # Estructura
+    'Endeudamiento Total': 'endeudamiento_total',
+    'Relación DeudaPatrimonio': 'deuda_patrimonio',
+    'Multiplicador de Capital': 'apalancamiento',
+    'Cobertura de Intereses': 'cobertura_intereses',
+    'Ratio de Capitalización': 'endeudamiento_cp',
+    'Ratio de PropiedadAutonomía': 'autonomia_financiera',
+    'Cobertura de Activos Fijos': 'solvencia_total',
+    'Estructura de la Deuda': 'pasivo_corriente_ratio',
+    'Ratio de Deuda a Activos Tangibles': 'ingresos_totales',
+    # Solvencia
+    'Cobertura de Cargos Fijos': 'costos_gastos_totales',
+    'Cobertura del Servicio de la Deuda': 'utilidad_neta',
+    'Ratio de Solvencia Patrimonial': 'utilidad_operacional',
+    'Deuda Neta a EBITDA': 'ebit',
+}
+
+# Module mapping from calculate_indicators MODULES dict
+MODULE_MAP = {
+    'LIQUIDEZ': 'liquidez',
+    'ACTIVIDAD': 'actividad',
+    'RENTABILIDAD': 'rentabilidad',
+    'SOLVENCIA': 'solvencia',
+    'ESTRUCTURA': 'estructura',
+}
+
+# Unit mapping
+UNIT_MAP = {
+    'Times': 'x', 'x': 'x',
+    'Days': 'días', 'días': 'días',
+    '%': '%',
+    '$ COP': '$', 'Mill': '$', 'MM COP': '$',
+    'Year': 'x',
+}
+
+# ── Models ─────────────────────────────────────────────────────
+class WebhookPayload(BaseModel):
+    """NocoDB webhook payload structure"""
+    type: Optional[str] = None
+    id: Optional[str] = None
+    data: Optional[dict] = None
+
+class ProcessRequest(BaseModel):
+    """Manual processing request"""
+    record_id: str
+
+class ProcessLocalRequest(BaseModel):
+    """Process from local files (for testing without NocoDB)"""
+    empresa_id: int = 1
+    sources_dir: Optional[str] = None
+
+class AIInsightRequest(BaseModel):
+    """Request for specific AI module insights"""
+    record_id: str
+    module: str
+
+class StatusResponse(BaseModel):
+    status: str
+    message: str
+    match_rate: Optional[float] = None
+    log: Optional[str] = None
+
+# ── NocoDB API Helpers ─────────────────────────────────────────
+async def nocodb_get_record(record_id: str) -> dict:
+    """Fetch a record from NocoDB cargas table."""
+    async with httpx.AsyncClient() as client:
+        resp = await client.get(
+            f"{NOCODB_URL}/api/v2/tables/{TABLE_ID_CARGAS}/records/{record_id}",
+            headers={"xc-token": NOCODB_TOKEN}
+        )
+        resp.raise_for_status()
+        return resp.json()
+
+async def nocodb_update_record(record_id: str, fields: dict):
+    """Update a record in NocoDB cargas table."""
+    async with httpx.AsyncClient() as client:
+        resp = await client.patch(
+            f"{NOCODB_URL}/api/v2/tables/{TABLE_ID_CARGAS}/records",
+            headers={"xc-token": NOCODB_TOKEN},
+            json={"Id": record_id, **fields}
+        )
+        resp.raise_for_status()
+
+async def nocodb_download_attachment(url: str, dest_path: str):
+    """Download a file attachment from NocoDB."""
+    async with httpx.AsyncClient() as client:
+        resp = await client.get(url)
+        resp.raise_for_status()
+        with open(dest_path, 'wb') as f:
+            f.write(resp.content)
+
+async def nocodb_upload_attachment(record_id: str, field_name: str, file_path: str):
+    """Upload a file as attachment to a NocoDB record."""
+    async with httpx.AsyncClient() as client:
+        with open(file_path, 'rb') as f:
+            upload_resp = await client.post(
+                f"{NOCODB_URL}/api/v2/storage/upload",
+                headers={"xc-token": NOCODB_TOKEN},
+                files={"file": (os.path.basename(file_path), f)}
+            )
+            upload_resp.raise_for_status()
+            file_data = upload_resp.json()
+        await nocodb_update_record(record_id, {field_name: json.dumps(file_data)})
+
+# ── PostgreSQL Helpers ─────────────────────────────────────────
+async def db_save_indicators(empresa_id: int, carga_id: int, results: dict, modules_map: dict):
+    """Save calculated indicators to PostgreSQL."""
+    if not db_pool:
+        print("⚠️ No DB pool, skipping PostgreSQL save")
+        return 0
+
+    saved = 0
+    async with db_pool.acquire() as conn:
+        # Use a transaction for atomicity
+        async with conn.transaction():
+            for display_name, data_points in results.items():
+                ind_key = INDICATOR_KEY_MAP.get(display_name)
+                if not ind_key:
+                    print(f"  ⚠️ No key mapping for: {display_name}")
+                    continue
+
+                # Determine module
+                modulo = None
+                for mod_display, indicators in modules_map.items():
+                    if display_name in indicators:
+                        modulo = MODULE_MAP.get(mod_display, mod_display.lower())
+                        break
+
+                # Determine unit
+                unidad = 'x'
+                for cat_key, cat_unit in UNIT_MAP.items():
+                    # Will be set from HEADER_MAP in calculate_indicators
+                    pass
+
+                for q, val, period, year in data_points:
+                    try:
+                        await conn.execute("""
+                            INSERT INTO indicadores 
+                                (empresa_id, carga_id, indicador_key, periodo_ano, periodo_mes, valor, unidad, modulo)
+                            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                            ON CONFLICT (empresa_id, periodo_ano, periodo_mes, indicador_key) 
+                            DO UPDATE SET valor = $6, carga_id = $2
+                        """, empresa_id, carga_id, ind_key, year, period,
+                            float(val) if val is not None else 0.0,
+                            unidad, modulo)
+                        saved += 1
+                    except Exception as e:
+                        print(f"  ❌ Error saving {ind_key} [{year}-{period}]: {e}")
+
+    return saved
+
+async def db_create_carga(empresa_id: int, fuente: str = 'siigo') -> int:
+    """Create a carga record and return its ID."""
+    if not db_pool:
+        return 0
+    async with db_pool.acquire() as conn:
+        row = await conn.fetchrow("""
+            INSERT INTO cargas (empresa_id, fuente_sistema, periodo_ano, estado)
+            VALUES ($1, $2, $3, 'processing')
+            RETURNING id
+        """, empresa_id, fuente, datetime.now().year)
+        return row['id']
+
+async def db_update_carga(carga_id: int, estado: str, resultado: str = None, match_rate: float = None):
+    """Update carga status."""
+    if not db_pool or carga_id == 0:
+        return
+    async with db_pool.acquire() as conn:
+        await conn.execute("""
+            UPDATE cargas SET estado = $1, resultado = $2, match_rate = $3, updated_at = NOW()
+            WHERE id = $4
+        """, estado, resultado, match_rate, carga_id)
+
+# ── Processing Logic ───────────────────────────────────────────
+async def process_record(record_id: str):
+    """Main processing pipeline for a single upload (NocoDB flow)."""
+    work_dir = os.path.join(WORKER_DIR, f"job_{record_id}_{datetime.now().strftime('%Y%m%d%H%M%S')}")
+    log_lines = []
+    carga_id = 0
+
+    def log(msg: str):
+        log_lines.append(f"[{datetime.now().strftime('%H:%M:%S')}] {msg}")
+        print(msg)
+
+    try:
+        await nocodb_update_record(record_id, {"estado": "procesando"})
+        log("Estado actualizado: procesando")
+
+        record = await nocodb_get_record(record_id)
+        empresa_id = record.get('empresa_id', 1)
+        log(f"Registro obtenido: empresa_id={empresa_id}")
+
+        # Create carga record in PostgreSQL
+        carga_id = await db_create_carga(empresa_id)
+        log(f"Carga registrada en DB: id={carga_id}")
+
+        os.makedirs(work_dir, exist_ok=True)
+        sources_dir = os.path.join(work_dir, "sources")
+        os.makedirs(sources_dir, exist_ok=True)
+
+        # Download files from NocoDB
+        master_att = record.get("master_account", [])
+        if isinstance(master_att, str):
+            master_att = json.loads(master_att)
+        if not master_att:
+            raise ValueError("No se encontró el archivo Master Account.xlsx")
+
+        master_url = master_att[0].get("signedUrl") or master_att[0].get("url")
+        master_path = os.path.join(sources_dir, "Master Account.xlsx")
+        await nocodb_download_attachment(f"{NOCODB_URL}/{master_url}", master_path)
+        log("✓ Master Account.xlsx descargado")
+
+        mov_att = record.get("mov_csv", [])
+        if isinstance(mov_att, str):
+            mov_att = json.loads(mov_att)
+        if not mov_att:
+            raise ValueError("No se encontraron archivos Mov CSV")
+
+        for att in mov_att:
+            att_url = att.get("signedUrl") or att.get("url")
+            att_name = att.get("title") or att.get("fileName")
+            att_path = os.path.join(sources_dir, att_name)
+            await nocodb_download_attachment(f"{NOCODB_URL}/{att_url}", att_path)
+            log(f"✓ {att_name} descargado")
+
+        # Run calculation pipeline
+        results, modules_map = await run_calculation_pipeline(sources_dir, log)
+
+        # Save to PostgreSQL
+        if db_pool:
+            saved = await db_save_indicators(empresa_id, carga_id, results, modules_map)
+            log(f"✓ {saved} registros guardados en PostgreSQL")
+            await db_update_carga(carga_id, 'success', "\n".join(log_lines))
+        else:
+            log("⚠️ Sin conexión a PostgreSQL, solo CSVs generados")
+
+        # Update NocoDB status
+        await nocodb_update_record(record_id, {
+            "estado": "completado",
+            "resultado": "\n".join(log_lines),
+        })
+        log("✓ Procesamiento completado exitosamente")
+
+    except Exception as e:
+        error_msg = f"ERROR: {str(e)}\n{traceback.format_exc()}"
+        log(error_msg)
+        await db_update_carga(carga_id, 'error', "\n".join(log_lines))
+        try:
+            await nocodb_update_record(record_id, {
+                "estado": "error",
+                "resultado": "\n".join(log_lines)
+            })
+        except Exception:
+            pass
+    finally:
+        if os.path.exists(work_dir):
+            shutil.rmtree(work_dir, ignore_errors=True)
+
+
+async def process_local(empresa_id: int, sources_dir: str):
+    """Process from local files (for testing without NocoDB)."""
+    log_lines = []
+    carga_id = 0
+
+    def log(msg: str):
+        log_lines.append(f"[{datetime.now().strftime('%H:%M:%S')}] {msg}")
+        print(msg)
+
+    try:
+        carga_id = await db_create_carga(empresa_id)
+        log(f"Carga registrada: id={carga_id}")
+
+        results, modules_map = await run_calculation_pipeline(sources_dir, log)
+
+        if db_pool:
+            saved = await db_save_indicators(empresa_id, carga_id, results, modules_map)
+            log(f"✓ {saved} registros guardados en PostgreSQL")
+            await db_update_carga(carga_id, 'success', "\n".join(log_lines))
+        
+        return {"status": "success", "saved": saved if db_pool else 0, "carga_id": carga_id}
+
+    except Exception as e:
+        error_msg = f"ERROR: {str(e)}\n{traceback.format_exc()}"
+        log(error_msg)
+        await db_update_carga(carga_id, 'error', "\n".join(log_lines))
+        raise
+
+
+async def run_calculation_pipeline(sources_dir: str, log):
+    """Execute the calculate_indicators.py pipeline."""
+    import importlib
+
+    script_source = os.path.join(os.path.dirname(__file__), "calculate_indicators.py")
+    script_dest = os.path.join(sources_dir, "calculate_indicators.py")
+    
+    if not os.path.exists(script_dest):
+        shutil.copy2(script_source, script_dest)
+    log("✓ Script de procesamiento listo")
+
+    # Save original cwd, switch to sources_dir (calculate_indicators uses relative paths)
+    original_cwd = os.getcwd()
+    os.chdir(sources_dir)
+    sys.path.insert(0, sources_dir)
+
+    try:
+        spec = importlib.util.spec_from_file_location("calculate_indicators", script_dest)
+        calc = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(calc)
+
+        accounts, group_termino = calc.load_account_classification()
+        log(f"  Cargadas {len(accounts)} cuentas")
+
+        movements = calc.parse_mov_files()
+        log("  Movimientos parseados")
+
+        results_tuple = calc.build_monthly_balances(movements, accounts)
+        m_full, m_ytd, m_flows_op, m_full_ex998, m_ytd_op, m_ytd_all, m_closing, m_flows_all_single = results_tuple
+
+        classifications = calc.classify_accounts(accounts, group_termino)
+        aggregates = calc.compute_aggregates(
+            m_full, m_ytd, m_flows_op, classifications,
+            m_full_ex998, m_ytd_op, m_ytd_all, m_closing, m_flows_all_single
+        )
+        results = calc.calculate_indicators(aggregates)
+        log(f"  ✓ {len(results)} indicadores calculados")
+
+        # Also write CSVs (backup)
+        calc.write_csvs(results)
+        log("  ✓ CSVs de respaldo escritos")
+
+        # Return results and MODULES for DB saving
+        modules_map = calc.MODULES
+        return results, modules_map
+
+    finally:
+        os.chdir(original_cwd)
+        if sources_dir in sys.path:
+            sys.path.remove(sources_dir)
+
+
+# ── API Endpoints: Write (Processing) ──────────────────────────
+@app.post("/api/procesar/calc", response_model=StatusResponse)
+async def webhook_procesar_calc(payload: WebhookPayload, background_tasks: BackgroundTasks):
+    """
+    Step 1: Financial Calculations only (No AI / Token Free).
+    Triggered by NocoDB on upload.
+    """
+    record_id = None
+    if payload.data and "rows" in payload.data:
+        record_id = str(payload.data["rows"][0].get("Id"))
+    elif payload.data and "Id" in payload.data:
+        record_id = str(payload.data["Id"])
+
+    if not record_id:
+        raise HTTPException(status_code=400, detail="No record ID found")
+
+    background_tasks.add_task(process_record, record_id)
+    return StatusResponse(status="accepted", message=f"Cálculos iniciados para {record_id}")
+
+@app.post("/api/procesar/local", response_model=StatusResponse)
+async def process_local_files(request: ProcessLocalRequest, background_tasks: BackgroundTasks):
+    """
+    Process from local files directory (for testing without NocoDB).
+    Uses the default sources directory if none provided.
+    """
+    sources = request.sources_dir or os.path.join(os.path.dirname(__file__), "..", "sources")
+    sources = os.path.abspath(sources)
+    
+    if not os.path.exists(sources):
+        raise HTTPException(status_code=404, detail=f"Sources dir not found: {sources}")
+    
+    background_tasks.add_task(process_local, request.empresa_id, sources)
+    return StatusResponse(status="accepted", message=f"Procesamiento local iniciado (empresa_id={request.empresa_id})")
+
+@app.post("/api/procesar/manual", response_model=StatusResponse)
+async def manual_procesar(request: ProcessRequest, background_tasks: BackgroundTasks):
+    """Manual trigger for full calculation."""
+    background_tasks.add_task(process_record, request.record_id)
+    return StatusResponse(
+        status="accepted",
+        message=f"Procesamiento manual iniciado para registro {request.record_id}"
+    )
+
+@app.post("/api/procesar/ai", response_model=StatusResponse)
+async def trigger_ai_insights(request: AIInsightRequest, background_tasks: BackgroundTasks):
+    """
+    Step 2: AI Insights Generation (Consumes Tokens).
+    Triggered manually by user or Antigravity.
+    """
+    background_tasks.add_task(generate_ai_insights, request.record_id, request.module)
+    return StatusResponse(
+        status="accepted",
+        message=f"Generación de IA iniciada para módulo: {request.module}"
+    )
+
+async def generate_ai_insights(record_id: str, module: str):
+    """Background task for LLM processing"""
+    print(f"Generating insights for {record_id} - Module: {module}")
+    # TODO: implement LLM or manual Antigravity protocol
+    pass
+
+
+# ── API Endpoints: Read (Dashboard Consumption) ────────────────
+@app.get("/api/indicadores/{empresa_id}")
+async def get_indicadores(
+    empresa_id: int,
+    modulo: Optional[str] = Query(None, description="Filter by module: liquidez, actividad, etc."),
+    periodo_ano: Optional[int] = Query(None, description="Filter by year"),
+    indicador_key: Optional[str] = Query(None, description="Filter by specific indicator")
+):
+    """
+    Fetch indicators for a company. Used by the Dashboard frontend.
+    Returns data structured for Chart.js consumption.
+    """
+    if not db_pool:
+        raise HTTPException(status_code=503, detail="Database not available")
+
+    async with db_pool.acquire() as conn:
+        query = "SELECT indicador_key, periodo_ano, periodo_mes, valor, unidad, modulo FROM indicadores WHERE empresa_id = $1"
+        params = [empresa_id]
+        idx = 2
+
+        if modulo:
+            query += f" AND modulo = ${idx}"
+            params.append(modulo)
+            idx += 1
+        if periodo_ano:
+            query += f" AND periodo_ano = ${idx}"
+            params.append(periodo_ano)
+            idx += 1
+        if indicador_key:
+            query += f" AND indicador_key = ${idx}"
+            params.append(indicador_key)
+            idx += 1
+
+        query += " ORDER BY indicador_key, periodo_ano, periodo_mes"
+        rows = await conn.fetch(query, *params)
+
+    # Group by indicator_key
+    grouped = {}
+    for row in rows:
+        key = row['indicador_key']
+        if key not in grouped:
+            grouped[key] = {
+                'indicador_key': key,
+                'unidad': row['unidad'],
+                'modulo': row['modulo'],
+                'data': []
+            }
+        grouped[key]['data'].append({
+            'year': row['periodo_ano'],
+            'month': row['periodo_mes'],
+            'valor': float(row['valor'])
+        })
+
+    return {
+        "empresa_id": empresa_id,
+        "total": len(rows),
+        "indicadores": list(grouped.values())
+    }
+
+
+@app.get("/api/insights/{empresa_id}")
+async def get_insights(
+    empresa_id: int,
+    periodo_ano: Optional[int] = Query(None),
+    indicador_key: Optional[str] = Query(None)
+):
+    """Fetch AI-generated insights for a company."""
+    if not db_pool:
+        raise HTTPException(status_code=503, detail="Database not available")
+
+    async with db_pool.acquire() as conn:
+        query = "SELECT * FROM insights_ai WHERE empresa_id = $1"
+        params = [empresa_id]
+        idx = 2
+
+        if periodo_ano:
+            query += f" AND periodo_ano = ${idx}"
+            params.append(periodo_ano)
+            idx += 1
+        if indicador_key:
+            query += f" AND indicador_key = ${idx}"
+            params.append(indicador_key)
+            idx += 1
+
+        query += " ORDER BY indicador_key, periodo_ano"
+        rows = await conn.fetch(query, *params)
+
+    return {
+        "empresa_id": empresa_id,
+        "total": len(rows),
+        "insights": [dict(r) for r in rows]
+    }
+
+
+@app.get("/api/empresas")
+async def get_empresas():
+    """List all companies."""
+    if not db_pool:
+        raise HTTPException(status_code=503, detail="Database not available")
+
+    async with db_pool.acquire() as conn:
+        rows = await conn.fetch("SELECT id, nit, razon_social, sucursal, moneda_base FROM empresas ORDER BY id")
+
+    return {"empresas": [dict(r) for r in rows]}
+
+
+@app.get("/api/catalogo")
+async def get_catalogo():
+    """Get the indicator catalog (33 KPIs metadata)."""
+    if not db_pool:
+        raise HTTPException(status_code=503, detail="Database not available")
+
+    async with db_pool.acquire() as conn:
+        rows = await conn.fetch("SELECT * FROM indicador_catalogo ORDER BY modulo, indicador_key")
+
+    return {"catalogo": [dict(r) for r in rows]}
+
+
+@app.get("/api/cargas/{empresa_id}")
+async def get_cargas(empresa_id: int):
+    """Get processing history for a company."""
+    if not db_pool:
+        raise HTTPException(status_code=503, detail="Database not available")
+
+    async with db_pool.acquire() as conn:
+        rows = await conn.fetch("""
+            SELECT id, fecha_upload, fuente_sistema, periodo_ano, estado, match_rate, created_at
+            FROM cargas WHERE empresa_id = $1
+            ORDER BY created_at DESC LIMIT 20
+        """, empresa_id)
+
+    return {"cargas": [dict(r) for r in rows]}
+
+
+@app.get("/api/status/{record_id}", response_model=StatusResponse)
+async def get_status(record_id: str):
+    """Check processing status for a specific record."""
+    try:
+        record = await nocodb_get_record(record_id)
+        return StatusResponse(
+            status=record.get("estado", "unknown"),
+            message=record.get("resultado", ""),
+            match_rate=record.get("match_rate")
+        )
+    except Exception as e:
+        return StatusResponse(status="error", message=str(e))
+
+
+@app.get("/health")
+async def health():
+    """Health check endpoint."""
+    db_status = "connected" if db_pool else "disconnected"
+    return {
+        "status": "ok",
+        "service": "liquidity-worker",
+        "version": "2.0.0",
+        "database": db_status,
+        "timestamp": datetime.now().isoformat()
+    }
