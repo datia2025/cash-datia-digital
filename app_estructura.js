@@ -1,6 +1,7 @@
 // Estado global de Estructura de Capital
 let charts = {};
 let currentLanguage = 'es';
+let dynamicDataError = false;
 
 // Lista de 7 indicadores de estructura
 const indicatorKeys = [
@@ -427,4 +428,21 @@ document.getElementById('languageFilter').addEventListener('change', (e) => {
 });
 
 // Inicialización
-document.addEventListener('DOMContentLoaded', updateAllCharts);
+async function initializeDashboard() {
+    try {
+        const empresaId = 1;
+        const apiData = await DashboardAPI.getIndicadoresData(empresaId, 'estructura');
+        if (apiData && apiData.length > 0) {
+            liquidityDataEstructura = apiData;
+            console.log(`[Dashboard] Dynamically loaded ${apiData.length} records for Estructura`);
+        } else {
+            console.warn("[Dashboard] API returned empty indicators. Using static fallback.");
+        }
+    } catch (error) {
+        dynamicDataError = true;
+        console.error("[Dashboard] Failed to fetch indicators from DB. Using static fallback.", error);
+    }
+    updateAllCharts();
+}
+
+document.addEventListener('DOMContentLoaded', initializeDashboard);

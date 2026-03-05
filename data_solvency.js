@@ -1,6 +1,6 @@
 // Datos de Solvencia consolidados (Endeudamiento)
 // Incluye: Cobertura de Cargos Fijos, Intereses, Servicio de la Deuda, Deuda Neta a EBITDA, Endeudamiento Total, Ratio de Solvencia Patrimonial
-const liquidityDataSolvency = [
+let liquidityDataSolvency = [
     // 2023
     { year: 2023, quarter: "1Q", period: 1, cargos_fijos: -41.91, intereses: -41.91, servicio_deuda: -40.17, deuda_ebitda: 0.01, endeudamiento_total: 0.9375669892978549, solvencia_patrimonial: -0.27 },
     { year: 2023, quarter: "1Q", period: 2, cargos_fijos: -7.71, intereses: -7.71, servicio_deuda: -5.82, deuda_ebitda: 2.29, endeudamiento_total: 0.8241553987181252, solvencia_patrimonial: -0.05 },

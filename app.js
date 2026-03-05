@@ -1,6 +1,7 @@
 // Estado global
 let charts = {};
 let currentLanguage = 'es';
+let dynamicDataError = false;
 
 // Lista de indicadores
 const indicatorKeys = ['razon', 'capital', 'prueba', 'efectivo'];
@@ -737,11 +738,27 @@ document.getElementById('languageFilter').addEventListener('change', (e) => {
 
 
 // Inicialización
-document.addEventListener('DOMContentLoaded', () => {
+async function initializeDashboard() {
+    try {
+        const empresaId = 1;
+        const apiData = await DashboardAPI.getIndicadoresData(empresaId, 'liquidez');
+        if (apiData && apiData.length > 0) {
+            liquidityData = apiData;
+            console.log(`[Dashboard] Dynamically loaded ${apiData.length} records for Liquidez`);
+        } else {
+            console.warn("[Dashboard] API returned empty indicators. Using static fallback.");
+        }
+    } catch (error) {
+        dynamicDataError = true;
+        console.error("[Dashboard] Failed to fetch indicators from DB. Using static fallback.", error);
+    }
+
     updateTitles();
     updateAllCharts();
     if (typeof lucide !== 'undefined') {
         lucide.createIcons();
     }
-});
+}
+
+document.addEventListener('DOMContentLoaded', initializeDashboard);
 

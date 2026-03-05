@@ -1,6 +1,6 @@
 // Datos de Actividad consolidados (Rotación y Ciclos)
 // Incluye: Ciclo Efectivo, DSO, DIO, DPO, Rotación Activos, Rotación Cartera, Rotación Inventarios, Rotación Proveedores
-const activityData = [
+let activityData = [
     // 2023
     { year: 2023, quarter: "1Q", period: 1, ciclo_efectivo: 258.55, dso: 280.61, dio: 0, dpo: 22.06, rotacion_activos: 0.06, rotacion_cartera: 0.11, rotacion_inventarios: 0, rotacion_proveedores: 1.41 },
     { year: 2023, quarter: "1Q", period: 2, ciclo_efectivo: 27.22, dso: 57.36, dio: 0, dpo: 30.13, rotacion_activos: 0.35, rotacion_cartera: 0.49, rotacion_inventarios: 0, rotacion_proveedores: 0.93 },
@@ -14,7 +14,7 @@ const activityData = [
     { year: 2023, quarter: "4Q", period: 10, ciclo_efectivo: 135.63, dso: 150.58, dio: 0, dpo: 14.96, rotacion_activos: 0.09, rotacion_cartera: 0.21, rotacion_inventarios: 0, rotacion_proveedores: 2.07 },
     { year: 2023, quarter: "4Q", period: 11, ciclo_efectivo: 58.65, dso: 114.13, dio: 0, dpo: 55.48, rotacion_activos: 0.11, rotacion_cartera: 0.26, rotacion_inventarios: 0, rotacion_proveedores: 0.54 },
     { year: 2023, quarter: "4Q", period: 12, ciclo_efectivo: 135.20, dso: 141.86, dio: 0, dpo: 6.66, rotacion_activos: -2.10, rotacion_cartera: 0.22, rotacion_inventarios: 0, rotacion_proveedores: 4.65 },
-    
+
     // 2024
     { year: 2024, quarter: "1Q", period: 1, ciclo_efectivo: 11.73, dso: 99.46, dio: 0, dpo: 87.73, rotacion_activos: 0.15, rotacion_cartera: 0.31, rotacion_inventarios: 0, rotacion_proveedores: 0.35 },
     { year: 2024, quarter: "1Q", period: 2, ciclo_efectivo: 43.55, dso: 74.08, dio: 0, dpo: 30.53, rotacion_activos: 0.20, rotacion_cartera: 0.39, rotacion_inventarios: 0, rotacion_proveedores: 0.95 },
@@ -28,7 +28,7 @@ const activityData = [
     { year: 2024, quarter: "4Q", period: 10, ciclo_efectivo: -63.35, dso: 99.29, dio: 0, dpo: 162.64, rotacion_activos: 0.07, rotacion_cartera: 0.31, rotacion_inventarios: 0, rotacion_proveedores: 0.19 },
     { year: 2024, quarter: "4Q", period: 11, ciclo_efectivo: -165.31, dso: 51.51, dio: 0, dpo: 216.82, rotacion_activos: 0.13, rotacion_cartera: 0.58, rotacion_inventarios: 0, rotacion_proveedores: 0.14 },
     { year: 2024, quarter: "4Q", period: 12, ciclo_efectivo: -100.09, dso: 40.76, dio: 0, dpo: 140.85, rotacion_activos: -0.79, rotacion_cartera: 0.76, rotacion_inventarios: 0, rotacion_proveedores: 0.22 },
-    
+
     // 2025
     { year: 2025, quarter: "1Q", period: 1, ciclo_efectivo: 63.65, dso: 111.41, dio: 0, dpo: 47.76, rotacion_activos: 0.07, rotacion_cartera: 0.28, rotacion_inventarios: 0, rotacion_proveedores: 0.65 },
     { year: 2025, quarter: "1Q", period: 2, ciclo_efectivo: -98.93, dso: 80.04, dio: 0, dpo: 178.98, rotacion_activos: 0.08, rotacion_cartera: 0.35, rotacion_inventarios: 0, rotacion_proveedores: 0.16 },

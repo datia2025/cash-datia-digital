@@ -309,6 +309,8 @@ async def process_record(record_id: str):
             raise ValueError("No se encontró el archivo Master Account.xlsx")
 
         master_url = master_att[0].get("signedPath") or master_att[0].get("path") or master_att[0].get("signedUrl") or master_att[0].get("url")
+        if not master_url:
+            raise ValueError(f"No valid URL found in attachment. Keys present: {list(master_att[0].keys())}")
         master_path = os.path.join(sources_dir, "Master Account.xlsx")
         await nocodb_download_attachment(f"{NOCODB_URL}/{master_url}", master_path)
         log("✓ Master Account.xlsx descargado")
@@ -321,6 +323,8 @@ async def process_record(record_id: str):
 
         for att in mov_att:
             att_url = att.get("signedPath") or att.get("path") or att.get("signedUrl") or att.get("url")
+            if not att_url:
+                raise ValueError(f"No valid URL found in array item. Keys present: {list(att.keys())}")
             att_name = att.get("title") or att.get("fileName")
             att_path = os.path.join(sources_dir, att_name)
             await nocodb_download_attachment(f"{NOCODB_URL}/{att_url}", att_path)

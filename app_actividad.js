@@ -1,6 +1,7 @@
 // Estado global de Actividad
 let charts = {};
 let currentLanguage = 'es';
+let dynamicDataError = false;
 
 // Lista de 8 indicadores de actividad
 const indicatorKeys = [
@@ -488,4 +489,22 @@ document.getElementById('languageFilter').addEventListener('change', (e) => {
 });
 
 // Inicialización
-document.addEventListener('DOMContentLoaded', updateAllCharts);
+async function initializeDashboard() {
+    try {
+        const empresaId = 1;
+        const apiData = await DashboardAPI.getIndicadoresData(empresaId, 'actividad');
+        if (apiData && apiData.length > 0) {
+            // Overwrite static data array
+            activityData = apiData;
+            console.log(`[Dashboard] Dynamically loaded ${apiData.length} records for Actividad`);
+        } else {
+            console.warn("[Dashboard] API returned empty indicators. Using static fallback.");
+        }
+    } catch (error) {
+        dynamicDataError = true;
+        console.error("[Dashboard] Failed to fetch indicators from DB. Using static fallback.", error);
+    }
+    updateAllCharts();
+}
+
+document.addEventListener('DOMContentLoaded', initializeDashboard);

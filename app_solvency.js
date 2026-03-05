@@ -1,6 +1,7 @@
 // Estado global de Solvencia
 let charts = {};
 let currentLanguage = 'es';
+let dynamicDataError = false;
 
 // Lista de 6 indicadores de solvencia
 const indicatorKeys = ['cargos_fijos', 'intereses', 'servicio_deuda', 'deuda_ebitda', 'endeudamiento_total', 'solvencia_patrimonial'];
@@ -570,4 +571,21 @@ document.getElementById('languageFilter').addEventListener('change', (e) => {
 });
 
 // Inicialización
-document.addEventListener('DOMContentLoaded', updateAllCharts);
+async function initializeDashboard() {
+    try {
+        const empresaId = 1;
+        const apiData = await DashboardAPI.getIndicadoresData(empresaId, 'solvencia');
+        if (apiData && apiData.length > 0) {
+            liquidityDataSolvency = apiData;
+            console.log(`[Dashboard] Dynamically loaded ${apiData.length} records for Solvencia`);
+        } else {
+            console.warn("[Dashboard] API returned empty indicators. Using static fallback.");
+        }
+    } catch (error) {
+        dynamicDataError = true;
+        console.error("[Dashboard] Failed to fetch indicators from DB. Using static fallback.", error);
+    }
+    updateAllCharts();
+}
+
+document.addEventListener('DOMContentLoaded', initializeDashboard);

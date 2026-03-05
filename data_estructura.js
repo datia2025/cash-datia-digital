@@ -1,7 +1,7 @@
 // Datos de Estructura de Capital consolidados
 // Incluye: Cobertura de Activos Fijos, Estructura de la Deuda, Multiplicador de Capital, Ratio de Capitalización, 
 // Ratio de Deuda a Activos Tangibles, Ratio de Propiedad/Autonomía, Relación Deuda/Patrimonio
-const liquidityDataEstructura = [
+let liquidityDataEstructura = [
     // 2023
     { year: 2023, quarter: "1Q", period: 1, cobertura_fijos: -5.92, estructura_deuda: 15.02, multiplicador_capital: 16.017167661043782, capitalizacion: 0, deuda_tangibles: 15.02, propiedad_autonomia: 0.06, deuda_patrimonio: 15.01716766104378 },
     { year: 2023, quarter: "1Q", period: 2, cobertura_fijos: -15.4, estructura_deuda: 4.69, multiplicador_capital: 5.6868393610618915, capitalizacion: 0, deuda_tangibles: 4.69, propiedad_autonomia: 0.18, deuda_patrimonio: 4.6868393610618915 },

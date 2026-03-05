@@ -1,6 +1,6 @@
 // Datos de Rentabilidad consolidados de Power BI
 // Incluye: Margen EBITDA, Margen Neto, Margen Operativo, Margen Bruto, Patrimonio, ROA, ROE, Utilidad Acumulada
-const profitabilityData = [
+let profitabilityData = [
     // 2023
     { year: 2023, quarter: "1Q", period: 1, ebitda: 3.06611874, neto: 3.27581220, operativo: -3.19947940, bruto: 1.00, patrimonio: 1953149, roa: -0.25926777, roe: -4.15273540, utilidad: -8110911 },
     { year: 2023, quarter: "1Q", period: 2, ebitda: 0.09790807, neto: 0.14653402, operativo: -0.12971560, bruto: 1.00, patrimonio: 7746478, roa: -0.05260898, roe: -0.29917880, utilidad: -2317582 },

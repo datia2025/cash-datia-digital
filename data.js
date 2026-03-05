@@ -1,6 +1,6 @@
 // Datos de Liquidez consolidados de Power BI
 // Incluye: Razón Corriente, Capital de Trabajo, Prueba Ácida, Ratio de Efectivo
-const liquidityData = [
+let liquidityData = [
     // 2023
     { year: 2023, quarter: "1Q", period: 1, razon: 2.3682450166047233, capital: -7780710, prueba: 2.3682450166047233, efectivo: -0.013235947093492021 },
     { year: 2023, quarter: "1Q", period: 2, razon: -0.40758530971680174, capital: -1814514, prueba: -0.40758530971680174, efectivo: 2.7455660823041246 },

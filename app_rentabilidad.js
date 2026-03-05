@@ -1,6 +1,7 @@
 // Estado global de Rentabilidad
 let charts = {};
 let currentLanguage = 'es';
+let dynamicDataError = false;
 
 // Lista de 8 indicadores de rentabilidad
 const indicatorKeys = ['ebitda', 'neto', 'operativo', 'bruto', 'patrimonio', 'roa', 'roe', 'utilidad'];
@@ -608,4 +609,21 @@ document.getElementById('languageFilter').addEventListener('change', (e) => {
 });
 
 // Inicialización
-document.addEventListener('DOMContentLoaded', updateAllCharts);
+async function initializeDashboard() {
+    try {
+        const empresaId = 1;
+        const apiData = await DashboardAPI.getIndicadoresData(empresaId, 'rentabilidad');
+        if (apiData && apiData.length > 0) {
+            profitabilityData = apiData;
+            console.log(`[Dashboard] Dynamically loaded ${apiData.length} records for Rentabilidad`);
+        } else {
+            console.warn("[Dashboard] API returned empty indicators. Using static fallback.");
+        }
+    } catch (error) {
+        dynamicDataError = true;
+        console.error("[Dashboard] Failed to fetch indicators from DB. Using static fallback.", error);
+    }
+    updateAllCharts();
+}
+
+document.addEventListener('DOMContentLoaded', initializeDashboard);
