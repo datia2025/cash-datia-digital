@@ -287,7 +287,10 @@ async def process_record(record_id: str):
         log("Estado actualizado: procesando")
 
         record = await nocodb_get_record(record_id)
-        empresa_id = record.get('empresa_id', 1)
+        empresa_id = record.get('empresa_id')
+        if not empresa_id:
+            empresa_id = 1
+        empresa_id = int(empresa_id)
         log(f"Registro obtenido: empresa_id={empresa_id}")
 
         # Create carga record in PostgreSQL
