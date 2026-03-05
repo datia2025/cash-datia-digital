@@ -8,6 +8,7 @@ Autor: Generado por Antigravity (Forensic Analytics Skill)
 """
 
 import csv
+import glob
 import os
 import re
 import calendar
@@ -21,9 +22,32 @@ from openpyxl import load_workbook
 SOURCES_DIR = os.path.dirname(os.path.abspath(__file__))
 OUTPUT_DIR = os.path.join(SOURCES_DIR, "GENERADOS")
 MASTER_FILE = os.path.join(SOURCES_DIR, "Master Account.xlsx")
-MOV_FILES = [
-    os.path.join(SOURCES_DIR, f"Mov {y}.csv") for y in [2021, 2022, 2023, 2024, 2025]
-]
+def discover_mov_files():
+    """
+    Auto-discover movement files in SOURCES_DIR.
+    Supports both CSV and Excel formats:
+      - Mov 2021.csv, Mov 2022.csv, etc.
+      - Mov 2021.xlsx, Mov 2022.xlsx, etc.
+      - Movimientos 2024.xlsx, etc.
+    If both .csv and .xlsx exist for the same year, prefers .xlsx.
+    """
+    found = {}
+    for ext in ('csv', 'xlsx'):
+        for fp in glob.glob(os.path.join(SOURCES_DIR, f"Mov*.{ext}")):
+            basename = os.path.basename(fp)
+            # Extract year from filename (e.g. "Mov 2024.xlsx" -> 2024)
+            m = re.search(r'(\d{4})', basename)
+            if m:
+                year = int(m.group(1))
+                # .xlsx takes priority over .csv for the same year
+                if year not in found or ext == 'xlsx':
+                    found[year] = fp
+    files = [found[y] for y in sorted(found.keys())]
+    if files:
+        print(f"  Discovered {len(files)} movement files: {[os.path.basename(f) for f in files]}")
+    return files
+
+MOV_FILES = discover_mov_files()
 # Dashboard analysis period
 ANALYSIS_YEARS = [2023, 2024, 2025]
 
@@ -87,12 +111,176 @@ def load_account_classification():
 
 
 # ============================================================
-# STEP 2: Parse all Mov CSV files
+# STEP 2: Parse all Mov CSV/XLSX files
 # ============================================================
+def _parse_mov_csv(filepath, movements):
+    """
+    Parse a single Mov CSV file and append to movements dict.
+    Returns number of lines parsed.
+    """
+    file_lines = 0
+    with open(filepath, 'r', encoding='utf-8', errors='replace') as f:
+        reader = csv.reader(f)
+        current_comprobante = ""
+
+        for row in reader:
+            if not row: continue
+
+            first_val = row[0].strip()
+            if first_val.startswith('Comprobante:'):
+                current_comprobante = first_val.replace('Comprobante:', '').strip()
+                continue
+
+            if not first_val or not first_val[0].isdigit():
+                continue
+
+            if len(row) < 12:
+                continue
+
+            fecha_str = row[1].strip()
+            codigo = row[2].strip()
+            if not fecha_str or not codigo:
+                continue
+
+            descripcion = row[7].strip() if len(row) > 7 else ""
+            detalle = row[8].strip() if len(row) > 8 else ""
+
+            is_closing = False
+            if 'cierre anual' in descripcion.lower() or 'cierre anual' in detalle.lower():
+                is_closing = True
+            if '998' in current_comprobante:
+                is_closing = True
+
+            try:
+                fecha = datetime.strptime(fecha_str, '%d/%m/%Y')
+            except ValueError:
+                continue
+
+            year = fecha.year
+            month = fecha.month
+
+            try:
+                debito = float(row[10].replace(',', '')) if row[10] else 0.0
+                credito = float(row[11].replace(',', '')) if row[11] else 0.0
+            except ValueError:
+                debito = 0.0
+                credito = 0.0
+
+            key = (year, month, codigo)
+            movements[key].append({
+                'debito': debito,
+                'credito': credito,
+                'is_closing': is_closing
+            })
+            file_lines += 1
+
+    return file_lines
+
+
+def _parse_mov_xlsx(filepath, movements):
+    """
+    Parse a single Mov Excel (.xlsx) file and append to movements dict.
+    Expects the same column layout as the CSV:
+      Col 0: Línea, Col 1: Fecha, Col 2: Código, Col 3: NIT,
+      Col 4: No. Documento, Col 5: Clase Documento, Col 6: Tipo,
+      Col 7: Descripción, Col 8: Detalle, Col 9: Campo,
+      Col 10: Débito, Col 11: Crédito
+    Also handles 'Comprobante:' header rows for 998 detection.
+    Returns number of lines parsed.
+    """
+    file_lines = 0
+    wb = load_workbook(filepath, read_only=True, data_only=True)
+    ws = wb.active  # Use the first/active sheet
+
+    current_comprobante = ""
+
+    for row in ws.iter_rows(values_only=True):
+        if not row or all(c is None for c in row):
+            continue
+
+        first_val = str(row[0]).strip() if row[0] is not None else ""
+
+        # Detect Comprobante header rows
+        if first_val.startswith('Comprobante:'):
+            current_comprobante = first_val.replace('Comprobante:', '').strip()
+            continue
+
+        # Skip non-data rows (headers, blanks, text rows)
+        if not first_val or not first_val[0].isdigit():
+            continue
+
+        if len(row) < 12:
+            continue
+
+        # Parse fecha — could be a datetime object or a string
+        fecha_raw = row[1]
+        if fecha_raw is None:
+            continue
+        if isinstance(fecha_raw, datetime):
+            fecha = fecha_raw
+        else:
+            fecha_str = str(fecha_raw).strip()
+            if not fecha_str:
+                continue
+            try:
+                fecha = datetime.strptime(fecha_str, '%d/%m/%Y')
+            except ValueError:
+                try:
+                    fecha = datetime.strptime(fecha_str, '%Y-%m-%d %H:%M:%S')
+                except ValueError:
+                    continue
+
+        codigo = str(row[2]).strip() if row[2] is not None else ""
+        if not codigo:
+            continue
+
+        descripcion = str(row[7]).strip() if len(row) > 7 and row[7] else ""
+        detalle = str(row[8]).strip() if len(row) > 8 and row[8] else ""
+
+        is_closing = False
+        if 'cierre anual' in descripcion.lower() or 'cierre anual' in detalle.lower():
+            is_closing = True
+        if '998' in current_comprobante:
+            is_closing = True
+
+        # Clase Documento column (col 5) may also indicate 998
+        clase_doc = str(row[5]).strip() if len(row) > 5 and row[5] else ""
+        if '998' in clase_doc:
+            is_closing = True
+
+        year = fecha.year
+        month = fecha.month
+
+        # Parse debito/credito — may be numeric or string
+        def parse_amount(val):
+            if val is None:
+                return 0.0
+            if isinstance(val, (int, float)):
+                return float(val)
+            try:
+                return float(str(val).replace(',', ''))
+            except ValueError:
+                return 0.0
+
+        debito = parse_amount(row[10])
+        credito = parse_amount(row[11])
+
+        key = (year, month, codigo)
+        movements[key].append({
+            'debito': debito,
+            'credito': credito,
+            'is_closing': is_closing
+        })
+        file_lines += 1
+
+    wb.close()
+    return file_lines
+
+
 def parse_mov_files():
     """
-    Parse all Mov 20XX.csv files and extract movements.
-    Uses csv.reader on file handle for multi-line support.
+    Parse all Mov files (CSV and/or XLSX) and extract movements.
+    Auto-detects format by file extension.
     Returns dict: { (year, month, codigo) -> [{debito, credito, is_closing}] }
     """
     movements = defaultdict(list)
@@ -102,70 +290,19 @@ def parse_mov_files():
         if not os.path.exists(filepath):
             print(f"  Warning: {filepath} not found.")
             continue
-        
+
         filename = os.path.basename(filepath)
-        print(f"  Parsing {filename}...")
-        
+        ext = os.path.splitext(filename)[1].lower()
+        print(f"  Parsing {filename} ({ext})...")
+
         try:
-            with open(filepath, 'r', encoding='utf-8', errors='replace') as f:
-                reader = csv.reader(f)
-                
-                current_comprobante = ""
-                file_lines = 0
-                
-                for row in reader:
-                    if not row: continue
-                    
-                    first_val = row[0].strip()
-                    if first_val.startswith('Comprobante:'):
-                        current_comprobante = first_val.replace('Comprobante:', '').strip()
-                        continue
-                    
-                    if not first_val or not first_val[0].isdigit():
-                        continue
-                        
-                    if len(row) < 12:
-                        continue
-                    
-                    fecha_str = row[1].strip()
-                    codigo = row[2].strip()
-                    if not fecha_str or not codigo:
-                        continue
-                        
-                    descripcion = row[7].strip() if len(row) > 7 else ""
-                    detalle = row[8].strip() if len(row) > 8 else ""
+            if ext == '.xlsx':
+                file_lines = _parse_mov_xlsx(filepath, movements)
+            else:
+                file_lines = _parse_mov_csv(filepath, movements)
 
-                    is_closing = False
-                    if 'cierre anual' in descripcion.lower() or 'cierre anual' in detalle.lower():
-                        is_closing = True
-                    if '998' in current_comprobante:
-                        is_closing = True
-
-                    try:
-                        fecha = datetime.strptime(fecha_str, '%d/%m/%Y')
-                    except ValueError:
-                        continue
-
-                    year = fecha.year
-                    month = fecha.month
-
-                    try:
-                        debito = float(row[10].replace(',', '')) if row[10] else 0.0
-                        credito = float(row[11].replace(',', '')) if row[11] else 0.0
-                    except ValueError:
-                        debito = 0.0
-                        credito = 0.0
-
-                    key = (year, month, codigo)
-                    movements[key].append({
-                        'debito': debito,
-                        'credito': credito,
-                        'is_closing': is_closing
-                    })
-                    total_lines += 1
-                    file_lines += 1
-                
-                print(f"    Parsed {file_lines} movement lines")
+            print(f"    Parsed {file_lines} movement lines")
+            total_lines += file_lines
 
         except Exception as e:
             print(f"  Error parsing {filepath}: {e}")

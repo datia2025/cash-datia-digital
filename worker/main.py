@@ -305,7 +305,7 @@ async def process_record(record_id: str):
         if not master_att:
             raise ValueError("No se encontró el archivo Master Account.xlsx")
 
-        master_url = master_att[0].get("signedUrl") or master_att[0].get("url")
+        master_url = master_att[0].get("signedPath") or master_att[0].get("path") or master_att[0].get("signedUrl") or master_att[0].get("url")
         master_path = os.path.join(sources_dir, "Master Account.xlsx")
         await nocodb_download_attachment(f"{NOCODB_URL}/{master_url}", master_path)
         log("✓ Master Account.xlsx descargado")
@@ -314,10 +314,10 @@ async def process_record(record_id: str):
         if isinstance(mov_att, str):
             mov_att = json.loads(mov_att)
         if not mov_att:
-            raise ValueError("No se encontraron archivos Mov CSV")
+            raise ValueError("No se encontraron archivos de movimientos (Excel/CSV)")
 
         for att in mov_att:
-            att_url = att.get("signedUrl") or att.get("url")
+            att_url = att.get("signedPath") or att.get("path") or att.get("signedUrl") or att.get("url")
             att_name = att.get("title") or att.get("fileName")
             att_path = os.path.join(sources_dir, att_name)
             await nocodb_download_attachment(f"{NOCODB_URL}/{att_url}", att_path)
@@ -443,19 +443,34 @@ async def run_calculation_pipeline(sources_dir: str, log):
 async def webhook_procesar_calc(payload: WebhookPayload, background_tasks: BackgroundTasks):
     """
     Step 1: Financial Calculations only (No AI / Token Free).
-    Triggered by NocoDB on upload.
+    Triggered by NocoDB webhook via n8n, or manually.
+    Handles multiple payload formats:
+      - NocoDB v3: { data: { rows: [{ Id: X }] } }
+      - n8n simplified: { data: { Id: X } }
+      - Direct: { id: "X" }
     """
     record_id = None
+
+    # Format 1: NocoDB v3 webhook (data.rows[0].Id)
     if payload.data and "rows" in payload.data:
-        record_id = str(payload.data["rows"][0].get("Id"))
-    elif payload.data and "Id" in payload.data:
+        rows = payload.data["rows"]
+        if isinstance(rows, list) and len(rows) > 0:
+            record_id = str(rows[0].get("Id"))
+
+    # Format 2: n8n simplified (data.Id)
+    if not record_id and payload.data and "Id" in payload.data:
         record_id = str(payload.data["Id"])
 
-    if not record_id:
-        raise HTTPException(status_code=400, detail="No record ID found")
+    # Format 3: Direct id field
+    if not record_id and payload.id:
+        record_id = str(payload.id)
 
+    if not record_id or record_id in ("None", "null", ""):
+        raise HTTPException(status_code=400, detail="No record ID found in payload")
+
+    print(f"📥 Procesamiento solicitado para record_id={record_id}")
     background_tasks.add_task(process_record, record_id)
-    return StatusResponse(status="accepted", message=f"Cálculos iniciados para {record_id}")
+    return StatusResponse(status="accepted", message=f"Cálculos iniciados para registro {record_id}")
 
 @app.post("/api/procesar/local", response_model=StatusResponse)
 async def process_local_files(request: ProcessLocalRequest, background_tasks: BackgroundTasks):
