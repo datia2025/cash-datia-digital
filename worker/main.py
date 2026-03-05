@@ -163,7 +163,7 @@ class StatusResponse(BaseModel):
 # ── NocoDB API Helpers ─────────────────────────────────────────
 async def nocodb_get_record(record_id: str) -> dict:
     """Fetch a record from NocoDB cargas table."""
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(timeout=60.0) as client:
         resp = await client.get(
             f"{NOCODB_URL}/api/v2/tables/{TABLE_ID_CARGAS}/records/{record_id}",
             headers={"xc-token": NOCODB_TOKEN}
@@ -173,7 +173,7 @@ async def nocodb_get_record(record_id: str) -> dict:
 
 async def nocodb_update_record(record_id: str, fields: dict):
     """Update a record in NocoDB cargas table."""
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(timeout=60.0) as client:
         resp = await client.patch(
             f"{NOCODB_URL}/api/v2/tables/{TABLE_ID_CARGAS}/records",
             headers={"xc-token": NOCODB_TOKEN},
@@ -183,7 +183,7 @@ async def nocodb_update_record(record_id: str, fields: dict):
 
 async def nocodb_download_attachment(url: str, dest_path: str):
     """Download a file attachment from NocoDB."""
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(timeout=60.0) as client:
         resp = await client.get(url)
         resp.raise_for_status()
         with open(dest_path, 'wb') as f:
@@ -191,7 +191,7 @@ async def nocodb_download_attachment(url: str, dest_path: str):
 
 async def nocodb_upload_attachment(record_id: str, field_name: str, file_path: str):
     """Upload a file as attachment to a NocoDB record."""
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(timeout=60.0) as client:
         with open(file_path, 'rb') as f:
             upload_resp = await client.post(
                 f"{NOCODB_URL}/api/v2/storage/upload",
