@@ -475,6 +475,16 @@ async def webhook_procesar_calc(payload: WebhookPayload, background_tasks: Backg
     if not record_id or record_id in ("None", "null", ""):
         raise HTTPException(status_code=400, detail="No record ID found in payload")
 
+    # Anti-loop check: prevent webhooks triggered by our own updates from re-firing
+    try:
+        record = await nocodb_get_record(record_id)
+        current_state = record.get("estado")
+        if current_state in ("procesando", "completado"):
+            print(f"⏭️ Ignorando webhook repetido para record_id={record_id} (estado={current_state})")
+            return StatusResponse(status="ignored", message=f"Registro ya está en estado {current_state}")
+    except Exception as e:
+        print(f"⚠️ Error verificando estado para {record_id}: {e}")
+
     print(f"📥 Procesamiento solicitado para record_id={record_id}")
     background_tasks.add_task(process_record, record_id)
     return StatusResponse(status="accepted", message=f"Cálculos iniciados para registro {record_id}")
