@@ -724,8 +724,10 @@ def calculate_indicators(aggregates):
             q = month_to_quarter(month)
 
             # --- DYNAMIC MODE SWITCH (Liquidez and others) ---
-            # 2023 matches with YTD, 2024+ matches with REBASED FULL (starting Jan 2023)
-            mode = 'ytd' if year == 2023 else 'full_rebase'
+            # The earliest year in ANALYSIS_YEARS always uses 'ytd' (no prior year to rebase against).
+            # Subsequent years use 'full_rebase' (continuous balance rebased from the base year's Dec).
+            base_year = ANALYSIS_YEARS[0] if ANALYSIS_YEARS else 2023
+            mode = 'ytd' if year == base_year else 'full_rebase'
             d = a['modes'][mode]
             
             # --- AGGREGATES FOR ACTIVITY (Continuous History ALWAYS) ---
