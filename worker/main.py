@@ -283,14 +283,35 @@ async def process_record(record_id: str):
         print(msg)
 
     try:
-        await nocodb_update_record(record_id, {"estado": "procesando"})
-        log("Estado actualizado: procesando")
-
+        # 1. Fetch record parameters FIRST without setting status
         record = await nocodb_get_record(record_id)
         empresa_id = record.get('empresa_id')
         if not empresa_id:
             empresa_id = 1
         empresa_id = int(empresa_id)
+        
+        # 2. Check if attachments exist. If not, don't update NocoDB to avoid webhook loops!
+        master_att = record.get("master_account", [])
+        if isinstance(master_att, str):
+            try:
+                master_att = json.loads(master_att)
+            except:
+                pass
+        
+        mov_att = record.get("mov_csv", [])
+        if isinstance(mov_att, str):
+            try:
+                mov_att = json.loads(mov_att)
+            except:
+                pass
+
+        if not master_att or not mov_att:
+            log("Faltan archivos adjuntos (Master Account o Movimientos). Esperando a que el usuario termine de cargarlos.")
+            return
+
+        # 3. All good, let's start processing
+        await nocodb_update_record(record_id, {"estado": "procesando"})
+        log("Estado actualizado: procesando")
         log(f"Registro obtenido: empresa_id={empresa_id}")
 
         # Create carga record in PostgreSQL
@@ -301,25 +322,12 @@ async def process_record(record_id: str):
         sources_dir = os.path.join(work_dir, "sources")
         os.makedirs(sources_dir, exist_ok=True)
 
-        # Download files from NocoDB
-        master_att = record.get("master_account", [])
-        if isinstance(master_att, str):
-            master_att = json.loads(master_att)
-        if not master_att:
-            raise ValueError("No se encontró el archivo Master Account.xlsx")
-
         master_url = master_att[0].get("signedPath") or master_att[0].get("path") or master_att[0].get("signedUrl") or master_att[0].get("url")
         if not master_url:
             raise ValueError(f"No valid URL found in attachment. Keys present: {list(master_att[0].keys())}")
         master_path = os.path.join(sources_dir, "Master Account.xlsx")
         await nocodb_download_attachment(f"{NOCODB_URL}/{master_url}", master_path)
         log("✓ Master Account.xlsx descargado")
-
-        mov_att = record.get("mov_csv", [])
-        if isinstance(mov_att, str):
-            mov_att = json.loads(mov_att)
-        if not mov_att:
-            raise ValueError("No se encontraron archivos de movimientos (Excel/CSV)")
 
         for att in mov_att:
             att_url = att.get("signedPath") or att.get("path") or att.get("signedUrl") or att.get("url")
