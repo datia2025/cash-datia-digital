@@ -48,8 +48,21 @@ def discover_mov_files():
     return files
 
 MOV_FILES = discover_mov_files()
-# Dashboard analysis period
-ANALYSIS_YEARS = [2023, 2024, 2025]
+# Dashboard analysis period — dynamically inferred from movement files
+# Extracts years from filenames like "Mov 2022.xlsx", "Mov 2024.csv", etc.
+def _infer_analysis_years():
+    years = []
+    for fp in MOV_FILES:
+        basename = os.path.basename(fp)
+        m = re.search(r'(\d{4})', basename)
+        if m:
+            years.append(int(m.group(1)))
+    if not years:
+        # Fallback to recent years if no files found
+        return [2023, 2024, 2025]
+    return sorted(set(years))
+
+ANALYSIS_YEARS = _infer_analysis_years()
 
 # ============================================================
 # STEP 1: Load Master Account (Account Classification)
