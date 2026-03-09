@@ -279,17 +279,22 @@ async def db_get_or_create_empresa(nombre: str) -> int:
         return 1
     
     async with db_pool.acquire() as conn:
-        # Try to find existing
+        # Try to find existing by name first
         row = await conn.fetchrow("SELECT id FROM empresas WHERE UPPER(razon_social) = $1", nombre.upper())
         if row:
             return row['id']
         
-        # Create if not exists
+        # Use a unique NIT derived from the name to avoid constraint conflicts
+        import hashlib
+        nit_hash = str(int(hashlib.md5(nombre.upper().encode()).hexdigest(), 16) % 900000000 + 100000000)
+        
+        # Upsert: insert or return existing on conflict
         row = await conn.fetchrow("""
             INSERT INTO empresas (razon_social, nit, sucursal, moneda_base)
-            VALUES ($1, '900000000', 'Sede Principal', 'COP')
+            VALUES ($1, $2, 'Sede Principal', 'COP')
+            ON CONFLICT (nit) DO UPDATE SET razon_social = EXCLUDED.razon_social
             RETURNING id
-        """, nombre)
+        """, nombre, nit_hash)
         return row['id']
 
 async def db_save_indicators(empresa_id: int, carga_id: int, results: dict, modules_map: dict):
