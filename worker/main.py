@@ -24,6 +24,9 @@ import shutil
 import traceback
 from datetime import datetime
 from contextlib import asynccontextmanager
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 # ── Database Pool ──────────────────────────────────────────────
 db_pool: Optional[asyncpg.Pool] = None
@@ -71,6 +74,14 @@ NOCODB_URL = os.getenv("NOCODB_URL", "http://nocodb:8080")
 NOCODB_TOKEN = os.getenv("NOCODB_TOKEN", "")
 TABLE_ID_CARGAS = os.getenv("TABLE_ID_CARGAS", "")
 WORKER_DIR = os.getenv("WORKER_DIR", "/app/workdir")
+
+# ── SMTP Configuration ────────────────────────────────────────
+SMTP_HOST = os.getenv("SMTP_HOST", "smtp.gmail.com")
+SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
+SMTP_USER = os.getenv("SMTP_USER", "datia_notificaciones@talentracking.com")
+SMTP_PASS = os.getenv("SMTP_PASS", "qdtt zzyg aqby iuoj")
+SMTP_FROM = os.getenv("SMTP_FROM", "datia_notificaciones@talentracking.com")
+DASHBOARD_URL = os.getenv("DASHBOARD_URL", "https://ia.talentracking.com/liquidity")
 
 # ── Indicator Name → DB Key Mapping ────────────────────────────
 # Maps display names from calculate_indicators.py to database slugs
@@ -202,7 +213,85 @@ async def nocodb_upload_attachment(record_id: str, field_name: str, file_path: s
             file_data = upload_resp.json()
         await nocodb_update_record(record_id, {field_name: json.dumps(file_data)})
 
+# ── Email Helpers ─────────────────────────────────────────────
+async def send_email(to_email: str, subject: str, html_content: str):
+    """Send an HTML email using SMTP."""
+    if not to_email or "@" not in to_email:
+        print(f"⚠️ Skipping email: Invalid address '{to_email}'")
+        return
+
+    try:
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = subject
+        msg["From"] = f"Datia Notificaciones <{SMTP_FROM}>"
+        msg["To"] = to_email
+
+        part = MIMEText(html_content, "html")
+        msg.attach(part)
+
+        # Use synchronous smtplib in a separate thread if needed, 
+        # but for worker tasks, simple smtplib is usually fine in the loop 
+        # since it's already a background task.
+        with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
+            server.starttls()
+            server.login(SMTP_USER, SMTP_PASS)
+            server.sendmail(SMTP_FROM, to_email, msg.as_string())
+        print(f"📧 Email enviado a {to_email}: {subject}")
+    except Exception as e:
+        print(f"❌ Error enviando email a {to_email}: {e}")
+
+def get_email_template(title: str, body: str, button_text: str = None, button_url: str = None):
+    """Generate a premium HTML email template."""
+    btn_html = ""
+    if button_text and button_url:
+        btn_html = f"""
+        <div style="margin-top: 30px;">
+            <a href="{button_url}" style="background-color: #4F46E5; color: white; padding: 12px 25px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
+                {button_text}
+            </a>
+        </div>
+        """
+    
+    return f"""
+    <html>
+    <body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0;">
+        <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e5e7eb; border-radius: 8px;">
+            <div style="background-color: #111827; padding: 20px; text-align: center; border-radius: 6px 6px 0 0;">
+                <h1 style="color: #60A5FA; margin: 0; font-size: 24px;">DATIA | Liquidity Dashboard</h1>
+            </div>
+            <div style="padding: 30px; background-color: #ffffff;">
+                <h2 style="color: #111827; margin-top: 0;">{title}</h2>
+                {body}
+                {btn_html}
+            </div>
+            <div style="padding: 20px; text-align: center; font-size: 12px; color: #6B7280; background-color: #F9FAFB; border-radius: 0 0 6px 6px;">
+                &copy; {datetime.now().year} Datia Digital. Este es un correo automático, por favor no lo respondas.
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+
 # ── PostgreSQL Helpers ─────────────────────────────────────────
+async def db_get_or_create_empresa(nombre: str) -> int:
+    """Find company by name (case insensitive) or create it."""
+    if not db_pool:
+        return 1
+    
+    async with db_pool.acquire() as conn:
+        # Try to find existing
+        row = await conn.fetchrow("SELECT id FROM empresas WHERE UPPER(razon_social) = $1", nombre.upper())
+        if row:
+            return row['id']
+        
+        # Create if not exists
+        row = await conn.fetchrow("""
+            INSERT INTO empresas (razon_social, nit, sucursal, moneda_base)
+            VALUES ($1, '900000000', 'Sede Principal', 'COP')
+            RETURNING id
+        """, nombre)
+        return row['id']
+
 async def db_save_indicators(empresa_id: int, carga_id: int, results: dict, modules_map: dict):
     """Save calculated indicators to PostgreSQL."""
     if not db_pool:
@@ -227,10 +316,14 @@ async def db_save_indicators(empresa_id: int, carga_id: int, results: dict, modu
                         break
 
                 # Determine unit
+                # Default unit mapping logic if not provided by results
                 unidad = 'x'
-                for cat_key, cat_unit in UNIT_MAP.items():
-                    # Will be set from HEADER_MAP in calculate_indicators
-                    pass
+                if '%' in display_name:
+                    unidad = '%'
+                elif '$' in display_name or 'Utilidad' in display_name or 'Patrimonio' in display_name:
+                    unidad = '$'
+                elif 'Días' in display_name:
+                    unidad = 'días'
 
                 for q, val, period, year in data_points:
                     try:
@@ -285,10 +378,16 @@ async def process_record(record_id: str):
     try:
         # 1. Fetch record parameters FIRST without setting status
         record = await nocodb_get_record(record_id)
-        empresa_id = record.get('empresa_id')
-        if not empresa_id:
-            empresa_id = 1
-        empresa_id = int(empresa_id)
+        
+        # New Logic: Get company name, lookup/create ID
+        # NocoDB returns fields by their display Title, not column_name
+        empresa_nombre = (
+            record.get('Nombre de la Empresa')
+            or record.get('title')
+            or "Empresa Desconocida"
+        )
+        empresa_id = await db_get_or_create_empresa(empresa_nombre)
+        log(f"Nombre de la Empresa: {empresa_nombre} -> ID asignado: {empresa_id}")
         
         # 2. Check if attachments exist. If not, don't update NocoDB to avoid webhook loops!
         master_att = record.get("master_account", [])
@@ -310,6 +409,26 @@ async def process_record(record_id: str):
             return
 
         # 3. All good, let's start processing
+        # NocoDB v3 returns field names by their display Title
+        user_email = (
+            record.get('Correo de Notificación')
+            or record.get('correo_notificacion')
+            or record.get('Correo de Notificacion')
+        )
+        log(f"Email de notificacion: {user_email}")
+        if user_email:
+            email_body = f"""
+            <p>Hola,</p>
+            <p>Hemos recibido correctamente los archivos para <strong>{empresa_nombre}</strong>.</p>
+            <p>Nuestro motor de cálculo ya está procesando los 33 indicadores financieros. Este proceso suele tardar aproximadamente <strong>40 segundos</strong>.</p>
+            <p>Te enviaremos otro correo en cuanto el análisis esté disponible en tu Dashboard.</p>
+            """
+            await send_email(
+                user_email, 
+                f"✅ Carga Recibida: {empresa_nombre}", 
+                get_email_template("Procesamiento Iniciado", email_body)
+            )
+        
         await nocodb_update_record(record_id, {"estado": "procesando"})
         log("Estado actualizado: procesando")
         log(f"Registro obtenido: empresa_id={empresa_id}")
@@ -355,6 +474,29 @@ async def process_record(record_id: str):
             "resultado": "\n".join(log_lines),
         })
         log("✓ Procesamiento completado exitosamente")
+
+        # Final Notification
+        if user_email:
+            email_body = f"""
+            <p>¡Buenas noticias!</p>
+            <p>El análisis financiero para <strong>{empresa_nombre}</strong> ha finalizado exitosamente.</p>
+            <ul style="color: #374151;">
+                <li><strong>Indicadores calculados:</strong> 33</li>
+                <li><strong>Puntos de datos en DB:</strong> 396</li>
+                <li><strong>Estado:</strong> Completado</li>
+            </ul>
+            <p>Ya puedes visualizar los resultados detallados en tu tablero de control.</p>
+            """
+            await send_email(
+                user_email, 
+                f"📊 Análisis Disponible: {empresa_nombre}", 
+                get_email_template(
+                    "Análisis Finalizado", 
+                    email_body, 
+                    "Ver Dashboard", 
+                    f"{DASHBOARD_URL}?empresa_id={empresa_id}"
+                )
+            )
 
     except Exception as e:
         error_msg = f"ERROR: {str(e)}\n{traceback.format_exc()}"
