@@ -427,13 +427,23 @@ async def process_record(record_id: str):
             log("Faltan archivos adjuntos (Master Account o Movimientos). Esperando a que el usuario termine de cargarlos.")
             return
 
+
         # 3. All good, let's start processing
-        # NocoDB v3 returns field names by their display Title
-        user_email = (
-            record.get('Correo de Notificación')
-            or record.get('correo_notificacion')
-            or record.get('Correo de Notificacion')
-        )
+        # Robust email detection: scan all record values for an email pattern
+        # (avoids Unicode key matching issues with 'Correo de Notificación')
+        user_email = None
+        for key, val in record.items():
+            if val and isinstance(val, str) and '@' in val and '.' in val:
+                # Candidate email found - verify it's not a filename or path
+                if 'correo' in key.lower() or 'email' in key.lower() or 'mail' in key.lower() or 'notif' in key.lower():
+                    user_email = val.strip()
+                    break
+        # Fallback: any value that looks like an email across all fields
+        if not user_email:
+            for key, val in record.items():
+                if val and isinstance(val, str) and '@' in val and '.' in val and '/' not in val and ' ' not in val:
+                    user_email = val.strip()
+                    break
         log(f"Email de notificacion: {user_email}")
         if user_email:
             email_body = f"""
