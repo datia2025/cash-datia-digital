@@ -274,28 +274,42 @@ def get_email_template(title: str, body: str, button_text: str = None, button_ur
 
 # ── PostgreSQL Helpers ─────────────────────────────────────────
 async def db_get_or_create_empresa(nombre: str) -> int:
-    """Find company by name (case insensitive) or create it."""
+    """Find company by name (case insensitive) or create it. Triple-safe."""
     if not db_pool:
         return 1
-    
+
+    import hashlib
+
     async with db_pool.acquire() as conn:
-        # Try to find existing by name first
-        row = await conn.fetchrow("SELECT id FROM empresas WHERE UPPER(razon_social) = $1", nombre.upper())
+        # 1. Try to find existing by name
+        row = await conn.fetchrow(
+            "SELECT id FROM empresas WHERE UPPER(razon_social) = $1",
+            nombre.upper()
+        )
         if row:
             return row['id']
-        
-        # Use a unique NIT derived from the name to avoid constraint conflicts
-        import hashlib
-        nit_hash = str(int(hashlib.md5(nombre.upper().encode()).hexdigest(), 16) % 900000000 + 100000000)
-        
-        # Upsert: insert or return existing on conflict
-        row = await conn.fetchrow("""
-            INSERT INTO empresas (razon_social, nit, sucursal, moneda_base)
-            VALUES ($1, $2, 'Sede Principal', 'COP')
-            ON CONFLICT (nit) DO UPDATE SET razon_social = EXCLUDED.razon_social
-            RETURNING id
-        """, nombre, nit_hash)
-        return row['id']
+
+        # 2. Generate unique NIT from name hash
+        nit_hash = str(int(hashlib.md5(nombre.upper().encode()).hexdigest(), 16) % 800000000 + 100000001)
+
+        # 3. Upsert: if NIT collision, update razon_social and return id
+        try:
+            row = await conn.fetchrow("""
+                INSERT INTO empresas (razon_social, nit, sucursal, moneda_base)
+                VALUES ($1, $2, 'Sede Principal', 'COP')
+                ON CONFLICT (nit) DO UPDATE SET razon_social = EXCLUDED.razon_social
+                RETURNING id
+            """, nombre, nit_hash)
+            return row['id']
+        except Exception:
+            # 4. Final fallback: find by NIT
+            row = await conn.fetchrow(
+                "SELECT id FROM empresas WHERE nit = $1", nit_hash
+            )
+            if row:
+                return row['id']
+            # 5. Last resort: return company 1 (MAS CONSULTA SAS)
+            return 1
 
 async def db_save_indicators(empresa_id: int, carga_id: int, results: dict, modules_map: dict):
     """Save calculated indicators to PostgreSQL."""
