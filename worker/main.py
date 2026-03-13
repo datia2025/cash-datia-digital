@@ -361,16 +361,16 @@ async def db_save_indicators(empresa_id: int, carga_id: int, results: dict, modu
 
     return saved
 
-async def db_create_carga(empresa_id: int, fuente: str = 'siigo') -> int:
+async def db_create_carga(empresa_id: int, fuente: str = 'siigo', nocodb_record_id: str = None) -> int:
     """Create a carga record and return its ID."""
     if not db_pool:
         return 0
     async with db_pool.acquire() as conn:
         row = await conn.fetchrow("""
-            INSERT INTO cargas (empresa_id, fuente_sistema, periodo_ano, estado)
-            VALUES ($1, $2, $3, 'processing')
+            INSERT INTO cargas (empresa_id, fuente_sistema, periodo_ano, estado, nocodb_record_id)
+            VALUES ($1, $2, $3, 'processing', $4)
             RETURNING id
-        """, empresa_id, fuente, datetime.now().year)
+        """, empresa_id, fuente, datetime.now().year, nocodb_record_id)
         return row['id']
 
 async def db_update_carga(carga_id: int, estado: str, resultado: str = None, match_rate: float = None):
@@ -463,8 +463,10 @@ async def process_record(record_id: str):
         log(f"Registro obtenido: empresa_id={empresa_id}")
 
         # Create carga record in PostgreSQL
-        carga_id = await db_create_carga(empresa_id)
-        log(f"Carga registrada en DB: id={carga_id}")
+        # fuente_sistema reflects the account catalog type for traceability
+        fuente_sistema = 'puc' if es_puc_crudo else 'master_account'
+        carga_id = await db_create_carga(empresa_id, fuente=fuente_sistema, nocodb_record_id=record_id)
+        log(f"Carga registrada en DB: id={carga_id} | tipo_catalogo={fuente_sistema}")
 
         os.makedirs(work_dir, exist_ok=True)
         sources_dir = os.path.join(work_dir, "sources")
@@ -476,6 +478,18 @@ async def process_record(record_id: str):
         master_path = os.path.join(sources_dir, "Master Account.xlsx")
         await nocodb_download_attachment(f"{NOCODB_URL}/{master_url}", master_path)
         log("✓ Master Account.xlsx descargado")
+
+        # Detect if uploaded file is a raw PUC (no 'Accounts' sheet) or a parameterized Master Account
+        try:
+            from openpyxl import load_workbook as _lw
+            _wb = _lw(master_path, read_only=True)
+            es_puc_crudo = 'Accounts' not in _wb.sheetnames
+            _wb.close()
+            tipo_catalogo = "Plan Único de Cuentas (PUC) estándar" if es_puc_crudo else "Plan de cuentas parametrizado"
+            log(f"  Tipo de catálogo de cuentas: {tipo_catalogo}")
+        except Exception:
+            es_puc_crudo = False
+            tipo_catalogo = "Plan de cuentas"
 
         for att in mov_att:
             att_url = att.get("signedPath") or att.get("path") or att.get("signedUrl") or att.get("url")
@@ -497,24 +511,64 @@ async def process_record(record_id: str):
         else:
             log("⚠️ Sin conexión a PostgreSQL, solo CSVs generados")
 
-        # Update NocoDB status
+        # Update NocoDB status (core fields)
         await nocodb_update_record(record_id, {
             "estado": "completado",
             "resultado": "\n".join(log_lines),
         })
+        # Best-effort: store catalog type for traceability (field may not exist in all NocoDB deployments)
+        try:
+            await nocodb_update_record(record_id, {"tipo_catalogo": tipo_catalogo})
+        except Exception as e_tc:
+            log(f"  ℹ️ Campo tipo_catalogo no disponible en NocoDB (ignorado): {e_tc}")
         log("✓ Procesamiento completado exitosamente")
 
         # Final Notification
         if user_email:
+            # Build accounting-language note based on account catalog type
+            nota_contable = ""
+            if es_puc_crudo:
+                nota_contable = """
+            <div style="background:#FEF3C7; border-left:4px solid #F59E0B; padding:16px; margin-top:24px; border-radius:6px; font-size:14px;">
+              <p style="margin:0 0 10px 0;"><strong>📋 Nota técnica para el contador</strong></p>
+              <p style="margin:0 0 8px 0;">
+                El análisis se realizó utilizando el <strong>Plan Único de Cuentas (PUC) estándar</strong>. Para su revisión, el motor de cálculo ha utilizado las siguientes agrupaciones:
+              </p>
+              <ul style="margin:0 0 10px 0; padding-left:20px;">
+                <li style="margin-bottom:4px;"><strong>Cartera:</strong> Cuenta <code>1305</code> (Clientes).</li>
+                <li style="margin-bottom:4px;"><strong>Inventarios:</strong> Cuenta <code>1435</code> (Mercancías no fabricadas por la empresa).</li>
+                <li style="margin-bottom:4px;"><strong>Proveedores:</strong> Cuentas <code>2205</code>, <code>2210</code> y <code>2335</code> (Costos y gastos por pagar).</li>
+              </ul>
+              <p style="margin:0 0 8px 0;">
+                Para los indicadores de <strong>Rentabilidad</strong>, <strong>Solvencia</strong> y <strong>Estructura</strong>, se recomienda validar:
+              </p>
+              <ol style="margin:0 0 8px 0; padding-left:20px;">
+                <li style="margin-bottom:6px;">
+                  <strong>Gastos financieros:</strong> El sistema identifica intereses específicamente en la cuenta <code>53052001</code>. Si utiliza otras subcuentas para intereses de obligaciones financieras, el gasto podría estar subestimado.
+                </li>
+                <li style="margin-bottom:6px;">
+                  <strong>Activos intangibles:</strong> Se asume valor cero para el <strong>Grupo 16</strong> (Intangibles). Si la empresa registra marcas o software, el Ratio de Activos Tangibles podría variar.
+                </li>
+                <li>
+                  <strong>Cierre contable:</strong> El motor excluye automáticamente los asientos del <strong>Comprobante N° 998</strong> (o descripciones de "cierre anual") para reflejar la utilidad operativa real del período.
+                </li>
+              </ol>
+              <p style="margin:0; color:#92400E; font-size:13px; font-style:italic;">
+                Estos resultados son para análisis de gestión interna. Para reportes oficiales, realice una validación final contra su balance de prueba.
+              </p>
+            </div>
+            """
+
             email_body = f"""
             <p>¡Buenas noticias!</p>
             <p>El análisis financiero para <strong>{empresa_nombre}</strong> ha finalizado exitosamente.</p>
             <ul style="color: #374151;">
                 <li><strong>Indicadores calculados:</strong> 33</li>
-                <li><strong>Puntos de datos en DB:</strong> 396</li>
+                <li><strong>Fuente del plan de cuentas:</strong> {tipo_catalogo}</li>
                 <li><strong>Estado:</strong> Completado</li>
             </ul>
             <p>Ya puedes visualizar los resultados detallados en tu tablero de control.</p>
+            {nota_contable}
             """
             await send_email(
                 user_email, 
@@ -625,6 +679,10 @@ async def run_calculation_pipeline(sources_dir: str, log):
 
 
 # ── API Endpoints: Write (Processing) ──────────────────────────
+
+# In-memory lock for currently processing records to prevent webhook storms
+PROCESSING_RECORDS = set()
+
 @app.post("/api/procesar/calc", response_model=StatusResponse)
 async def webhook_procesar_calc(payload: WebhookPayload, background_tasks: BackgroundTasks):
     """
@@ -654,6 +712,10 @@ async def webhook_procesar_calc(payload: WebhookPayload, background_tasks: Backg
     if not record_id or record_id in ("None", "null", ""):
         raise HTTPException(status_code=400, detail="No record ID found in payload")
 
+    if record_id in PROCESSING_RECORDS:
+        print(f"⏳ Ignorando webhook: Ya existe un procesamiento en curso para record_id={record_id} en memoria.")
+        return StatusResponse(status="ignored", message="Procesamiento concurrente en curso.")
+
     # Anti-loop check: prevent webhooks triggered by our own updates from re-firing
     try:
         record = await nocodb_get_record(record_id)
@@ -665,8 +727,16 @@ async def webhook_procesar_calc(payload: WebhookPayload, background_tasks: Backg
         print(f"⚠️ Error verificando estado para {record_id}: {e}")
 
     print(f"📥 Procesamiento solicitado para record_id={record_id}")
-    background_tasks.add_task(process_record, record_id)
+    PROCESSING_RECORDS.add(record_id)
+    background_tasks.add_task(process_record_wrapper, record_id)
     return StatusResponse(status="accepted", message=f"Cálculos iniciados para registro {record_id}")
+
+async def process_record_wrapper(record_id: str):
+    """Wrapper to properly clear the PROCESSING_RECORDS lock."""
+    try:
+        await process_record(record_id)
+    finally:
+        PROCESSING_RECORDS.discard(record_id)
 
 @app.post("/api/procesar/local", response_model=StatusResponse)
 async def process_local_files(request: ProcessLocalRequest, background_tasks: BackgroundTasks):

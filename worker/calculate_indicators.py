@@ -66,29 +66,84 @@ ANALYSIS_YEARS = _infer_analysis_years()
 
 # ============================================================
 # STEP 1: Load Master Account (Account Classification)
+#   Auto-detects format: Master Account (Accounts sheet) or
+#   raw PUC.xlsx (standard Siigo/ERP export)
 # ============================================================
+
+# --- Static lookup tables for PUC colombiano ---
+
+# Clase contable → Tipo contable
+CLASE_TO_TIPO = {
+    'Activo': 'Balance',
+    'Pasivo': 'Balance',
+    'Patrimonio': 'Balance',
+    'Ingresos': 'Resultado',
+    'Gastos': 'Resultado',
+    'Costos de venta': 'Resultado',
+    'Costos de producción o de operación': 'Resultado',
+    'Cuentas de orden deudoras': 'Orden',
+    'Cuentas de orden acreedoras': 'Orden',
+}
+
+# Grupo PUC → Termino (Corto/Largo Plazo)
+# Calibrado contra la hoja List del Master Account.xlsx de MAS CONSULTA SAS
+# Grupos 25 (obligaciones laborales), 27, 28 = Corto Termino (exigibles en <1 año)
+# Grupos 31-38 (Patrimonio) = sin termino (no son pasivos)
+GROUP_TERMINO_DEFAULT = {
+    '11': 'Corto Termino', '12': 'Corto Termino',
+    '13': 'Corto Termino', '14': 'Corto Termino',
+    '15': 'Largo Termino', '16': 'Largo Termino',
+    '17': 'Largo Termino', '18': 'Corto Termino',
+    '19': 'Corto Termino',
+    '21': 'Corto Termino', '22': 'Corto Termino',  # 21=oblig. financieras → CP (alineado con Master Account)
+    '23': 'Corto Termino', '24': 'Corto Termino',
+    '25': 'Corto Termino', '26': 'Largo Termino',  # 25=obligaciones laborales → CP
+    '27': 'Corto Termino', '28': 'Corto Termino',  # 27-28=depósitos/anticipos → CP
+    '29': 'Largo Termino',
+    # Patrimonio (clase 3): sin termino — no son pasivos corrientes ni no corrientes
+    '31': '', '32': '', '33': '', '34': '', '36': '', '37': '', '38': '',
+}
+
+# Grupos que participan en EBITDA:
+#   41/42 = Ingresos operacionales (alineado con Master Account — 33 cuentas clase 4x con ebitda=SI)
+#   51/52 = Gastos operativos (excluye financieros/depreciación)
+EBITDA_GRUPOS = {'41', '42', '51', '52'}
+# Cuentas excluidas de EBITDA (depreciación, amortización)
+EBITDA_EXCLUSION_PREFIXES = ('5160', '5165', '5260', '5265')
+
+
 def load_account_classification():
     """
-    From 'Accounts' sheet, extract:
-    - codigo: PUC code
-    - clase: Activo/Pasivo/Patrimonio
-    - tipo: Balance/Resultado
-    - grupo: PUC group (11, 13, 22, etc.)
-    - termino: Corto Termino / Largo Termino
-    - ebitda: SI / NO
+    Auto-detects file format and loads account classification:
+    - If file has 'Accounts' sheet → Master Account format (original)
+    - Otherwise → raw PUC.xlsx from Siigo/ERP (auto-derives fields)
+    Returns: (accounts_dict, group_termino_dict)
     """
     wb = load_workbook(MASTER_FILE, read_only=True, data_only=True)
 
+    if 'Accounts' in wb.sheetnames:
+        print("  Formato detectado: Master Account (hoja Accounts)")
+        return _load_from_master_account(wb)
+    else:
+        print("  Formato detectado: PUC.xlsx crudo (auto-derivación)")
+        return _load_from_puc(wb)
+
+
+def _load_from_master_account(wb):
+    """Original Master Account loader — updated to handle missing 'List' sheet."""
     # Read List sheet for group → termino mapping
-    ws_list = wb['List']
     group_termino = {}
-    for row in ws_list.iter_rows(min_row=2, values_only=True):
-        # Columns: B=Clase, C=Nombre, D=Tipo, E=empty, F=Grupo, G=NombreGrupo, H=Tipo(Termino)
-        if row and len(row) >= 8:
-            grupo = str(row[5]) if row[5] else None
-            termino = str(row[7]) if row[7] else None
-            if grupo and termino:
-                group_termino[grupo] = termino
+    if 'List' in wb.sheetnames:
+        ws_list = wb['List']
+        for row in ws_list.iter_rows(min_row=2, values_only=True):
+            if row and len(row) >= 8:
+                grupo = str(row[5]) if row[5] else None
+                termino = str(row[7]) if row[7] else None
+                if grupo and termino:
+                    group_termino[grupo] = termino
+    else:
+        print("  ⚠️ Hoja 'List' no encontrada. Usando mapeo por defecto de Corto/Largo Plazo.")
+        group_termino = dict(GROUP_TERMINO_DEFAULT)
 
     # Read Accounts sheet
     ws_accounts = wb['Accounts']
@@ -104,7 +159,6 @@ def load_account_classification():
         grupo = str(row[13]) if row[13] else ""  # Column N = grupo PUC
         ebitda_flag = str(row[17]) if row[17] else "NO"  # Column R = EBITDA
 
-        # Determine termino from group lookup
         termino = group_termino.get(grupo, "")
 
         accounts[codigo] = {
@@ -119,6 +173,121 @@ def load_account_classification():
 
     wb.close()
     print(f"  Loaded {len(accounts)} accounts from Master Account")
+    print(f"  Group-Termino mappings: {len(group_termino)}")
+    return accounts, group_termino
+
+
+def _load_from_puc(wb):
+    """
+    Load account classification from a raw PUC.xlsx (Siigo/ERP export).
+    Auto-detects header row and derives Tipo, Grupo, Termino, EBITDA.
+    Expected PUC columns: Código, Nombre, Categoría, Clase, ...
+    """
+    ws = wb.active
+
+    # Step 1: Find header row (search for 'Código' or 'Codigo' in first column)
+    header_row_idx = None
+    col_map = {}  # column_name → column_index
+    all_rows = []
+    for i, row in enumerate(ws.iter_rows(values_only=True), 1):
+        all_rows.append(row)
+        if header_row_idx is None and row:
+            for j, cell in enumerate(row):
+                cell_str = str(cell).strip().lower() if cell else ''
+                if cell_str in ('código', 'codigo'):
+                    header_row_idx = i
+                    # Map all headers in this row
+                    for k, h in enumerate(row):
+                        if h:
+                            col_map[str(h).strip().lower()] = k
+                    break
+
+    if header_row_idx is None:
+        # Fallback: assume data starts at row 2, col 0 = code
+        print("  ⚠️ No header row found in PUC, using positional fallback")
+        header_row_idx = 1
+        col_map = {'código': 0, 'nombre': 1, 'categoría': 2, 'clase': 3}
+
+    # Resolve column indices
+    col_code = col_map.get('código', col_map.get('codigo', 0))
+    col_name = col_map.get('nombre', 1)
+    col_cat = col_map.get('categoría', col_map.get('categoria', 2))
+    col_clase = col_map.get('clase', 3)
+    col_nivel = col_map.get('nivel agrupación', col_map.get('nivel agrupacion', -1))
+
+    print(f"  PUC header en fila {header_row_idx}: code={col_code}, name={col_name}, cat={col_cat}, clase={col_clase}")
+
+    # Step 2: Parse leaf accounts (8+ digit codes or Nivel=Transaccional)
+    accounts = {}
+    group_termino = dict(GROUP_TERMINO_DEFAULT)  # Use static defaults
+    skipped = 0
+
+    for row in all_rows[header_row_idx:]:  # Skip header row
+        if not row:
+            continue
+
+        raw_code = row[col_code] if col_code < len(row) else None
+        if not raw_code:
+            continue
+
+        codigo = str(raw_code).strip()
+
+        # Skip non-numeric codes (company names, NIT, headers)
+        if not codigo or not codigo[0].isdigit():
+            continue
+
+        # Filter: only leaf accounts (8+ digits = transactional level)
+        # Also accept if Nivel column says "Transaccional"
+        is_leaf = len(codigo) >= 8
+        if col_nivel >= 0 and col_nivel < len(row) and row[col_nivel]:
+            nivel_val = str(row[col_nivel]).strip().lower()
+            if nivel_val == 'transaccional':
+                is_leaf = True
+
+        if not is_leaf:
+            skipped += 1
+            continue
+
+        nombre = str(row[col_name]).strip() if col_name < len(row) and row[col_name] else ""
+        categoria = str(row[col_cat]).strip() if col_cat < len(row) and row[col_cat] else ""
+        clase = str(row[col_clase]).strip() if col_clase < len(row) and row[col_clase] else ""
+
+        # --- Derive Tipo from Clase ---
+        tipo = CLASE_TO_TIPO.get(clase, '')
+        if not tipo:
+            # Fallback by first digit: 1-3 = Balance, 4-7 = Resultado
+            first = codigo[0]
+            if first in ('1', '2', '3'):
+                tipo = 'Balance'
+            elif first in ('4', '5', '6', '7'):
+                tipo = 'Resultado'
+
+        # --- Derive Grupo from first 2 digits ---
+        grupo = codigo[:2] if len(codigo) >= 2 else ""
+
+        # --- Derive Termino from Grupo ---
+        termino = group_termino.get(grupo, "")
+
+        # --- Derive EBITDA flag ---
+        ebitda_flag = "NO"
+        if grupo in EBITDA_GRUPOS:
+            # Gastos operativos participan, excepto depreciación/amortización
+            if not any(codigo.startswith(prefix) for prefix in EBITDA_EXCLUSION_PREFIXES):
+                ebitda_flag = "SI"
+
+        accounts[codigo] = {
+            'nombre': nombre,
+            'categoria': categoria,
+            'clase': clase,
+            'tipo': tipo,
+            'grupo': grupo,
+            'termino': termino,
+            'ebitda': ebitda_flag
+        }
+
+    wb.close()
+    print(f"  Loaded {len(accounts)} leaf accounts from PUC.xlsx")
+    print(f"  Skipped {skipped} parent/group codes")
     print(f"  Group-Termino mappings: {len(group_termino)}")
     return accounts, group_termino
 
