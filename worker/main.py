@@ -389,6 +389,8 @@ async def process_record(record_id: str):
     work_dir = os.path.join(WORKER_DIR, f"job_{record_id}_{datetime.now().strftime('%Y%m%d%H%M%S')}")
     log_lines = []
     carga_id = 0
+    es_puc_crudo = False
+    tipo_catalogo = "Plan de cuentas"
 
     def log(msg: str):
         log_lines.append(f"[{datetime.now().strftime('%H:%M:%S')}] {msg}")
