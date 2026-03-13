@@ -462,11 +462,7 @@ async def process_record(record_id: str):
         log("Estado actualizado: procesando")
         log(f"Registro obtenido: empresa_id={empresa_id}")
 
-        # Create carga record in PostgreSQL
-        # fuente_sistema reflects the account catalog type for traceability
-        fuente_sistema = 'puc' if es_puc_crudo else 'master_account'
-        carga_id = await db_create_carga(empresa_id, fuente=fuente_sistema, nocodb_record_id=record_id)
-        log(f"Carga registrada en DB: id={carga_id} | tipo_catalogo={fuente_sistema}")
+
 
         os.makedirs(work_dir, exist_ok=True)
         sources_dir = os.path.join(work_dir, "sources")
@@ -490,6 +486,12 @@ async def process_record(record_id: str):
         except Exception:
             es_puc_crudo = False
             tipo_catalogo = "Plan de cuentas"
+
+        # Create carga record in PostgreSQL now that we know the catalogue type
+        # fuente_sistema reflects the account catalog type for traceability
+        fuente_sistema = 'puc' if es_puc_crudo else 'master_account'
+        carga_id = await db_create_carga(empresa_id, fuente=fuente_sistema, nocodb_record_id=record_id)
+        log(f"Carga registrada en DB: id={carga_id} | tipo_catalogo={fuente_sistema}")
 
         for att in mov_att:
             att_url = att.get("signedPath") or att.get("path") or att.get("signedUrl") or att.get("url")
