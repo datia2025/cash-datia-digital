@@ -874,7 +874,7 @@ async def api_auth_login(req: LoginRequest):
             raise HTTPException(status_code=401, detail="Credenciales incorrectas")
         
         # Update last login
-        await conn.execute("UPDATE usuarios SET ultimo_login = NOW() WHERE email = $1", req.usuario)
+        await conn.execute("UPDATE public.usuarios SET ultimo_login = NOW() WHERE email = $1", req.usuario)
         
         return {
             "status": "success",
