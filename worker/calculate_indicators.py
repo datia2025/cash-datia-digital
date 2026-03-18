@@ -362,19 +362,22 @@ def _parse_mov_csv(filepath, movements):
 def _parse_mov_xlsx(filepath, movements):
     """
     Parse a single Mov Excel (.xlsx) file and append to movements dict.
-    Expects the same column layout as the CSV:
-      Col 0: Línea, Col 1: Fecha, Col 2: Código, Col 3: NIT,
-      Col 4: No. Documento, Col 5: Clase Documento, Col 6: Tipo,
-      Col 7: Descripción, Col 8: Detalle, Col 9: Campo,
-      Col 10: Débito, Col 11: Crédito
-    Also handles 'Comprobante:' header rows for 998 detection.
+    Auto-detects column layout reading the headers.
     Returns number of lines parsed.
     """
     file_lines = 0
+    from openpyxl import load_workbook
     wb = load_workbook(filepath, read_only=True, data_only=True)
-    ws = wb.active  # Use the first/active sheet
+    ws = wb.active
 
     current_comprobante = ""
+    header_found = False
+    
+    # Fallback default positions (Siigo format)
+    col_map = {
+        'fecha': 1, 'codigo': 2, 'descripcion': 7,
+        'detalle': 8, 'clase_doc': 5, 'debito': 10, 'credito': 11
+    }
 
     for row in ws.iter_rows(values_only=True):
         if not row or all(c is None for c in row):
@@ -387,37 +390,62 @@ def _parse_mov_xlsx(filepath, movements):
             current_comprobante = first_val.replace('Comprobante:', '').strip()
             continue
 
-        # Skip non-data rows (headers, blanks, text rows)
-        if not first_val or not first_val[0].isdigit():
+        # Try to detect headers
+        if not header_found:
+            str_row = [str(c).strip().lower() if c is not None else "" for c in row]
+            if any('fecha' in c for c in str_row) and (any('bito' in c for c in str_row) or any('dito' in c for c in str_row) or any('debe' in c for c in str_row) or any('haber' in c for c in str_row)):
+                col_map = {}
+                for i, c in enumerate(str_row):
+                    if 'fecha' in c and 'fecha' not in col_map: col_map['fecha'] = i
+                    elif ('código' in c or 'codigo' in c or 'digo' in c or 'cuenta' in c or 'cta' in c) and 'codigo' not in col_map: col_map['codigo'] = i
+                    elif ('débito' in c or 'debito' in c or 'bito' in c or 'debe' in c) and 'debito' not in col_map: col_map['debito'] = i
+                    elif ('crédito' in c or 'credito' in c or 'dito' in c or 'haber' in c) and 'credito' not in col_map: col_map['credito'] = i
+                    elif 'descripci' in c and 'descripcion' not in col_map: col_map['descripcion'] = i
+                    elif 'detalle' in c and 'detalle' not in col_map: col_map['detalle'] = i
+                    elif 'clase' in c and 'doc' in c and 'clase_doc' not in col_map: col_map['clase_doc'] = i
+                header_found = True
+                continue
+
+        # Ensure we have minimum valid indices before extracting
+        if 'fecha' not in col_map or 'debito' not in col_map:
             continue
 
-        if len(row) < 12:
+        # Safe extraction
+        def safe_get(col_name):
+            idx = col_map.get(col_name, -1)
+            return row[idx] if 0 <= idx < len(row) else None
+
+        # Parse fecha
+        fecha_raw = safe_get('fecha')
+        if fecha_raw is None or str(fecha_raw).strip() == '' or str(fecha_raw).lower() == 'fecha':
             continue
 
-        # Parse fecha — could be a datetime object or a string
-        fecha_raw = row[1]
-        if fecha_raw is None:
-            continue
+        from datetime import datetime
         if isinstance(fecha_raw, datetime):
             fecha = fecha_raw
         else:
             fecha_str = str(fecha_raw).strip()
-            if not fecha_str:
-                continue
+            # If it's a header repetition, skip
+            if fecha_str.lower() == 'fecha': continue
             try:
                 fecha = datetime.strptime(fecha_str, '%d/%m/%Y')
             except ValueError:
                 try:
                     fecha = datetime.strptime(fecha_str, '%Y-%m-%d %H:%M:%S')
                 except ValueError:
-                    continue
+                    continue  # Invalid date format
 
-        codigo = str(row[2]).strip() if row[2] is not None else ""
-        if not codigo:
+        codigo_raw = safe_get('codigo')
+        codigo = str(codigo_raw).strip() if codigo_raw is not None else ""
+        if not codigo or not codigo[0].isdigit():
+            # If it's not a valid account code, skip it
             continue
 
-        descripcion = str(row[7]).strip() if len(row) > 7 and row[7] else ""
-        detalle = str(row[8]).strip() if len(row) > 8 and row[8] else ""
+        desc_raw = safe_get('descripcion')
+        descripcion = str(desc_raw).strip() if desc_raw is not None else ""
+        
+        det_raw = safe_get('detalle')
+        detalle = str(det_raw).strip() if det_raw is not None else ""
 
         is_closing = False
         if 'cierre anual' in descripcion.lower() or 'cierre anual' in detalle.lower():
@@ -425,17 +453,16 @@ def _parse_mov_xlsx(filepath, movements):
         if '998' in current_comprobante:
             is_closing = True
 
-        # Clase Documento column (col 5) may also indicate 998
-        clase_doc = str(row[5]).strip() if len(row) > 5 and row[5] else ""
+        clase_doc_raw = safe_get('clase_doc')
+        clase_doc = str(clase_doc_raw).strip() if clase_doc_raw is not None else ""
         if '998' in clase_doc:
             is_closing = True
 
         year = fecha.year
         month = fecha.month
 
-        # Parse debito/credito — may be numeric or string
         def parse_amount(val):
-            if val is None:
+            if val is None or str(val).strip() == '':
                 return 0.0
             if isinstance(val, (int, float)):
                 return float(val)
@@ -444,8 +471,12 @@ def _parse_mov_xlsx(filepath, movements):
             except ValueError:
                 return 0.0
 
-        debito = parse_amount(row[10])
-        credito = parse_amount(row[11])
+        debito = parse_amount(safe_get('debito'))
+        credito = parse_amount(safe_get('credito'))
+
+        # Only register lines with actual flow to save memory
+        if debito == 0 and credito == 0:
+            continue
 
         key = (year, month, codigo)
         movements[key].append({
