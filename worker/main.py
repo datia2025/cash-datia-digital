@@ -107,23 +107,23 @@ INDICATOR_KEY_MAP = {
     'Margen EBITDA': 'margen_ebitda',
     'Retorno sobre Patrimonio (ROE)': 'roe',
     'Retorno sobre Activos (ROA)': 'roa',
-    'Utilidad Acumulada': 'ebitda',
+    'Utilidad Acumulada': 'utilidad_acumulada',
     'Patrimonio': 'patrimonio_relativo',
     # Estructura
-    'Endeudamiento Total': 'endeudamiento_total',
+    'Cobertura de Activos Fijos': 'cobertura_fijos',
+    'Estructura de la Deuda': 'estructura_deuda',
+    'Multiplicador de Capital': 'multiplicador_capital',
+    'Ratio de Capitalización': 'capitalizacion',
+    'Ratio de Deuda a Activos Tangibles': 'deuda_tangibles',
+    'Ratio de PropiedadAutonomía': 'propiedad_autonomia',
     'Relación DeudaPatrimonio': 'deuda_patrimonio',
-    'Multiplicador de Capital': 'apalancamiento',
-    'Cobertura de Intereses': 'cobertura_intereses',
-    'Ratio de Capitalización': 'endeudamiento_cp',
-    'Ratio de PropiedadAutonomía': 'autonomia_financiera',
-    'Cobertura de Activos Fijos': 'solvencia_total',
-    'Estructura de la Deuda': 'pasivo_corriente_ratio',
-    'Ratio de Deuda a Activos Tangibles': 'ingresos_totales',
     # Solvencia
-    'Cobertura de Cargos Fijos': 'costos_gastos_totales',
-    'Cobertura del Servicio de la Deuda': 'utilidad_neta',
-    'Ratio de Solvencia Patrimonial': 'utilidad_operacional',
-    'Deuda Neta a EBITDA': 'ebit',
+    'Cobertura de Cargos Fijos': 'cargos_fijos',
+    'Cobertura de Intereses': 'cobertura_intereses',
+    'Cobertura del Servicio de la Deuda': 'servicio_deuda',
+    'Deuda Neta a EBITDA': 'deuda_ebitda',
+    'Endeudamiento Total': 'endeudamiento_total',
+    'Ratio de Solvencia Patrimonial': 'solvencia_patrimonial',
 }
 
 # Module mapping from calculate_indicators MODULES dict
@@ -373,6 +373,35 @@ async def db_create_carga(empresa_id: int, fuente: str = 'siigo', nocodb_record_
         """, empresa_id, fuente, datetime.now().year, nocodb_record_id)
         return row['id']
 
+async def db_get_or_create_user(empresa_id: int, email: str, nombre_empresa: str) -> tuple:
+    """Find user by email or create them with a random password. Return (user_obj, is_new)."""
+    if not db_pool:
+        return {"email": email, "password": "demo", "nombre": nombre_empresa, "rol": "Demo"}, False
+
+    import secrets
+    import string
+
+    async with db_pool.acquire() as conn:
+        # 1. Try to find existing
+        row = await conn.fetchrow(
+            "SELECT email, password, nombre, rol, initials FROM usuarios WHERE email = $1",
+            email
+        )
+        if row:
+            return dict(row), False
+
+        # 2. Not found: Create new with random 8-char password
+        new_pass = ''.join(secrets.choice(string.ascii_letters + string.digits) for i in range(8))
+        initials = ''.join([n[0] for n in nombre_empresa.split() if n])[:2].upper() or "US"
+        
+        row = await conn.fetchrow("""
+            INSERT INTO usuarios (empresa_id, email, password, nombre, rol, initials)
+            VALUES ($1, $2, $3, $4, 'Analista Financiero', $5)
+            RETURNING email, password, nombre, rol, initials
+        """, empresa_id, email, new_pass, nombre_empresa, initials)
+        
+        return dict(row), True
+
 async def db_update_carga(carga_id: int, estado: str, resultado: str = None, match_rate: float = None):
     """Update carga status."""
     if not db_pool or carga_id == 0:
@@ -529,6 +558,33 @@ async def process_record(record_id: str):
 
         # Final Notification
         if user_email:
+            # Handle Auto-Management for Users
+            user_creds, es_nuevo = await db_get_or_create_user(empresa_id, user_email, empresa_nombre)
+            
+            # Welcome note if new user or recovery
+            access_note = ""
+            welcome_title = "Análisis Finalizado"
+            if es_nuevo:
+                welcome_title = "🚀 Bienvenida y Análisis Finalizado"
+                access_note = f"""
+                <div style="background:#F0F9FF; border-left:4px solid #0EA5E9; padding:16px; margin:20px 0; border-radius:6px; font-size:14px;">
+                  <p style="margin:0 0 10px 0;"><strong>🔑 Tus Credenciales de Acceso</strong></p>
+                  <p style="margin:0 0 5px 0;">Hemos habilitado tu portal financiero. Tus credenciales son:</p>
+                  <p style="margin:0;"><strong>Usuario:</strong> {user_email}</p>
+                  <p style="margin:0;"><strong>Contraseña Temporal:</strong> <span style="background:#fff; padding:2px 6px; border:1px solid #ddd; font-family:monospace;">{user_creds['password']}</span></p>
+                  <p style="margin:10px 0 0 0; color:#0369A1; font-size:12px;"><em>Recomendamos cambiar tu contraseña en el primer acceso.</em></p>
+                </div>
+                """
+            else:
+                 access_note = f"""
+                <div style="background:#F0F9FF; border-left:4px solid #0EA5E9; padding:16px; margin:20px 0; border-radius:6px; font-size:14px;">
+                  <p style="margin:0 0 10px 0;"><strong>🔑 Recordatorio de Acceso</strong></p>
+                  <p style="margin:0 0 5px 0;">Tu cuenta ya está activa:</p>
+                  <p style="margin:0;"><strong>Usuario:</strong> {user_email}</p>
+                  <p style="margin:10px 0 0 0; color:#0369A1; font-size:12px;">Usa tu contraseña habitual o solicita una recuperación si la has olvidado.</p>
+                </div>
+                """
+
             # Build accounting-language note based on account catalog type
             nota_contable = ""
             if es_puc_crudo:
@@ -571,6 +627,7 @@ async def process_record(record_id: str):
                 <li><strong>Fuente del plan de cuentas:</strong> {tipo_catalogo}</li>
                 <li><strong>Estado:</strong> Completado</li>
             </ul>
+            {access_note}
             <p>Ya puedes visualizar los resultados detallados en tu tablero de control.</p>
             {nota_contable}
             """
@@ -578,10 +635,10 @@ async def process_record(record_id: str):
                 user_email, 
                 f"📊 Análisis Disponible: {empresa_nombre}", 
                 get_email_template(
-                    "Análisis Finalizado", 
+                    welcome_title, 
                     email_body, 
                     "Ver Dashboard", 
-                    f"{DASHBOARD_URL}?empresa_id={empresa_id}"
+                    f"{DASHBOARD_URL}/login.html"
                 )
             )
 
@@ -779,13 +836,56 @@ async def trigger_ai_insights(request: AIInsightRequest, background_tasks: Backg
     )
 
 async def generate_ai_insights(record_id: str, module: str):
-    """Background task for LLM processing"""
-    print(f"Generating insights for {record_id} - Module: {module}")
-    # TODO: implement LLM or manual Antigravity protocol
+    """
+    Background task for LLM processing.
+    Requirement: Each insight (analysis and recommendation) must have 
+    an extension of approximately 50 words for depth and professional branding.
+    """
+    print(f"Generating insights for {record_id} - Module: {module} (Length: ~50 words)")
+    # TODO: implement LLM call using the 50-word constraint protocol
     pass
 
 
 # ── API Endpoints: Read (Dashboard Consumption) ────────────────
+# ── Auth Endpoints ─────────────────────────────────────────────
+class LoginRequest(BaseModel):
+    usuario: str
+    password: str
+
+@app.post("/api/auth/login")
+async def api_auth_login(req: LoginRequest):
+    """
+    Validate credentials against PostgreSQL usuarios table.
+    Requirement: self-managed access during data load.
+    """
+    if not db_pool:
+        # Fallback for dev environment
+        if req.usuario == "admin" and req.password == "datia2026":
+            return {"status": "success", "user": {"empresa": 1, "nombre": "Admin Demo", "rol": "Admin", "initials": "AD"}}
+        raise HTTPException(status_code=401, detail="DB connection unavailable for login")
+
+    async with db_pool.acquire() as conn:
+        row = await conn.fetchrow("""
+            SELECT empresa_id, email, nombre, rol, initials FROM public.usuarios 
+            WHERE email = $1 AND password = $2
+        """, req.usuario, req.password)
+        
+        if not row:
+            raise HTTPException(status_code=401, detail="Credenciales incorrectas")
+        
+        # Update last login
+        await conn.execute("UPDATE usuarios SET ultimo_login = NOW() WHERE email = $1", req.usuario)
+        
+        return {
+            "status": "success",
+            "user": {
+                "empresa": row['empresa_id'],
+                "nombre": row['nombre'],
+                "rol": row['rol'],
+                "initials": row['initials']
+            }
+        }
+
 @app.get("/api/indicadores/{empresa_id}")
 async def get_indicadores(
     empresa_id: int,
