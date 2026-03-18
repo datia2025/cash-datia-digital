@@ -33,15 +33,17 @@ def discover_mov_files():
     """
     found = {}
     for ext in ('csv', 'xlsx'):
-        for fp in glob.glob(os.path.join(SOURCES_DIR, f"Mov*.{ext}")):
-            basename = os.path.basename(fp)
-            # Extract year from filename (e.g. "Mov 2024.xlsx" -> 2024)
-            m = re.search(r'(\d{4})', basename)
-            if m:
-                year = int(m.group(1))
-                # .xlsx takes priority over .csv for the same year
-                if year not in found or ext == 'xlsx':
-                    found[year] = fp
+        # Search multiple casing patterns for Linux case-sensitivity
+        for pattern in (f"Mov*.{ext}", f"MOV*.{ext}", f"mov*.{ext}"):
+            for fp in glob.glob(os.path.join(SOURCES_DIR, pattern)):
+                basename = os.path.basename(fp)
+                # Extract year from filename (e.g. "Mov 2024.xlsx" -> 2024)
+                m = re.search(r'(\d{4})', basename)
+                if m:
+                    year = int(m.group(1))
+                    # .xlsx takes priority over .csv for the same year
+                    if year not in found or ext == 'xlsx':
+                        found[year] = fp
     files = [found[y] for y in sorted(found.keys())]
     if files:
         print(f"  Discovered {len(files)} movement files: {[os.path.basename(f) for f in files]}")
