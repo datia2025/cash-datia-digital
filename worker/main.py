@@ -1046,6 +1046,26 @@ async def get_status(record_id: str):
         return StatusResponse(status="error", message=str(e))
 
 
+@app.delete("/api/admin/clear_empresa/{empresa_id}")
+async def clear_empresa_data(empresa_id: int):
+    """
+    DANGER: Clear all data for a company (indicators, loads, users, company record).
+    Used for resetting data during deployment or auditing.
+    """
+    if not db_pool:
+        raise HTTPException(status_code=503, detail="Database not available")
+
+    async with db_pool.acquire() as conn:
+        async with conn.transaction():
+            # Delete in order of constraints
+            await conn.execute("DELETE FROM indicadores WHERE empresa_id = $1", empresa_id)
+            await conn.execute("DELETE FROM insights_ai WHERE empresa_id = $1", empresa_id)
+            await conn.execute("DELETE FROM cargas WHERE empresa_id = $1", empresa_id)
+            await conn.execute("DELETE FROM public.usuarios WHERE empresa_id = $1", empresa_id)
+            await conn.execute("DELETE FROM empresas WHERE id = $1", empresa_id)
+
+    return {"status": "success", "message": f"All data forced purged for ID {empresa_id}"}
+
 @app.get("/health")
 async def health():
     """Health check endpoint."""
