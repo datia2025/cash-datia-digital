@@ -75,3 +75,15 @@ Se detectó un punto de fricción en el despliegue de nuevas instancias donde la
 > [!IMPORTANT]
 > **Estatus de Despliegue**: El sistema ahora es "Zero-Config" para la capa de identidad, facilitando el on-boarding de múltiples empresas en entornos limpios de PostgreSQL.
 
+## 8. Operaciones de Mantenimiento y Purga (Audit Trail)
+**Fecha**: 19 de Marzo, 2026 (08:00 COT)
+
+Tras asegurar que el sistema es capaz de auto-proveer el esquema de usuarios, se implementó una herramienta de limpieza definitiva para facilitar el testeo de punta a punta.
+
+*   **Feature (Data Purge)**: Se habilitó el endpoint `DELETE /api/admin/clear_empresa/{empresa_id}`. Este comando realiza un borrado de tipo *Hard-Purge*, eliminando toda la jerarquía de datos (desde indicadores hasta el registro de la empresa) para permitir un "re-run" perfecto en entornos de producción o auditoría.
+*   **Estandarización de Esquema**: Se consolidó el uso del esquema **`public.usuarios`** en todo el Worker para evitar colisiones con el esquema de indicators (`liquidity`).
+
+---
+> [!CAUTION]
+> **Aviso de Integridad**: El uso del endpoint de limpieza es irreversible. Se recomienda su ejecución solo en fases de on-boarding o auditoría técnica.
+

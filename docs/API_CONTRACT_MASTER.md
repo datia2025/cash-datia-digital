@@ -39,11 +39,21 @@ Este es el punto de entrada neurálgico para la automatización. El endpoint ha 
 Endpoint de observabilidad crítica que informa sobre el estado de las dependencias vitales del sistema.
 - **Respuesta**: `{"status": "ok", "service": "liquidity-worker", "database": "connected"}`.
 
+### 2.3 `DELETE /api/admin/clear_empresa/{empresa_id}` (Hard-Purge de Auditoría)
+Endpoint administrativo de alta criticidad para limpieza profunda de datos.
+- **Función**: Elimina en cascada indicadores, insights, cargas, usuarios y el registro maestro de la empresa.
+- **Uso**: Reinicio de instancias para auditoría o corrección de cargas masivas fallidas.
+
 ---
 
-## 3. Especificación de Endpoints de Consulta (Data API)
+## 3. Especificación de Endpoints de Consulta y Seguridad
 
-### 3.1 `GET /api/indicadores/{empresa_id}` (Feed de Visualización)
+### 3.1 `POST /api/auth/login` (Identidad y Sesión)
+Valida credenciales contra la tabla `public.usuarios`.
+- **Payload**: `{"usuario": "email", "password": "..."}`.
+- **Seguridad**: Si el usuario no existe durante la carga de datos, el Worker lo crea dinámicamente con una clave aleatoria (Self-Provisioning).
+
+### 3.3 `GET /api/indicadores/{empresa_id}` (Feed de Visualización)
 Este endpoint extrae la serie temporal de indicadores persistidos en PostgreSQL. Soporta filtros avanzados para optimizar la carga del dashboard, permitiendo la recuperación selectiva por módulo o vigencia fiscal.
 
 **Parámetros de Query:**
