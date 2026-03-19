@@ -165,6 +165,18 @@ class AIInsightRequest(BaseModel):
     record_id: str
     module: str
 
+class InsightPayload(BaseModel):
+    """Direct insight injection payload (used by AI agents/Antigravity)"""
+    empresa_id: int
+    indicador_key: str
+    periodo_ano: int
+    periodo_mes: Optional[int] = None
+    tipo: str  # 'success' | 'warning' | 'danger' | 'info'
+    analisis_positivo: str
+    analisis_negativo: str
+    recomendacion: str
+    metodologia: Optional[str] = "Protocolo 50 Palabras - Lenguaje Gerencial"
+
 class StatusResponse(BaseModel):
     status: str
     message: str
@@ -273,10 +285,10 @@ def get_email_template(title: str, body: str, button_text: str = None, button_ur
     """
 
 # ── PostgreSQL Helpers ─────────────────────────────────────────
-async def db_get_or_create_empresa(nombre: str) -> int:
-    """Find company by name (case insensitive) or create it. Triple-safe."""
+async def db_get_or_create_empresa(nombre: str) -> tuple:
+    """Find company by name (case insensitive) or create it. Returns (id, is_new)."""
     if not db_pool:
-        return 1
+        return 1, False
 
     import hashlib
 
@@ -287,12 +299,12 @@ async def db_get_or_create_empresa(nombre: str) -> int:
             nombre.upper()
         )
         if row:
-            return row['id']
+            return row['id'], False
 
         # 2. Generate unique NIT from name hash
         nit_hash = str(int(hashlib.md5(nombre.upper().encode()).hexdigest(), 16) % 800000000 + 100000001)
 
-        # 3. Upsert: if NIT collision, update razon_social and return id
+        # 3. Upsert
         try:
             row = await conn.fetchrow("""
                 INSERT INTO empresas (razon_social, nit, sucursal, moneda_base)
@@ -308,7 +320,7 @@ async def db_get_or_create_empresa(nombre: str) -> int:
             )
             if row:
                 return row['id']
-            # 5. Last resort: return company 1 (MAS CONSULTA SAS)
+            # 5. Last resort: return company 1 (DATIA INTERNAL SAS)
             return 1
 
 async def db_save_indicators(empresa_id: int, carga_id: int, results: dict, modules_map: dict):
@@ -449,8 +461,35 @@ async def process_record(record_id: str):
             or record.get('title')
             or "Empresa Desconocida"
         )
-        empresa_id = await db_get_or_create_empresa(empresa_nombre)
-        log(f"Nombre de la Empresa: {empresa_nombre} -> ID asignado: {empresa_id}")
+        empresa_id, es_nueva_empresa = await db_get_or_create_empresa(empresa_nombre)
+        log(f"Nombre de la Empresa: {empresa_nombre} -> ID asignado: {empresa_id} (Nueva: {es_nueva_empresa})")
+        
+        # 1.5 Alert Support if it's a new company
+        if es_nueva_empresa:
+            support_email = "support@talentracking.com"
+            support_body = f"""
+            <div style="border-left: 4px solid #EF4444; padding-left: 15px;">
+                <h2 style="color: #1F2937; margin-top: 0;">🚨 Alerta: Nuevo Cliente Detectado</h2>
+                <p>Se ha iniciado el procesamiento de datos para una nueva entidad:</p>
+                <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
+                    <tr>
+                        <td style="padding: 8px; background: #F3F4F6; font-weight: bold; width: 150px;">Empresa:</td>
+                        <td style="padding: 8px; border-bottom: 1px solid #F3F4F6;">{empresa_nombre}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px; background: #F3F4F6; font-weight: bold;">ID Asignado:</td>
+                        <td style="padding: 8px; border-bottom: 1px solid #F3F4F6;">{empresa_id}</td>
+                    </tr>
+                </table>
+                <p style="margin-top: 20px;"><strong>Acción requerida:</strong> Favor iniciar el protocolo de generación de insights AI segmentado en cuanto finalice el procesamiento técnico.</p>
+            </div>
+            """
+            await send_email(
+                support_email,
+                f"🚨 NUEVO CLIENTE: {empresa_nombre}",
+                get_email_template("Alerta de Soporte", support_body, "Ver Dashboard", f"{DASHBOARD_URL}?empresa={empresa_id}")
+            )
+            log(f"📣 Alerta enviada a {support_email}")
         
         # 2. Check if attachments exist. If not, don't update NocoDB to avoid webhook loops!
         master_att = record.get("master_account", [])
@@ -857,6 +896,82 @@ async def generate_ai_insights(record_id: str, module: str):
     print(f"Generating insights for {record_id} - Module: {module} (Length: ~50 words)")
     # TODO: implement LLM call using the 50-word constraint protocol
     pass
+
+
+@app.post("/api/insights", response_model=StatusResponse)
+async def inject_insight(payload: InsightPayload):
+    """
+    Direct AI Insight Injection — Used by Antigravity/external agents.
+    SECURITY: Validates empresa_id exists before writing. Refuses orphan inserts.
+    Protocol: anti-mapping-error (documented in GUIA_GENERACION_INSIGHTS_AI.md)
+    """
+    if not db_pool:
+        raise HTTPException(status_code=503, detail="Database not available")
+
+    async with db_pool.acquire() as conn:
+        # ── ANTI-MAPPING GUARD: validate empresa exists ──────────────
+        empresa = await conn.fetchrow(
+            "SELECT id, razon_social FROM empresas WHERE id = $1", payload.empresa_id
+        )
+        if not empresa:
+            raise HTTPException(
+                status_code=422,
+                detail=(
+                    f"EMPRESA_ID {payload.empresa_id} no existe en producción. "
+                    "Valida primero con GET /api/empresas antes de inyectar insights. "
+                    "(Protocolo Anti-Mapping-Error — GUIA_GENERACION_INSIGHTS_AI.md)"
+                )
+            )
+
+        # ── INSERT with upsert logic ─────────────────────────────────
+        await conn.execute("""
+            INSERT INTO insights_ai (
+                empresa_id, indicador_key, periodo_ano, periodo_mes,
+                tipo, analisis_positivo, analisis_negativo, recomendacion, metodologia
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+            ON CONFLICT (empresa_id, indicador_key, periodo_ano, COALESCE(periodo_mes, -1))
+            DO UPDATE SET
+                tipo = EXCLUDED.tipo,
+                analisis_positivo = EXCLUDED.analisis_positivo,
+                analisis_negativo = EXCLUDED.analisis_negativo,
+                recomendacion = EXCLUDED.recomendacion,
+                metodologia = EXCLUDED.metodologia,
+                updated_at = NOW()
+        """,
+            payload.empresa_id, payload.indicador_key, payload.periodo_ano,
+            payload.periodo_mes, payload.tipo, payload.analisis_positivo,
+            payload.analisis_negativo, payload.recomendacion, payload.metodologia
+        )
+
+    print(f"✅ Insight inyectado: empresa={payload.empresa_id} | key={payload.indicador_key} | {payload.periodo_ano}")
+    return StatusResponse(
+        status="success",
+        message=f"Insight '{payload.indicador_key}' guardado para empresa {payload.empresa_id} ({empresa['razon_social']})"
+    )
+
+
+@app.delete("/api/insights/{empresa_id}", response_model=StatusResponse)
+async def delete_insights(empresa_id: int, periodo_ano: Optional[int] = Query(None)):
+    """
+    Delete insights for a company (optionally filtered by year).
+    Used to clean up orphan/incorrect injections.
+    """
+    if not db_pool:
+        raise HTTPException(status_code=503, detail="Database not available")
+
+    async with db_pool.acquire() as conn:
+        if periodo_ano:
+            deleted = await conn.fetchval(
+                "DELETE FROM insights_ai WHERE empresa_id=$1 AND periodo_ano=$2 RETURNING COUNT(*)",
+                empresa_id, periodo_ano
+            )
+        else:
+            deleted = await conn.fetchval(
+                "DELETE FROM insights_ai WHERE empresa_id=$1 RETURNING COUNT(*)",
+                empresa_id
+            )
+
+    return StatusResponse(status="success", message=f"{deleted or 0} insights eliminados para empresa {empresa_id}")
 
 
 # ── API Endpoints: Read (Dashboard Consumption) ────────────────
