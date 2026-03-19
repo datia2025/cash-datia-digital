@@ -1046,6 +1046,16 @@ async def get_status(record_id: str):
         return StatusResponse(status="error", message=str(e))
 
 
+@app.get("/api/admin/usuarios/{empresa_id}")
+async def get_empresa_usuarios(empresa_id: int):
+    """Admin tool to check users for a company."""
+    if not db_pool:
+        raise HTTPException(status_code=503, detail="Database not available")
+    async with db_pool.acquire() as conn:
+        rows = await conn.fetch("SELECT email, nombre, rol, initials, ultimo_login FROM public.usuarios WHERE empresa_id = $1", empresa_id)
+    return {"empresa_id": empresa_id, "usuarios": [dict(r) for r in rows]}
+
+
 @app.delete("/api/admin/clear_empresa/{empresa_id}")
 async def clear_empresa_data(empresa_id: int):
     """
