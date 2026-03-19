@@ -384,19 +384,20 @@ async def db_get_or_create_user(empresa_id: int, email: str, nombre_empresa: str
     async with db_pool.acquire() as conn:
         # 0. Ensure table exists
         await conn.execute("""
-            CREATE TABLE IF NOT EXISTS usuarios (
+            CREATE TABLE IF NOT EXISTS public.usuarios (
                 email VARCHAR PRIMARY KEY,
                 empresa_id INT,
                 password VARCHAR,
                 nombre VARCHAR,
                 rol VARCHAR,
-                initials VARCHAR
+                initials VARCHAR,
+                ultimo_login TIMESTAMP
             )
         """)
 
         # 1. Try to find existing
         row = await conn.fetchrow(
-            "SELECT email, password, nombre, rol, initials FROM usuarios WHERE email = $1",
+            "SELECT email, password, nombre, rol, initials FROM public.usuarios WHERE email = $1",
             email
         )
         if row:
@@ -407,7 +408,7 @@ async def db_get_or_create_user(empresa_id: int, email: str, nombre_empresa: str
         initials = ''.join([n[0] for n in nombre_empresa.split() if n])[:2].upper() or "US"
         
         row = await conn.fetchrow("""
-            INSERT INTO usuarios (empresa_id, email, password, nombre, rol, initials)
+            INSERT INTO public.usuarios (empresa_id, email, password, nombre, rol, initials)
             VALUES ($1, $2, $3, $4, 'Analista Financiero', $5)
             RETURNING email, password, nombre, rol, initials
         """, empresa_id, email, new_pass, nombre_empresa, initials)

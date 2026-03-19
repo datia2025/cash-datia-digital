@@ -162,7 +162,7 @@ La integridad de los datos se basa en la consistencia de las llaves primarias y 
 | `initials` | VARCHAR | Metadato de personalización de UI. |
 
 > [!TIP]
-> **Aprovisionamiento Dinámico**: Esta tabla es creada automáticamente por el Python Worker en su primer acceso si no existe, garantizando que el sistema sea capaz de "curarse" a sí mismo (Self-Healing) durante el primer flujo de procesamiento.
+> **Aprovisionamiento Dinámico**: Esta tabla (`public.usuarios`) es creada automáticamente por el Python Worker en su primer acceso si no existe, garantizando que el sistema sea capaz de "curarse" a sí mismo (Self-Healing) durante el primer flujo de procesamiento.
 
 ---
 

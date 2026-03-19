@@ -21,7 +21,7 @@ El ciclo de vida del acceso de un usuario se activa de forma reactiva ante la ca
     - Confirmación del éxito del cálculo.
     - **Bloque de Acceso**: Usuario (email) y contraseña temporal.
     - Enlace directo al portal de login.
-5.  **Aprovisionamiento de Esquema (Self-Healing)**: El Worker verifica y crea la tabla `usuarios` automáticamente si no existe en la base de datos PostgreSQL, eliminando errores de despliegue inicial.
+5.  **Aprovisionamiento de Esquema (Self-Healing)**: El Worker verifica y crea la tabla `public.usuarios` automáticamente si no existe en la base de datos PostgreSQL, eliminando errores de despliegue inicial.
 
 ## 3. Componentes Técnicos
 
