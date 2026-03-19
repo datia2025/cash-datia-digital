@@ -1167,9 +1167,22 @@ async def get_empresa_usuarios(empresa_id: int):
     if not db_pool:
         raise HTTPException(status_code=503, detail="Database not available")
     async with db_pool.acquire() as conn:
-        rows = await conn.fetch("SELECT email, nombre, rol, initials, ultimo_login FROM public.usuarios WHERE empresa_id = $1", empresa_id)
+        rows = await conn.fetch("SELECT email, password, nombre, rol, initials, ultimo_login FROM public.usuarios WHERE empresa_id = $1", empresa_id)
     return {"empresa_id": empresa_id, "usuarios": [dict(r) for r in rows]}
 
+@app.post("/api/admin/reset_password/{empresa_id}")
+async def reset_password(empresa_id: int, payload: dict):
+    if not db_pool:
+        raise HTTPException(status_code=503, detail="Database not available")
+    email = payload.get("email")
+    new_password = payload.get("new_password")
+    
+    async with db_pool.acquire() as conn:
+        updated = await conn.execute(
+            "UPDATE public.usuarios SET password = $1 WHERE empresa_id = $2 AND email = $3",
+            new_password, empresa_id, email
+        )
+    return {"status": "success", "message": f"Clave actualizada para {email}: {updated}"}
 
 @app.delete("/api/admin/clear_empresa/{empresa_id}")
 async def clear_empresa_data(empresa_id: int):
