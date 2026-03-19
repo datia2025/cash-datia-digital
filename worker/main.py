@@ -171,7 +171,7 @@ class InsightPayload(BaseModel):
     indicador_key: str
     periodo_ano: int
     periodo_mes: Optional[int] = None
-    tipo: str  # 'success' | 'warning' | 'danger' | 'info'
+    tipo: str  # 'success' | 'warning' | 'danger' | 'info' (info maps to success)
     analisis_positivo: str
     analisis_negativo: str
     recomendacion: str
@@ -901,15 +901,18 @@ async def generate_ai_insights(record_id: str, module: str):
 @app.post("/api/insights", response_model=StatusResponse)
 async def inject_insight(payload: InsightPayload):
     """
-    Direct AI Insight Injection — Used by Antigravity/external agents.
+    Direct AI Insight Injection - Used by Antigravity/external agents.
     SECURITY: Validates empresa_id exists before writing. Refuses orphan inserts.
     Protocol: anti-mapping-error (documented in GUIA_GENERACION_INSIGHTS_AI.md)
     """
     if not db_pool:
         raise HTTPException(status_code=503, detail="Database not available")
 
+    # Map 'info' to 'success' (DB constraint only allows success/warning/danger)
+    tipo_db = payload.tipo if payload.tipo in ('success', 'warning', 'danger') else 'success'
+
     async with db_pool.acquire() as conn:
-        # ── ANTI-MAPPING GUARD: validate empresa exists ──────────────
+        # Anti-mapping guard: validate empresa exists
         empresa = await conn.fetchrow(
             "SELECT id, razon_social FROM empresas WHERE id = $1", payload.empresa_id
         )
@@ -917,33 +920,31 @@ async def inject_insight(payload: InsightPayload):
             raise HTTPException(
                 status_code=422,
                 detail=(
-                    f"EMPRESA_ID {payload.empresa_id} no existe en producción. "
+                    f"EMPRESA_ID {payload.empresa_id} no existe en produccion. "
                     "Valida primero con GET /api/empresas antes de inyectar insights. "
-                    "(Protocolo Anti-Mapping-Error — GUIA_GENERACION_INSIGHTS_AI.md)"
+                    "(Protocolo Anti-Mapping-Error - GUIA_GENERACION_INSIGHTS_AI.md)"
                 )
             )
 
-        # ── INSERT with upsert logic ─────────────────────────────────
+        # DELETE existing then INSERT (avoids ON CONFLICT complexity with nullable periodo_mes)
+        await conn.execute("""
+            DELETE FROM insights_ai
+            WHERE empresa_id=$1 AND indicador_key=$2 AND periodo_ano=$3
+              AND (periodo_mes=$4 OR (periodo_mes IS NULL AND $4 IS NULL))
+        """, payload.empresa_id, payload.indicador_key, payload.periodo_ano, payload.periodo_mes)
+
         await conn.execute("""
             INSERT INTO insights_ai (
                 empresa_id, indicador_key, periodo_ano, periodo_mes,
                 tipo, analisis_positivo, analisis_negativo, recomendacion, metodologia
             ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-            ON CONFLICT (empresa_id, indicador_key, periodo_ano, COALESCE(periodo_mes, -1))
-            DO UPDATE SET
-                tipo = EXCLUDED.tipo,
-                analisis_positivo = EXCLUDED.analisis_positivo,
-                analisis_negativo = EXCLUDED.analisis_negativo,
-                recomendacion = EXCLUDED.recomendacion,
-                metodologia = EXCLUDED.metodologia,
-                updated_at = NOW()
         """,
             payload.empresa_id, payload.indicador_key, payload.periodo_ano,
-            payload.periodo_mes, payload.tipo, payload.analisis_positivo,
+            payload.periodo_mes, tipo_db, payload.analisis_positivo,
             payload.analisis_negativo, payload.recomendacion, payload.metodologia
         )
 
-    print(f"✅ Insight inyectado: empresa={payload.empresa_id} | key={payload.indicador_key} | {payload.periodo_ano}")
+    print(f"Insight inyectado: empresa={payload.empresa_id} | key={payload.indicador_key} | {payload.periodo_ano}")
     return StatusResponse(
         status="success",
         message=f"Insight '{payload.indicador_key}' guardado para empresa {payload.empresa_id} ({empresa['razon_social']})"
@@ -961,17 +962,17 @@ async def delete_insights(empresa_id: int, periodo_ano: Optional[int] = Query(No
 
     async with db_pool.acquire() as conn:
         if periodo_ano:
-            deleted = await conn.fetchval(
-                "DELETE FROM insights_ai WHERE empresa_id=$1 AND periodo_ano=$2 RETURNING COUNT(*)",
+            await conn.execute(
+                "DELETE FROM insights_ai WHERE empresa_id=$1 AND periodo_ano=$2",
                 empresa_id, periodo_ano
             )
         else:
-            deleted = await conn.fetchval(
-                "DELETE FROM insights_ai WHERE empresa_id=$1 RETURNING COUNT(*)",
+            await conn.execute(
+                "DELETE FROM insights_ai WHERE empresa_id=$1",
                 empresa_id
             )
 
-    return StatusResponse(status="success", message=f"{deleted or 0} insights eliminados para empresa {empresa_id}")
+    return StatusResponse(status="success", message=f"Insights eliminados para empresa {empresa_id}")
 
 
 # ── API Endpoints: Read (Dashboard Consumption) ────────────────
