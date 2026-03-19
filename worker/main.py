@@ -926,21 +926,20 @@ async def inject_insight(payload: InsightPayload):
                 )
             )
 
-        # DELETE existing then INSERT (avoids ON CONFLICT complexity with nullable periodo_mes)
+        # DELETE existing then INSERT (periodo_mes NOT in production table)
         await conn.execute("""
             DELETE FROM insights_ai
             WHERE empresa_id=$1 AND indicador_key=$2 AND periodo_ano=$3
-              AND (periodo_mes=$4 OR (periodo_mes IS NULL AND $4 IS NULL))
-        """, payload.empresa_id, payload.indicador_key, payload.periodo_ano, payload.periodo_mes)
+        """, payload.empresa_id, payload.indicador_key, payload.periodo_ano)
 
         await conn.execute("""
             INSERT INTO insights_ai (
-                empresa_id, indicador_key, periodo_ano, periodo_mes,
+                empresa_id, indicador_key, periodo_ano,
                 tipo, analisis_positivo, analisis_negativo, recomendacion, metodologia
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
         """,
             payload.empresa_id, payload.indicador_key, payload.periodo_ano,
-            payload.periodo_mes, tipo_db, payload.analisis_positivo,
+            tipo_db, payload.analisis_positivo,
             payload.analisis_negativo, payload.recomendacion, payload.metodologia
         )
 
