@@ -382,6 +382,18 @@ async def db_get_or_create_user(empresa_id: int, email: str, nombre_empresa: str
     import string
 
     async with db_pool.acquire() as conn:
+        # 0. Ensure table exists
+        await conn.execute("""
+            CREATE TABLE IF NOT EXISTS usuarios (
+                email VARCHAR PRIMARY KEY,
+                empresa_id INT,
+                password VARCHAR,
+                nombre VARCHAR,
+                rol VARCHAR,
+                initials VARCHAR
+            )
+        """)
+
         # 1. Try to find existing
         row = await conn.fetchrow(
             "SELECT email, password, nombre, rol, initials FROM usuarios WHERE email = $1",
