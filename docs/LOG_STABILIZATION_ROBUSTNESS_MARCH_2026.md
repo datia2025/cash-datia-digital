@@ -63,3 +63,15 @@ Se detectó una inconsistencia crítica en el sistema de autenticación durante 
 > [!NOTE]
 > Todos estos ajustes han sido validados mediante auditoría visual directa en navegador (Chrome/Edge) y cumplen con los estándares de diseño premium exigidos para la suite de Datia.
 
+## 7. Automatización de Esquema y Aprovisionamiento (Identity Ops)
+**Fecha**: 19 de Marzo, 2026 (07:00 COT)
+
+Se detectó un punto de fricción en el despliegue de nuevas instancias donde la tabla de `usuarios` podía no estar presente al momento de finalizar la primera carga.
+
+*   **Ajuste de Robustez (Self-Healing Schema)**: Se modificó la función `db_get_or_create_user` en el Worker para incluir un bloque `CREATE TABLE IF NOT EXISTS`. Esto garantiza que el sistema sea capaz de "curarse" a sí mismo durante el primer flujo de procesamiento sin intervención manual de un DBA.
+*   **Flujo de Bienvenida**: Se verificó el flujo de envío de emails SMTP, asegurando que las credenciales autogeneradas lleguen al cliente inmediatamente después de que el motor de indicadores termine su ejecución.
+
+---
+> [!IMPORTANT]
+> **Estatus de Despliegue**: El sistema ahora es "Zero-Config" para la capa de identidad, facilitando el on-boarding de múltiples empresas en entornos limpios de PostgreSQL.
+
