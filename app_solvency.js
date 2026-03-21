@@ -135,6 +135,7 @@ function getComparativeInsights(filter) {
 }
 
 
+// Función para mostrar el Dictamen (estilo Lean Premium - siempre visible)
 function updateDictamen() {
     const yearFilter = document.getElementById('yearFilter').value;
     const quarterFilter = document.getElementById('quarterFilter').value;
@@ -142,23 +143,22 @@ function updateDictamen() {
 
     if (!container) return;
 
-    let targetYear = (yearFilter === 'all' || yearFilter === 'Todos') ? "2025" : yearFilter;
+    let targetYear = (yearFilter === 'all' || yearFilter === 'Todos') ? 2025 : parseInt(yearFilter);
     let periodKey = (quarterFilter === 'all' || quarterFilter === 'Todos') ? "Annual" : quarterFilter;
 
-    const yearData = (typeof auditRepositorySolvency !== 'undefined' && empresaId === 1) ? auditRepositorySolvency[targetYear] : null;
-    const report = yearData?.[periodKey]?.report;
+    // 1. PRIORIDAD: Buscar en Insights dinámicos (Base de Datos)
+    let dynamicReport = null;
+    if (dbInsights && dbInsights.length > 0) {
+        dynamicReport = dbInsights.find(ins => 
+            (ins.year === targetYear || ins.periodo_ano === targetYear) && 
+            ins.period_key === periodKey &&
+            (ins.indicador_key === 'report' || ins.indicador_key === 'insight-solvencia-ai' || ins.indicador_key === 'solvencia')
+        );
+    }
 
-    const statusColors = {
-        success: { accent: '#10b981', bg: 'rgba(16, 185, 129, 0.1)', text: '#059669' },
-        warning: { accent: '#f59e0b', bg: 'rgba(245, 158, 11, 0.1)', text: '#92400e' },
-        danger:  { accent: '#ef4444', bg: 'rgba(239, 68, 68, 0.1)',  text: '#991b1b'  }
-    };
-
-    const status = report?.status || 'warning';
-    const c = statusColors[status] || statusColors.warning;
-    const title = report ? (report.title[currentLanguage] || report.title.es) : (currentLanguage === 'es' ? 'Diagnóstico No Disponible' : 'Diagnosis Not Available');
-    const text = report ? (report.text[currentLanguage] || report.text.es) : (currentLanguage === 'es' ? 'No se han generado hallazgos de auditoría para este periodo aún. Los indicadores técnicos se muestran a continuación.' : 'No audit findings have been generated for this period yet. Technical indicators are shown below.');
-    const parsedText = typeof marked !== 'undefined' ? marked.parse(text) : text.replace(/\n/g, '<br>');
+    const pos = dynamicReport?.analisis_positivo || (currentLanguage === 'es' ? "No se registran hallazgos positivos en solvencia para este periodo." : "No positive solvency findings recorded.");
+    const neg = dynamicReport?.analisis_negativo || (currentLanguage === 'es' ? "No hay alertas criticas de solvencia en este periodo." : "No critical solvency alerts.");
+    const acc = dynamicReport?.recomendacion || (currentLanguage === 'es' ? "Monitorear niveles de endeudamiento y cobertura." : "Monitor debt levels and coverage.");
 
     container.innerHTML = `
         <style>
@@ -166,149 +166,113 @@ function updateDictamen() {
                 background: white;
                 border-radius: 12px;
                 padding: 24px;
-                box-shadow: 0 4px 20px rgba(0,0,0,0.05);
-                border: 1px solid #e0e0e0;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+                border: 1px solid #f1f5f9;
                 margin-bottom: 20px;
-                animation: fadeSlideIn 0.5s ease-out;
-                font-family: 'Inter', sans-serif;
+                animation: fadeIn 0.4s ease-out;
             }
             .lean-header {
                 display: flex;
                 justify-content: space-between;
-                align-items: flex-start;
-                margin-bottom: 12px;
-                padding-bottom: 8px;
-                border-bottom: 1px solid #f1f2f6;
-            }
-            .lean-company-meta h2 {
-                font-size: 0.95rem;
-                font-weight: 800;
-                color: #0A1F44;
-                margin: 0;
-                letter-spacing: -0.02em;
-            }
-            .lean-company-meta p {
-                font-size: 0.72rem;
-                color: #94a3b8;
-                margin: 0;
-            }
-            .lean-status-badge {
-                font-size: 0.65rem;
-                font-weight: 700;
-                padding: 4px 12px;
-                border-radius: 20px;
-                background: ${c.bg};
-                color: ${c.text};
-                display: flex;
                 align-items: center;
-                gap: 6px;
-                height: fit-content;
+                margin-bottom: 20px;
+                padding-bottom: 12px;
+                border-bottom: 1px solid #f8fafc;
             }
-            .lean-badge-dot {
-                width: 6px;
-                height: 6px;
-                background: ${c.accent};
-                border-radius: 50%;
-                box-shadow: 0 0 8px ${c.accent};
-            }
-
-            .lean-grid {
-                display: flex;
-                gap: 32px;
-            }
-
-            .lean-column-left {
-                width: 320px;
-                border-right: 1px solid #f1f2f6;
-                padding-right: 24px;
-                flex-shrink: 0;
-            }
-            .lean-column-right {
-                flex-grow: 1;
-                padding-left: 0;
-            }
-            .lean-section-title {
+            .company-name-lean {
                 font-size: 0.9rem;
                 font-weight: 800;
-                color: #0A1F44;
-                margin-bottom: 0.75rem;
+                color: #0f172a;
+                text-transform: uppercase;
+                letter-spacing: -0.01em;
+            }
+            .status-tag {
+                font-size: 0.65rem;
+                font-weight: 700;
+                color: #10b981;
+                display: flex;
+                align-items: center;
+                gap: 5px;
+            }
+            .insight-columns-grid {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 20px;
+            }
+            .insight-card {
+                padding: 16px;
+                border-radius: 10px;
+                font-size: 0.85rem;
+                line-height: 1.6;
+                color: #475569;
+                border-left: 4px solid #e2e8f0;
+                background: #fbfcfd;
+                transition: all 0.2s ease;
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+            }
+            .insight-card:hover {
+                background: white;
+                box-shadow: 0 6px 15px rgba(0,0,0,0.05);
+                transform: translateY(-2px);
+            }
+            .card-header-icon {
                 display: flex;
                 align-items: center;
                 gap: 8px;
-                letter-spacing: -0.01em;
-            }
-            .lean-risk-item {
-                display: flex;
-                align-items: center;
-                gap: 10px;
-                padding: 6px 10px;
-                background: #f8fafc;
-                border-radius: 6px;
-                margin-bottom: 6px;
-                font-size: 0.8rem;
-                color: #475569;
-                border: 1px solid transparent;
-                transition: all 0.2s ease;
-            }
-            .lean-risk-icon { color: #1E4E79; opacity: 0.8; }
-
-            .lean-audit-body {
-                column-count: 2;
-                column-gap: 30px;
-                column-rule: 1px solid #f1f2f6;
-            }
-            .lean-audit-body h3 {
-                break-inside: avoid-column;
-                font-size: 0.7rem;
                 font-weight: 800;
-                text-transform: uppercase;
-                color: #1E4E79;
-                margin: 0 0 0.25rem;
-                padding: 0;
-                letter-spacing: 0.05em;
-            }
-            .lean-audit-body p {
-                break-inside: avoid-column;
                 font-size: 0.75rem;
-                color: #475569;
-                line-height: 1.5;
-                margin: 0 0 1rem;
+                text-transform: uppercase;
             }
-            @keyframes fadeSlideIn {
-                from { opacity: 0; transform: translateY(10px); }
-                to { opacity: 1; transform: translateY(0); }
+            .card-pos { border-color: #10b981; }
+            .card-neg { border-color: #f59e0b; }
+            .card-acc { border-color: #3b82f6; }
+            .insight-text-render {
+                text-align: justify;
+                hyphens: auto;
             }
+            @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         </style>
-
+        
         <div class="dictamen-lean">
             <div class="lean-header">
-                <div class="lean-company-meta">
-                    <h2>${currentCompany.name.toUpperCase()}</h2>
-                    <p>Sector: ${currentCompany.sector} | Diagnóstico de Solvencia</p>
+                <div class="company-name-lean">
+                    ${currentCompany.name.toUpperCase()}
+                    <span class="text-slate-400 font-normal ml-2 lowercase" style="font-size: 0.72rem">Sector: ${currentCompany.sector || 'Consultoría / Servicios'} | Diagnóstico de Solvencia</span>
                 </div>
-                <div class="lean-status-badge">
-                    <div class="lean-badge-dot"></div>
+                <div class="status-tag">
+                    <div style="width: 5px; height: 5px; border-radius: 50%; background: #10b981; box-shadow: 0 0 6px #10b981"></div>
                     PERFIL ACTIVO
                 </div>
             </div>
 
-            <div class="lean-grid">
-                <div class="lean-column-left">
-                    <div class="lean-section-title">RIESGOS DETECTADOS</div>
-                    ${(currentCompany.risks.solvencia || []).map(r => `
-                        <div class="lean-risk-item">
-                            <i data-lucide="${r.icon}" class="lean-risk-icon" style="width: 14px; height: 14px;"></i>
-                            <span>${r.text}</span>
-                        </div>
-                    `).join('')}
+            <div class="insight-columns-grid">
+                
+                <!-- POSITIVO -->
+                <div class="insight-card card-pos">
+                    <div class="card-header-icon" style="color: #059669">
+                        <i data-lucide="check-circle" size="16"></i> POSITIVO
+                    </div>
+                    <div class="insight-text-render">${pos}</div>
                 </div>
 
-                <div class="lean-column-right">
-                    <div class="lean-section-title">${title}</div>
-                    <div class="lean-audit-body">
-                        ${parsedText}
+                <!-- ALERTA -->
+                <div class="insight-card card-neg">
+                    <div class="card-header-icon" style="color: #d97706">
+                        <i data-lucide="alert-triangle" size="16"></i> ALERTA
                     </div>
+                    <div class="insight-text-render">${neg}</div>
                 </div>
+
+                <!-- ACCION -->
+                <div class="insight-card card-acc">
+                    <div class="card-header-icon" style="color: #2563eb">
+                        <i data-lucide="zap" size="16"></i> ACCIÓN
+                    </div>
+                    <div class="insight-text-render">${acc}</div>
+                </div>
+
             </div>
         </div>
     `;

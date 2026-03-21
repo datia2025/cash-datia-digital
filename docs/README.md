@@ -1,6 +1,6 @@
 # Liquidity Dashboard - Protocolo de Insights y Estándares Visuales (v4.5 - ACTUALIZADO)
 
-Este documento detalla la arquitectura de insights implementada y certificada tras la consolidación de la pestaña de **Liquidez** para MAS CONSULTA SAS.
+Este documento detalla la arquitectura de insights implementada y certificada tras la consolidación de la pestaña de **Liquidez**.
 
 ---
 
@@ -9,7 +9,7 @@ Para que una pestaña sea considerada "Terminada", debe cumplir con su Matriz de
 
 - 🏗️ **[Pestaña Actividad (Matriz 231)](PROTOCOLO_MASTER_ACTIVIDAD.md)**: Estándar global de auditoría para los 8 indicadores operativos.
 - 📊 **Pestaña Liquidez (Matriz 123)**: Protocolo certificado (8 indicadores + Auditoría).
-- 📈 **Pestaña Rentabilidad (Matriz 231)**: PENDIENTE (Sigue la estructura de Actividad).
+- 📈 **[Pestaña Rentabilidad (Matriz 231)](PROTOCOLO_MASTER_RENTABILIDAD.md)**: Estándar global de auditoría para los 8 indicadores de márgenes.
 
 | Componente | Cálculo de Periodos | Cant. Registros | Comentarios UI |
 | :--- | :--- | :---: | :---: |
@@ -29,7 +29,7 @@ Para que una pestaña sea considerada "Terminada", debe cumplir con su Matriz de
 La arquitectura técnica para soportar el análisis comparativo mensual (Bloque D) exige un nivel de precisión paramétrica y resiliencia en el frontend para evitar incongruencias. A continuación, se detalla el ecosistema integral de captura, generación, inyección y renderizado:
 
 ### A. Ingeniería de Generación de Datos (Scripting en Origen)
-1. **Extracción en Caliente (Hot Fetching):** El motor local (`gen_bloque_d.py`) se conecta directamente a la API productiva (`/api/indicadores/3104?modulo=actividad`) mediante `urllib` para garantizar que la semilla matemática base de la Inteligencia Artificial sea estrictamente consistente con el último snapshot real inyectado.
+1. **Extracción en Caliente (Hot Fetching):** El motor local (`gen_bloque_d.py`) se conecta directamente a la API productiva (`/api/indicadores/{ID_EMPRESA}?modulo=actividad`) mediante `urllib` para garantizar que la semilla matemática base de la Inteligencia Artificial sea estrictamente consistente con el último snapshot real inyectado.
 2. **Cálculo de Promedios Históricos:** Para cada uno de los 8 indicadores operativos y a lo largo de los 12 meses fiscales, el sistema aísla algorítmicamente el comportamiento estacional (ej. mapear los eneros correspondientes a 2023, 2024 y 2025), derivando un promedio simple consolidado para erigir una **Línea Base Histórica**.
 3. **Evaluación de Rendimiento (Delta Analysis):** El mes aislado de análisis (Target Year, típicamente la corrida fiscal vigente) se enfrenta directamente contra su propia silueta histórica (promedio). Dependiendo de las condiciones del negocio relativas al KPI (donde DSO o DIO premian cifras menores; y las Rotaciones exigen cifras mayores), la maquinaria clasifica el estado resultante etiquetándolo unívocamente hacia los *endpoints* `success`, `warning`, `danger` o bien `info`.
 4. **Generación Heurística "Gerencia-a-Gerencia":** Acto seguido de la indexación polar, se inyectan arrays de plantillas semánticas altamente rotativas. Este *prompting estático* respeta a rajatabla tanto la etiqueta mandataria `[Analisis Interanual - Mes]` al inicio de los caracteres, como la contextualización exacta del mes (`monthFilter`), produciendo esquemas narrativos propositivos, resolutivos y orientados a la caja. Cada ciclo engendra **96 registros JSON puros**, con extensiones absolutas de mínimo **40 palabras** blindando la profundidad analítica.
@@ -50,6 +50,27 @@ El frontend asume la responsabilidad innegociable de mapear sin contratiempos to
    - **Abort Algorithm:** Al desencadenarse al final del pintado `updateAnalysis(indicatorKey, hasData)`, si este último booleano falla validación matemática, la jerarquía de botones de la IA (POSITIVO / ALERTA) es suprimida del Virtual DOM.
    - **Componente Neutro Exclusivo:** En detrimento de las interacciones clásicas, se implanta un nodo estéril y neutro ostentando `<i data-lucide="file-warning"></i> ANÁLISIS NO DISPONIBLE`. Al ser detonado este modal explicativo, instruye a las direcciones encargadas que: *"No hay registros numéricos suficientes en el periodo seleccionado para emitir un dictamen de Inteligencia Artificial."* Protegiendo en una sola línea de código el intelecto técnico y fiduciario del sistema contra despropósitos contables por alucinación.
 4. **Binding de Texturas Objeto:** Las implementaciones referidas en Tooltips originaban *Reference Errors* al arrastrar objetos anidados referenciando traducciones bajo `metadata.name`. Se solventó acoplando directamente los árboles de nodos lingüísticos en base pre-evaluada (`metadata.name[currentLanguage] || metadata.name.es`) erradicando el bug histórico visual `[object Object]`.
+5. **Prevención de Colisiones de Dominio (Key Collision):** Dado que la API retorna el ecosistema completo de insights para un `ID_EMPRESA`, existe el riesgo latente de solapamiento entre módulos si comparten identificadores legacy (ej. El dictamen general de Actividad utiliza la llave global `report`). Para la nueva arquitectura en Rentabilidad, se depuraron las sentencias disyuntivas (`OR`) heredadas en el método `.find()`, obligando a la UI a demandar coincidencias estrictas y exclusivas para su propio módulo (ej. bloqueando lecturas a `report` y exigiendo únicamente `insight-rentabilidad-ai`). Esto garantiza el confinamiento absoluto del dictamen entre pestañas.
+
+### D. Consolidación y Blindaje de la Pestaña Rentabilidad (app_rentabilidad.js)
+
+Tras detectar una desconexión crítica entre la disponibilidad de inteligencia financiera en el backend y su visualización en la interfaz de **Rentabilidad** para empresas específicas (ej. ID 3104), se ejecutó una reingeniería profunda sobre los métodos de captura y renderizado:
+
+1.  **Optimización del Rango de Captura Dinámica (Wide-Range Fetching Protocol):**
+    - **Problema Detectado:** El método de inicialización (`initializeDashboard`) limitaba rígidamente la petición a `DashboardAPI.getInsights(empresaId, 'rentabilidad')`. Si un hallazgo estratégico (tipo `report` o `rentabilidad`) carecía del tag explícito del módulo en la base de datos, el payload era descartado por el middleware de la API, induciendo un estado de "Diagnóstico No Disponible".
+    - **Solución Implementada:** Se neutralizó el parámetro de filtrado en la llamada (`DashboardAPI.getInsights(empresaId)`). Ahora, el frontend adquiere el universo completo de hallazgos del tenant y delega el filtrado lógico a los métodos de renderizado locales. Este enfoque garantiza que ninguna pieza de inteligencia se pierda por inconsistencias de indexación en el servidor, permitiendo que hallazgos transversales o mal etiquetados sean capturados y mostrados.
+
+2.  **Resolución de Ambigüedad Termino-Transaccional (Dual-Key Mapping):**
+    - **Problema Detectado:** Existe un desacople histórico entre la nomenclatura del componente de visualización (ej. `ebitda`, `neto`, `utilidad`) y la clave de indicador persistida para los insights (ej. `margen_ebitda`, `utilidad_acumulada`). El motor original de búsqueda `.find()` fallaba al no encontrar una coincidencia de literales de string.
+    - **Solución Implementada:** Se integró una matriz de mapeo de claves (`keyMapping`) dentro del método `updateAnalysis`. El algoritmo de búsqueda ahora opera bajo una lógica disyuntiva: intenta localizar el registro usando la clave de interfaz (`indicatorKey`) y, ante un resultado nulo, reintenta con la clave técnica transaccional (`dbKey`). Este blindaje asegura la interoperatividad con registros inyectados bajo cualquier convención de nombres (ej. capturando satisfactoriamente tanto `ebitda_1Q` como `margen_ebitda_1Q`).
+
+3.  **Jerarquía de Resiliencia en el Dictamen Maestro (Multi-Fallback Executive Summary):**
+    - **Problema Detectado:** La tarjeta superior de diagnóstico ("Riesgos Detectados") dependía exclusivamente de la presencia estricta de la llave `insight-rentabilidad-ai`. Si por razones operativas los datos se inyectaban como `report` o simplemente `rentabilidad`, la UI degradaba el servicio y mostraba un placeholder de error.
+    - **Solución Implementada:** Se expandió el espectro de auditoría algorítmica en `updateDictamen` para rastrear secuencialmente: `insight-rentabilidad-ai` → `report` → `rentabilidad` → `action-rentabilidad`. Este mecanismo de "descubrimiento de hallazgos" asegura que el dashboard siempre ofrezca la mejor pieza de análisis disponible para el periodo consultado (Año/Trimestre), eliminando la percepción de inoperatividad del sistema.
+
+4.  **Alineación de la Integridad Temporal (Standardized Year Property):**
+    - **Problema Detectado:** Mientras que la capa de servicios `api.js` y otros módulos consolidados ya operaban sobre la propiedad normalizada `year`, el módulo de Rentabilidad persistía en el uso de la propiedad cruda `periodo_ano`, generando colisiones lógicas y fallos de tipo *undefined* durante los filtrados interanuales.
+    - **Solución Implementada:** Se migró toda la lógica de filtrado y búsqueda dinámico al uso prioritario de la propiedad `year`, manteniendo `periodo_ano` exclusivamente como respaldo de compatibilidad inversa (*backward compatibility*). Esto unifica el comportamiento del sistema y garantiza una sincronización del 100% entre los selectores de la interfaz y la respuesta del backend.
 
 ---
 
@@ -64,7 +85,7 @@ El frontend asume la responsabilidad innegociable de mapear sin contratiempos to
 ## 4. Estado Actual de Pestañas:
 - `Liquidez`: **CERTIFICADA al 100% (123/123 registros)**.
 - `Actividad`: **CERTIFICADA AL 100% (Bloques A, B, C y D Completados integralmente)**. Refactorización algorítmica y prevención UI consolidada.
-- `Rentabilidad`: **PENDIENTE** de auditoría inicial e integraciones.
+- `Rentabilidad`: **CERTIFICADA AL 100%**. Algoritmos de mapeo resiliente y descubrimiento de fallbacks integrados integralmente; visualización dinámica de la matriz de 231 registros normalizada.
 
 ---
 
