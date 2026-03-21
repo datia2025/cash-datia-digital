@@ -71,7 +71,7 @@ for ind_key, values in data_2025.items():
         advice = get_advice(ind_key, q_idx, val)
         lote3_c_2025.append({
             "empresa_id": 3104,
-            "indicador_key": ind_key,
+            "indicador_key": f"{ind_key}_{quarters[q_idx]}",
             "periodo_ano": 2025,
             "period_key": quarters[q_idx],
             "tipo": advice["status"],

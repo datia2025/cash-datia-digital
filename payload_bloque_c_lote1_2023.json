@@ -1,7 +1,7 @@
 [
   {
     "empresa_id": 3104,
-    "indicador_key": "ciclo_conversion_efectivo",
+    "indicador_key": "ciclo_conversion_efectivo_1Q",
     "periodo_ano": 2023,
     "period_key": "1Q",
     "tipo": "warning",
@@ -13,7 +13,7 @@
   },
   {
     "empresa_id": 3104,
-    "indicador_key": "ciclo_conversion_efectivo",
+    "indicador_key": "ciclo_conversion_efectivo_2Q",
     "periodo_ano": 2023,
     "period_key": "2Q",
     "tipo": "warning",
@@ -25,7 +25,7 @@
   },
   {
     "empresa_id": 3104,
-    "indicador_key": "ciclo_conversion_efectivo",
+    "indicador_key": "ciclo_conversion_efectivo_3Q",
     "periodo_ano": 2023,
     "period_key": "3Q",
     "tipo": "warning",
@@ -37,7 +37,7 @@
   },
   {
     "empresa_id": 3104,
-    "indicador_key": "ciclo_conversion_efectivo",
+    "indicador_key": "ciclo_conversion_efectivo_4Q",
     "periodo_ano": 2023,
     "period_key": "4Q",
     "tipo": "warning",
@@ -49,7 +49,7 @@
   },
   {
     "empresa_id": 3104,
-    "indicador_key": "dso",
+    "indicador_key": "dso_1Q",
     "periodo_ano": 2023,
     "period_key": "1Q",
     "tipo": "danger",
@@ -61,7 +61,7 @@
   },
   {
     "empresa_id": 3104,
-    "indicador_key": "dso",
+    "indicador_key": "dso_2Q",
     "periodo_ano": 2023,
     "period_key": "2Q",
     "tipo": "danger",
@@ -73,7 +73,7 @@
   },
   {
     "empresa_id": 3104,
-    "indicador_key": "dso",
+    "indicador_key": "dso_3Q",
     "periodo_ano": 2023,
     "period_key": "3Q",
     "tipo": "warning",
@@ -85,7 +85,7 @@
   },
   {
     "empresa_id": 3104,
-    "indicador_key": "dso",
+    "indicador_key": "dso_4Q",
     "periodo_ano": 2023,
     "period_key": "4Q",
     "tipo": "danger",
@@ -97,7 +97,7 @@
   },
   {
     "empresa_id": 3104,
-    "indicador_key": "dio",
+    "indicador_key": "dio_1Q",
     "periodo_ano": 2023,
     "period_key": "1Q",
     "tipo": "success",
@@ -109,7 +109,7 @@
   },
   {
     "empresa_id": 3104,
-    "indicador_key": "dio",
+    "indicador_key": "dio_2Q",
     "periodo_ano": 2023,
     "period_key": "2Q",
     "tipo": "success",
@@ -121,7 +121,7 @@
   },
   {
     "empresa_id": 3104,
-    "indicador_key": "dio",
+    "indicador_key": "dio_3Q",
     "periodo_ano": 2023,
     "period_key": "3Q",
     "tipo": "success",
@@ -133,7 +133,7 @@
   },
   {
     "empresa_id": 3104,
-    "indicador_key": "dio",
+    "indicador_key": "dio_4Q",
     "periodo_ano": 2023,
     "period_key": "4Q",
     "tipo": "success",
@@ -145,7 +145,7 @@
   },
   {
     "empresa_id": 3104,
-    "indicador_key": "dpo",
+    "indicador_key": "dpo_1Q",
     "periodo_ano": 2023,
     "period_key": "1Q",
     "tipo": "warning",
@@ -157,7 +157,7 @@
   },
   {
     "empresa_id": 3104,
-    "indicador_key": "dpo",
+    "indicador_key": "dpo_2Q",
     "periodo_ano": 2023,
     "period_key": "2Q",
     "tipo": "warning",
@@ -169,7 +169,7 @@
   },
   {
     "empresa_id": 3104,
-    "indicador_key": "dpo",
+    "indicador_key": "dpo_3Q",
     "periodo_ano": 2023,
     "period_key": "3Q",
     "tipo": "warning",
@@ -181,7 +181,7 @@
   },
   {
     "empresa_id": 3104,
-    "indicador_key": "dpo",
+    "indicador_key": "dpo_4Q",
     "periodo_ano": 2023,
     "period_key": "4Q",
     "tipo": "warning",
@@ -193,7 +193,7 @@
   },
   {
     "empresa_id": 3104,
-    "indicador_key": "rotacion_activos",
+    "indicador_key": "rotacion_activos_1Q",
     "periodo_ano": 2023,
     "period_key": "1Q",
     "tipo": "info",
@@ -205,7 +205,7 @@
   },
   {
     "empresa_id": 3104,
-    "indicador_key": "rotacion_activos",
+    "indicador_key": "rotacion_activos_2Q",
     "periodo_ano": 2023,
     "period_key": "2Q",
     "tipo": "info",
@@ -217,7 +217,7 @@
   },
   {
     "empresa_id": 3104,
-    "indicador_key": "rotacion_activos",
+    "indicador_key": "rotacion_activos_3Q",
     "periodo_ano": 2023,
     "period_key": "3Q",
     "tipo": "info",
@@ -229,7 +229,7 @@
   },
   {
     "empresa_id": 3104,
-    "indicador_key": "rotacion_activos",
+    "indicador_key": "rotacion_activos_4Q",
     "periodo_ano": 2023,
     "period_key": "4Q",
     "tipo": "info",
@@ -241,7 +241,7 @@
   },
   {
     "empresa_id": 3104,
-    "indicador_key": "rotacion_cartera",
+    "indicador_key": "rotacion_cartera_1Q",
     "periodo_ano": 2023,
     "period_key": "1Q",
     "tipo": "warning",
@@ -253,7 +253,7 @@
   },
   {
     "empresa_id": 3104,
-    "indicador_key": "rotacion_cartera",
+    "indicador_key": "rotacion_cartera_2Q",
     "periodo_ano": 2023,
     "period_key": "2Q",
     "tipo": "warning",
@@ -265,7 +265,7 @@
   },
   {
     "empresa_id": 3104,
-    "indicador_key": "rotacion_cartera",
+    "indicador_key": "rotacion_cartera_3Q",
     "periodo_ano": 2023,
     "period_key": "3Q",
     "tipo": "success",
@@ -277,7 +277,7 @@
   },
   {
     "empresa_id": 3104,
-    "indicador_key": "rotacion_cartera",
+    "indicador_key": "rotacion_cartera_4Q",
     "periodo_ano": 2023,
     "period_key": "4Q",
     "tipo": "warning",
@@ -289,7 +289,7 @@
   },
   {
     "empresa_id": 3104,
-    "indicador_key": "rotacion_inventarios",
+    "indicador_key": "rotacion_inventarios_1Q",
     "periodo_ano": 2023,
     "period_key": "1Q",
     "tipo": "success",
@@ -301,7 +301,7 @@
   },
   {
     "empresa_id": 3104,
-    "indicador_key": "rotacion_inventarios",
+    "indicador_key": "rotacion_inventarios_2Q",
     "periodo_ano": 2023,
     "period_key": "2Q",
     "tipo": "success",
@@ -313,7 +313,7 @@
   },
   {
     "empresa_id": 3104,
-    "indicador_key": "rotacion_inventarios",
+    "indicador_key": "rotacion_inventarios_3Q",
     "periodo_ano": 2023,
     "period_key": "3Q",
     "tipo": "success",
@@ -325,7 +325,7 @@
   },
   {
     "empresa_id": 3104,
-    "indicador_key": "rotacion_inventarios",
+    "indicador_key": "rotacion_inventarios_4Q",
     "periodo_ano": 2023,
     "period_key": "4Q",
     "tipo": "success",
@@ -337,7 +337,7 @@
   },
   {
     "empresa_id": 3104,
-    "indicador_key": "rotacion_proveedores",
+    "indicador_key": "rotacion_proveedores_1Q",
     "periodo_ano": 2023,
     "period_key": "1Q",
     "tipo": "info",
@@ -349,7 +349,7 @@
   },
   {
     "empresa_id": 3104,
-    "indicador_key": "rotacion_proveedores",
+    "indicador_key": "rotacion_proveedores_2Q",
     "periodo_ano": 2023,
     "period_key": "2Q",
     "tipo": "info",
@@ -361,7 +361,7 @@
   },
   {
     "empresa_id": 3104,
-    "indicador_key": "rotacion_proveedores",
+    "indicador_key": "rotacion_proveedores_3Q",
     "periodo_ano": 2023,
     "period_key": "3Q",
     "tipo": "info",
@@ -373,7 +373,7 @@
   },
   {
     "empresa_id": 3104,
-    "indicador_key": "rotacion_proveedores",
+    "indicador_key": "rotacion_proveedores_4Q",
     "periodo_ano": 2023,
     "period_key": "4Q",
     "tipo": "info",

@@ -189,7 +189,7 @@ function getComparativeInsights(filter) {
 
 
 // Función para actualizar el análisis (Audit Insights) con el diseño de pestañas (TV Style)
-function updateAnalysis(indicatorKey) {
+function updateAnalysis(indicatorKey, hasData = true) {
     const yearFilter = document.getElementById('yearFilter').value;
     const quarterFilter = document.getElementById('quarterFilter').value;
     const monthFilter = document.getElementById('monthFilter')?.value || 'all';
@@ -198,23 +198,38 @@ function updateAnalysis(indicatorKey) {
     if (!tabsContainer) return;
     tabsContainer.innerHTML = '';
 
+    if (!hasData) {
+        const btn = document.createElement('button');
+        btn.className = 'insight-tab-btn';
+        btn.innerHTML = `<i data-lucide="file-warning" style="color: #64748b"></i> ANÁLISIS NO DISPONIBLE`;
+        btn.onclick = () => toggleInsightOverlay(indicatorKey, { 
+            id: 'nodata', label: 'ANÁLISIS NO DISPONIBLE', icon: 'file-warning', color: '#64748b', 
+            title: 'DATOS NUMÉRICOS INSUFICIENTES', 
+            text: 'No hay registros numéricos suficientes en el periodo seleccionado para emitir un dictamen de Inteligencia Artificial.' 
+        }, btn);
+        tabsContainer.appendChild(btn);
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+        return;
+    }
+
     let itemToRender = null;
     let isComparative = (yearFilter === 'all' || yearFilter === 'Todos');
 
     // 1. PRIORIDAD: Búsqueda dinámica en BD
     if (dbInsights && dbInsights.length > 0) {
         let dynamicInsight = null;
+        let dbKey = indicatorKey === 'ciclo_efectivo' ? 'ciclo_conversion_efectivo' : indicatorKey;
 
         if (!isComparative) {
             // AÑO ESPECÍFICO: Buscar por año + periodo (Q o Annual)
             dynamicInsight = dbInsights.find(ins => 
                 ins.year === parseInt(yearFilter) && 
                 (ins.period_key === quarterFilter || (quarterFilter === 'all' && ins.period_key === 'Annual')) &&
-                ins.indicador_key === indicatorKey
+                ins.indicador_key === dbKey
             );
         } else if (monthFilter !== 'all' && monthFilter !== 'Todos') {
             // MODO INTERANUAL: Buscar llave comparativa del mes (ej: DSO_M2)
-            const monthKey = `${indicatorKey}_M${monthFilter}`.toUpperCase();
+            const monthKey = `${dbKey}_M${monthFilter}`.toUpperCase();
             dynamicInsight = dbInsights.find(ins => 
                 ins.indicador_key.toUpperCase() === monthKey
             );
@@ -359,6 +374,7 @@ function updateSingleChart(indicatorKey) {
     const monthFilter = document.getElementById('monthFilter')?.value || 'all';
     const yearFilter = document.getElementById('yearFilter').value;
     const isMonthSpecific = monthFilter !== 'all' && monthFilter !== 'Todos';
+    let hasData = true;
 
     const canvas = document.getElementById(`chart${indicatorKey.charAt(0).toUpperCase() + indicatorKey.slice(1)}`);
     const noDataId = `no-data-${indicatorKey}`;
@@ -383,7 +399,7 @@ function updateSingleChart(indicatorKey) {
         if (!monthData || monthData.length === 0) {
             if (noDataOverlay) noDataOverlay.classList.remove('hidden');
             canvas.classList.add('hidden');
-            updateAnalysis(indicatorKey);
+            updateAnalysis(indicatorKey, false);
             return;
         } else {
             if (noDataOverlay) noDataOverlay.classList.add('hidden');
@@ -392,6 +408,7 @@ function updateSingleChart(indicatorKey) {
 
         const labels = monthData.map(d => d.year.toString());
         const values = monthData.map(d => d[indicatorKey]);
+        hasData = values.some(v => v !== null && v !== undefined && Math.abs(v) > 0.001);
         const backgroundColors = monthData.map(d => (yearColors[d.year] || yearColors[2023]).bg);
         const borderColors = monthData.map(d => (yearColors[d.year] || yearColors[2023]).border);
         const monthLabel = (monthNames[currentLanguage] || monthNames.es)[monthNum];
@@ -401,7 +418,7 @@ function updateSingleChart(indicatorKey) {
             data: {
                 labels: labels,
                 datasets: [{
-                    label: `${metadata.name} — ${monthLabel}`,
+                    label: `${metadata.name[currentLanguage] || metadata.name.es} — ${monthLabel}`,
                     data: values,
                     backgroundColor: backgroundColors,
                     borderColor: borderColors,
@@ -442,7 +459,7 @@ function updateSingleChart(indicatorKey) {
         if (!data || data.length === 0) {
             if (noDataOverlay) noDataOverlay.classList.remove('hidden');
             canvas.classList.add('hidden');
-            updateAnalysis(indicatorKey);
+            updateAnalysis(indicatorKey, false);
             return;
         } else {
             if (noDataOverlay) noDataOverlay.classList.add('hidden');
@@ -450,6 +467,7 @@ function updateSingleChart(indicatorKey) {
         }
 
         const values = data.map(d => d[indicatorKey]);
+        hasData = values.some(v => v !== null && v !== undefined && Math.abs(v) > 0.001);
         const labels = data.map(d => d.period.toString());
 
         config = {
@@ -525,7 +543,7 @@ function updateSingleChart(indicatorKey) {
 
     if (charts[indicatorKey]) charts[indicatorKey].destroy();
     charts[indicatorKey] = new Chart(canvas.getContext('2d'), config);
-    updateAnalysis(indicatorKey);
+    updateAnalysis(indicatorKey, hasData);
 }
 
 // Función para mostrar el Reporte de Realida// Función para mostrar el Reporte de Realidad Financiera Anual (estilo Lean Premium - siempre visible)
