@@ -1,0 +1,56 @@
+quiero hacer una prueba, voy a cargar el puc y los movimientos contables y quiero que contrastes el resultado con estos 
+
+00 ACTIVIDAD
+ 
+
+00 ESTRUCTURA
+ 
+
+00 LIQUIDEZ
+ 
+
+00 RENTABILIDAD
+ 
+
+00 SOLVENCIA
+ 
+
+
+Preparing Reference Data for PUC Test
+Preparing to compare PUC-based processing output against the original Master Account reference CSVs across all 5 modules.
+
+Progress Updates
+1
+Reading the 5 reference CSV files to establish ground truth values
+
+Continue
+
+Son directorios. Déjame ver su contenido.
+
+Analyzed
+c:\Users\gutie\OneDrive\FERFILES\DATIA\PROPUESTAS\COLOMBIA\MASCONSULTA\LiquidityDashboard\sources\00 LIQUIDEZ
+Analyzed
+c:\Users\gutie\OneDrive\FERFILES\DATIA\PROPUESTAS\COLOMBIA\MASCONSULTA\LiquidityDashboard\sources\00 ACTIVIDAD
+Analyzed
+c:\Users\gutie\OneDrive\FERFILES\DATIA\PROPUESTAS\COLOMBIA\MASCONSULTA\LiquidityDashboard\sources\00 RENTABILIDAD
+Analyzed
+c:\Users\gutie\OneDrive\FERFILES\DATIA\PROPUESTAS\COLOMBIA\MASCONSULTA\LiquidityDashboard\sources\00 ESTRUCTURA
+Analyzed
+c:\Users\gutie\OneDrive\FERFILES\DATIA\PROPUESTAS\COLOMBIA\MASCONSULTA\LiquidityDashboard\sources\00 SOLVENCIA
+Ahora déjame leer todos los CSVs de referencia. Son 33 indicadores en total.
+
+Preparing Reference Data for PUC Test
+Read all 12 LIQUIDEZ + ACTIVIDAD reference CSVs. Key observations: DIO and Rotac. Inventarios = all zeros (no inventory for this company).
+
+Progress Updates
+1
+Reading all 33 reference CSV files across 5 modules
+
+2
+Reading ACTIVIDAD, RENTABILIDAD, ESTRUCTURA, and SOLVENCIA reference CSVs
+
+3
+Reading remaining ACTIVIDAD, RENTABILIDAD, ESTRUCTURA, SOLVENCIA CSVs
+
+4
+Reading RENTABILIDAD, ESTRUCTURA and SOLVENCIA reference CSVs

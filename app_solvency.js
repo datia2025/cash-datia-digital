@@ -1,7 +1,7 @@
-// Estado global de Solvencia
 let charts = {};
 let currentLanguage = 'es';
 let dynamicDataError = false;
+let dbInsights = []; // Almacén para insights desde la BD
 
 // Lista de 6 indicadores de solvencia
 const indicatorKeys = ['cargos_fijos', 'intereses', 'servicio_deuda', 'deuda_ebitda', 'endeudamiento_total', 'solvencia_patrimonial'];
@@ -46,7 +46,10 @@ function filterData() {
     const quarterFilter = document.getElementById('quarterFilter').value;
     const monthFilter = document.getElementById('monthFilter')?.value || 'all';
 
-    let filtered = liquidityDataSolvency.filter(d => d.year && d.period);
+    let localData = window.liquidityDataSolvency && window.liquidityDataSolvency.length > 0 ? window.liquidityDataSolvency : (typeof liquidityDataSolvency !== 'undefined' ? liquidityDataSolvency : []);
+    if (!localData || localData.length === 0) return [];
+    
+    let filtered = localData.filter(d => d.year && d.period);
 
     if (yearFilter !== 'all' && yearFilter !== 'Todos') {
         filtered = filtered.filter(d => d.year === parseInt(yearFilter));
@@ -109,6 +112,7 @@ const timeLabelsPlugin = {
 
 // Función para buscar hallazgos en el repositorio de solvencia
 function getAuditInsights(year, filter) {
+    if (typeof auditRepositorySolvency === 'undefined') return null;
     if (filter === 'all' || filter === 'Todos') {
         return auditRepositorySolvency[year]?.Annual;
     }
@@ -119,6 +123,7 @@ function getAuditInsights(year, filter) {
 // Función para buscar hallazgos comparativos
 function getComparativeInsights(filter) {
     if (filter === 'all' || filter === 'Todos') return null;
+    if (typeof auditRepositorySolvency === 'undefined') return null;
 
     // Si es un mes (1-12)
     if (!isNaN(filter)) {
@@ -129,7 +134,7 @@ function getComparativeInsights(filter) {
     return auditRepositorySolvency.Comparative?.[filter];
 }
 
-// Función para actualizar el dictamen ejecutivo con diseño premium
+
 function updateDictamen() {
     const yearFilter = document.getElementById('yearFilter').value;
     const quarterFilter = document.getElementById('quarterFilter').value;
@@ -137,96 +142,172 @@ function updateDictamen() {
 
     if (!container) return;
 
-    let targetYear = yearFilter;
-    if (targetYear === 'all' || targetYear === 'Todos') {
-        targetYear = "2025"; // Por defecto al más reciente si es comparativo
-    }
+    let targetYear = (yearFilter === 'all' || yearFilter === 'Todos') ? "2025" : yearFilter;
+    let periodKey = (quarterFilter === 'all' || quarterFilter === 'Todos') ? "Annual" : quarterFilter;
 
-    let data = auditRepositorySolvency[targetYear];
-    if (quarterFilter !== 'all' && quarterFilter !== 'Todos') {
-        data = data?.[quarterFilter];
-    } else {
-        data = data?.Annual;
-    }
+    const yearData = (typeof auditRepositorySolvency !== 'undefined' && empresaId === 1) ? auditRepositorySolvency[targetYear] : null;
+    const report = yearData?.[periodKey]?.report;
 
-    if (!data || !data.report) {
-        container.classList.add('hidden');
-        container.innerHTML = '';
-        return;
-    }
-
-    container.classList.remove('hidden');
-    const report = data.report;
-    const title = report.title[currentLanguage] || report.title.es;
-    const text = report.text[currentLanguage] || report.text.es;
-
-    // Determine status colors
     const statusColors = {
-        success: {
-            bg: 'linear-gradient(135deg, #065f46 0%, #10b981 100%)',
-            badge: '#10b981',
-            badgeBg: '#d1fae5',
-            icon: 'file-check-2'
-        },
-        warning: {
-            bg: 'linear-gradient(135deg, #92400e 0%, #f59e0b 100%)',
-            badge: '#f59e0b',
-            badgeBg: '#fef3c7',
-            icon: 'alert-triangle'
-        },
-        danger: {
-            bg: 'linear-gradient(135deg, #991b1b 0%, #ef4444 100%)',
-            badge: '#ef4444',
-            badgeBg: '#fee2e2',
-            icon: 'alert-octagon'
-        }
+        success: { accent: '#10b981', bg: 'rgba(16, 185, 129, 0.1)', text: '#059669' },
+        warning: { accent: '#f59e0b', bg: 'rgba(245, 158, 11, 0.1)', text: '#92400e' },
+        danger:  { accent: '#ef4444', bg: 'rgba(239, 68, 68, 0.1)',  text: '#991b1b'  }
     };
-    const colors = statusColors[report.status] || statusColors.warning;
+
+    const status = report?.status || 'warning';
+    const c = statusColors[status] || statusColors.warning;
+    const title = report ? (report.title[currentLanguage] || report.title.es) : (currentLanguage === 'es' ? 'Diagnóstico No Disponible' : 'Diagnosis Not Available');
+    const text = report ? (report.text[currentLanguage] || report.text.es) : (currentLanguage === 'es' ? 'No se han generado hallazgos de auditoría para este periodo aún. Los indicadores técnicos se muestran a continuación.' : 'No audit findings have been generated for this period yet. Technical indicators are shown below.');
+    const parsedText = typeof marked !== 'undefined' ? marked.parse(text) : text.replace(/\n/g, '<br>');
 
     container.innerHTML = `
-        <div style="margin-top: 2rem; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.1); background: white;">
-            <!-- Header con gradiente -->
-            <div style="background: ${colors.bg}; padding: 1.25rem 1.5rem; color: white;">
-                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
-                    <div style="display: flex; align-items: center; gap: 1rem;">
-                        <div style="background: rgba(255,255,255,0.2); padding: 0.6rem; border-radius: 10px;">
-                            <i data-lucide="${colors.icon}" style="width: 28px; height: 28px;"></i>
-                        </div>
-                        <div>
-                            <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.15em; opacity: 0.9; font-weight: 700;">
-                                ${currentLanguage === 'es' ? 'Dictamen de Auditoría' : 'Audit Opinion'}
-                            </div>
-                            <h2 style="margin: 0; font-size: 1.2rem; font-weight: 800; letter-spacing: -0.02em;">
-                                ${title}
-                            </h2>
-                        </div>
-                    </div>
-                    <div style="text-align: center; background: white; padding: 0.6rem 1.2rem; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
-                        <div style="font-size: 0.65rem; text-transform: uppercase; color: #64748b; font-weight: 700; letter-spacing: 0.05em; margin-bottom: 2px;">Score</div>
-                        <div style="font-size: 1.6rem; font-weight: 900; color: ${colors.badge}; line-height: 1;">
-                            ${report.score}
-                        </div>
-                    </div>
+        <style>
+            .dictamen-lean {
+                background: white;
+                border-radius: 12px;
+                padding: 24px;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+                border: 1px solid #e0e0e0;
+                margin-bottom: 20px;
+                animation: fadeSlideIn 0.5s ease-out;
+                font-family: 'Inter', sans-serif;
+            }
+            .lean-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-start;
+                margin-bottom: 12px;
+                padding-bottom: 8px;
+                border-bottom: 1px solid #f1f2f6;
+            }
+            .lean-company-meta h2 {
+                font-size: 0.95rem;
+                font-weight: 800;
+                color: #0A1F44;
+                margin: 0;
+                letter-spacing: -0.02em;
+            }
+            .lean-company-meta p {
+                font-size: 0.72rem;
+                color: #94a3b8;
+                margin: 0;
+            }
+            .lean-status-badge {
+                font-size: 0.65rem;
+                font-weight: 700;
+                padding: 4px 12px;
+                border-radius: 20px;
+                background: ${c.bg};
+                color: ${c.text};
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                height: fit-content;
+            }
+            .lean-badge-dot {
+                width: 6px;
+                height: 6px;
+                background: ${c.accent};
+                border-radius: 50%;
+                box-shadow: 0 0 8px ${c.accent};
+            }
+
+            .lean-grid {
+                display: flex;
+                gap: 32px;
+            }
+
+            .lean-column-left {
+                width: 320px;
+                border-right: 1px solid #f1f2f6;
+                padding-right: 24px;
+                flex-shrink: 0;
+            }
+            .lean-column-right {
+                flex-grow: 1;
+                padding-left: 0;
+            }
+            .lean-section-title {
+                font-size: 0.9rem;
+                font-weight: 800;
+                color: #0A1F44;
+                margin-bottom: 0.75rem;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                letter-spacing: -0.01em;
+            }
+            .lean-risk-item {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                padding: 6px 10px;
+                background: #f8fafc;
+                border-radius: 6px;
+                margin-bottom: 6px;
+                font-size: 0.8rem;
+                color: #475569;
+                border: 1px solid transparent;
+                transition: all 0.2s ease;
+            }
+            .lean-risk-icon { color: #1E4E79; opacity: 0.8; }
+
+            .lean-audit-body {
+                column-count: 2;
+                column-gap: 30px;
+                column-rule: 1px solid #f1f2f6;
+            }
+            .lean-audit-body h3 {
+                break-inside: avoid-column;
+                font-size: 0.7rem;
+                font-weight: 800;
+                text-transform: uppercase;
+                color: #1E4E79;
+                margin: 0 0 0.25rem;
+                padding: 0;
+                letter-spacing: 0.05em;
+            }
+            .lean-audit-body p {
+                break-inside: avoid-column;
+                font-size: 0.75rem;
+                color: #475569;
+                line-height: 1.5;
+                margin: 0 0 1rem;
+            }
+            @keyframes fadeSlideIn {
+                from { opacity: 0; transform: translateY(10px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+        </style>
+
+        <div class="dictamen-lean">
+            <div class="lean-header">
+                <div class="lean-company-meta">
+                    <h2>${currentCompany.name.toUpperCase()}</h2>
+                    <p>Sector: ${currentCompany.sector} | Diagnóstico de Solvencia</p>
+                </div>
+                <div class="lean-status-badge">
+                    <div class="lean-badge-dot"></div>
+                    PERFIL ACTIVO
                 </div>
             </div>
-            
-            <!-- Body con contenido -->
-            <div style="padding: 1.5rem 2rem;">
-                <div class="prose max-w-none" style="font-size: 0.9rem; line-height: 1.8; color: #334155;">
-                    ${typeof marked !== 'undefined' ? marked.parse(text) : text.replace(/\n/g, '<br>')}
+
+            <div class="lean-grid">
+                <div class="lean-column-left">
+                    <div class="lean-section-title">RIESGOS DETECTADOS</div>
+                    ${(currentCompany.risks.solvencia || []).map(r => `
+                        <div class="lean-risk-item">
+                            <i data-lucide="${r.icon}" class="lean-risk-icon" style="width: 14px; height: 14px;"></i>
+                            <span>${r.text}</span>
+                        </div>
+                    `).join('')}
                 </div>
-            </div>
-            
-            <!-- Footer profesional -->
-            <div style="background: #f1f5f9; padding: 1rem 2rem; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
-                <div style="display: flex; align-items: center; gap: 0.6rem;">
-                    <i data-lucide="shield-check" style="width: 16px; height: 16px; color: #64748b;"></i>
-                    <span style="color: #64748b; font-size: 0.75rem; font-weight: 500;">
-                        ${currentLanguage === 'es' ? 'Informe verificado por Auditoría Financiera' : 'Report verified by Financial Audit'}
-                    </span>
-                </div>
-                <div style="font-size: 0.7rem; color: #94a3b8; font-style: italic;">
-                    ${new Date().toLocaleDateString()}
+
+                <div class="lean-column-right">
+                    <div class="lean-section-title">${title}</div>
+                    <div class="lean-audit-body">
+                        ${parsedText}
+                    </div>
                 </div>
             </div>
         </div>
@@ -235,151 +316,154 @@ function updateDictamen() {
     if (typeof lucide !== 'undefined') lucide.createIcons();
 }
 
-// Función para actualizar el análisis (Audit Insights)
+// Función para actualizar el análisis (Audit Insights) con pestañas estilo Actividad
 function updateAnalysis(indicatorKey) {
     const yearFilter = document.getElementById('yearFilter').value;
     const quarterFilter = document.getElementById('quarterFilter').value;
     const monthFilter = document.getElementById('monthFilter')?.value || 'all';
 
-    const analysisContainer = document.getElementById(`analysis-${indicatorKey}`);
-    if (!analysisContainer) return;
-
-    if (typeof auditRepositorySolvency === 'undefined') {
-        analysisContainer.innerHTML = '';
-        return;
-    }
+    const tabsContainer = document.getElementById(`tabs-${indicatorKey}`);
+    if (!tabsContainer) return;
+    tabsContainer.innerHTML = '';
 
     let itemToRender = null;
     let isComparative = (yearFilter === 'all' || yearFilter === 'Todos');
 
-    if (isComparative) {
-        // Modo comparativo: buscar en Comparative
-        const compData = getComparativeInsights(monthFilter !== 'all' ? monthFilter : quarterFilter);
-        if (compData) {
-            if (compData.indicators && compData.indicators[indicatorKey]) {
-                // Per-indicator data (months and quarters with indicators)
-                itemToRender = compData.indicators[indicatorKey];
-            } else if (compData.findings) {
-                // Fallback: general finding (legacy)
-                itemToRender = compData.findings[0];
-            }
-        }
-    } else {
-        // Modo año específico: buscar en el año
-        const yearData = getAuditInsights(yearFilter, quarterFilter);
-        if (yearData && yearData.indicators) {
-            itemToRender = yearData.indicators[indicatorKey];
+    // 1. PRIORIDAD: Buscar en insights dinámicos de la BD
+    if (!isComparative && dbInsights && dbInsights.length > 0) {
+        const dynamicInsight = dbInsights.find(ins => 
+            ins.year === parseInt(yearFilter) && 
+            (ins.period_key === quarterFilter || (quarterFilter === 'all' && ins.period_key === 'Annual')) &&
+            ins.indicador_key === indicatorKey
+        );
+        if (dynamicInsight) {
+            itemToRender = {
+                title: dynamicInsight.titulo || "Análisis AI",
+                text: (
+                    (dynamicInsight.analisis_positivo ? `**Aspecto Positivo:** ${dynamicInsight.analisis_positivo}\n\n` : '') +
+                    (dynamicInsight.analisis_negativo ? `**Aspecto Negativo:** ${dynamicInsight.analisis_negativo}\n\n` : '') +
+                    (dynamicInsight.recomendacion ? `**Recomendación:** ${dynamicInsight.recomendacion}` : '')
+                ),
+                type: dynamicInsight.status || 'info'
+            };
         }
     }
 
-    if (!itemToRender) {
-        analysisContainer.innerHTML = `
-            <div class="bg-gray-50 p-4 rounded-lg border-l-4 border-gray-300 text-xs text-gray-500 italic">
+    // 2. FALLBACK: Repositorio estático (solo empresaId 1)
+    if (!itemToRender && empresaId === 1) {
+        if (isComparative) {
+            // Modo comparativo: buscar en Comparative
+            const compData = getComparativeInsights(monthFilter !== 'all' ? monthFilter : quarterFilter);
+            if (compData) {
+                if (compData.indicators && compData.indicators[indicatorKey]) {
+                    itemToRender = compData.indicators[indicatorKey];
+                } else if (compData.findings) {
+                    itemToRender = compData.findings[0];
+                }
+            }
+        } else {
+            // Modo año específico: buscar en el año
+            const yearData = getAuditInsights(yearFilter, quarterFilter);
+            if (yearData && yearData.indicators) {
+                itemToRender = yearData.indicators[indicatorKey];
+            }
+        }
+    }
+
+    // FALLBACK - Solo para MAS CONSULTA (empresaId 1)
+    if (!itemToRender && empresaId === 1) {
+        tabsContainer.innerHTML = `
+            <div class="text-xs text-gray-500 italic p-1">
                 ${currentLanguage === 'es' ? 'Sin hallazgos específicos para este periodo.' : 'No specific findings for this period.'}
             </div>
         `;
         return;
     }
 
-    // Parse the text into sections (Aspecto Positivo, Aspecto Negativo, Recomendación)
+    if (!itemToRender) return;
+
+    // Parse the text into sections
     const rawText = itemToRender.text || '';
-
-    const positivoMatch = rawText.match(/\*\*Aspecto Positivo:\*\*\s*([\s\S]*?)(?=\*\*Aspecto Negativo:|$)/);
-    const negativoMatch = rawText.match(/\*\*Aspecto Negativo:\*\*\s*([\s\S]*?)(?=\*\*Recomendación:|$)/);
-    const recomendacionMatch = rawText.match(/\*\*Recomendación:\*\*\s*([\s\S]*?)$/);
-
-    const positivo = positivoMatch ? positivoMatch[1].trim() : '';
-    const negativo = negativoMatch ? negativoMatch[1].trim() : '';
-    const recomendacion = recomendacionMatch ? recomendacionMatch[1].trim() : '';
-
-    let sections;
-
-    // If no standard sections found, use single-block interannual format
-    if (!positivo && !negativo && !recomendacion && rawText.trim()) {
+    
+    // Si no hay Aspecto Positivo/Negativo/Recomendación, crear una vista general
+    if (!rawText.includes('**Aspecto Positivo:**') && !rawText.includes('**Aspecto Negativo:**')) {
         const tendenciaClean = rawText.replace(/^\*\*Tendencia\s*\d{4}-\d{4}:\*\*\s*/i, '').trim();
-        sections = [
-            {
-                label: 'Análisis Interanual',
-                icon: 'bar-chart-2',
-                bg: '#dbeafe',
-                border: '#1e3a8a',
-                text: tendenciaClean
-            }
-        ];
+        if (tendenciaClean) {
+            const btn = document.createElement('button');
+            btn.className = 'insight-tab-btn';
+            btn.innerHTML = `<i data-lucide="bar-chart-2" style="color: #1e3a8a"></i> ANÁLISIS`;
+            btn.onclick = () => toggleInsightOverlay(indicatorKey, { 
+                id: 'general', label: 'ANÁLISIS', icon: 'bar-chart-2', color: '#1e3a8a', 
+                title: 'Análisis de Auditoría', text: tendenciaClean 
+            }, btn);
+            tabsContainer.appendChild(btn);
+        }
     } else {
-        sections = [
-            {
-                label: 'Aspecto Positivo',
-                icon: 'check-circle',
-                bg: '#c6f6d5',
-                border: '#22543d',
-                text: positivo
-            },
-            {
-                label: 'Aspecto Negativo',
-                icon: 'alert-triangle',
-                bg: '#fed7d7',
-                border: '#742a2a',
-                text: negativo
-            },
-            {
-                label: 'Recomendación',
-                icon: 'lightbulb',
-                bg: '#fefcbf',
-                border: '#975a16',
-                text: recomendacion
-            }
+        const sections = [
+            { id: 'positivo', label: 'POSITIVO', icon: 'check-circle', color: '#059669', title: 'FORTALEZA DETECTADA', regex: /\*\*Aspecto Positivo:\*\*\s*([\s\S]*?)(?=\*\*Aspecto Negativo:|\*\*Recomendación:|$)/ },
+            { id: 'negativo', label: 'ALERTA', icon: 'alert-triangle', color: '#dc2626', title: 'ALERTA DE SEGURIDAD', regex: /\*\*Aspecto Negativo:\*\*\s*([\s\S]*?)(?=\*\*Recomendación:|$)/ },
+            { id: 'recomendacion', label: 'ACCIÓN', icon: 'zap', color: '#2563eb', title: 'RECOMENDACIÓN DE AUDITORÍA', regex: /\*\*Recomendación:\*\*\s*([\s\S]*?)$/ }
         ];
+
+        sections.forEach(section => {
+            const match = rawText.match(section.regex);
+            const text = match ? match[1].trim() : '';
+            
+            if (text) {
+                const btn = document.createElement('button');
+                btn.className = 'insight-tab-btn';
+                btn.innerHTML = `<i data-lucide="${section.icon}" style="color: ${section.color}"></i> ${section.label}`;
+                btn.onclick = () => toggleInsightOverlay(indicatorKey, { ...section, text }, btn);
+                tabsContainer.appendChild(btn);
+            }
+        });
     }
 
-    // Unified header color to match the dashboard header (Blue 700-900)
-    const headerStyle = 'background: linear-gradient(to right, #1d4ed8, #1e3a8a);';
-    const yearLabel = isComparative ? 'Análisis Comparativo Interanual' : `Auditoría de Cierre Anual ${document.getElementById('yearFilter').value}`;
-
-    // Build the HTML with separated colored sections
-    let html = `
-        <div style="margin-top: 1rem; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
-            <div style="${headerStyle} padding: 0.75rem 1rem; color: white;">
-                <div style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; opacity: 0.8;">
-                    ${yearLabel}
-                </div>
-                <div style="font-size: 0.9rem; font-weight: 600; margin-top: 0.25rem;">
-                    ${itemToRender.title}
-                </div>
-            </div>
-            <div style="padding: 0.75rem; display: flex; flex-direction: column; gap: 0.5rem;">
-    `;
-
-    sections.forEach(section => {
-        if (section.text) {
-            html += `
-                <div style="display: flex; align-items: flex-start; gap: 0.6rem; padding: 0.6rem; background-color: ${section.bg}; border-radius: 6px; border-left: 3px solid ${section.border};">
-                    <div style="min-width: 18px; color: ${section.border}; padding-top: 1px;">
-                        <i data-lucide="${section.icon}" style="width: 16px; height: 16px;"></i>
-                    </div>
-                    <div>
-                        <strong style="display: block; color: ${section.border}; font-size: 0.7rem; margin-bottom: 0.2rem; text-transform: uppercase;">
-                            ${section.label}
-                        </strong>
-                        <span style="color: #2d3748; font-size: 0.72rem; line-height: 1.45; display: block;">
-                            ${section.text}
-                        </span>
-                    </div>
-                </div>
-            `;
-        }
-    });
-
-    html += `
-            </div>
-        </div>
-    `;
-
-    analysisContainer.innerHTML = html;
-
     if (typeof lucide !== 'undefined') lucide.createIcons();
-
 }
+
+window.toggleInsightOverlay = function(indicatorKey, section, btn) {
+    const overlay = document.getElementById(`analysis-${indicatorKey}`);
+    const tabs = document.getElementById(`tabs-${indicatorKey}`).querySelectorAll('.insight-tab-btn');
+    const isActive = btn.classList.contains('active');
+
+    // Resetear todas las pestañas de esta tarjeta
+    tabs.forEach(t => t.classList.remove('active'));
+
+    if (isActive) {
+        overlay.classList.remove('active');
+    } else {
+        btn.classList.add('active');
+        overlay.innerHTML = `
+            <div class="glow-bar" style="background: linear-gradient(90deg, ${section.color}, transparent);"></div>
+            <div class="close-overlay" onclick="event.stopPropagation(); hideInsightOverlay('${indicatorKey}');">
+                <i data-lucide="x" style="width: 14px; height: 14px; color: #1e293b;"></i>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+                <div style="color: ${section.color}; display: flex; align-items: center; justify-content: center;">
+                    <i data-lucide="${section.icon}" style="width: 18px; height: 18px;"></i>
+                </div>
+                <div style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.12em; font-weight: 800; color: #1e293b;">
+                    ${section.title}
+                </div>
+            </div>
+            <div style="color: #475569; font-size: 0.85rem; line-height: 1.65; font-weight: 500; padding-right: 25px;">
+                ${typeof marked !== 'undefined' ? marked.parse(section.text) : section.text}
+            </div>
+        `;
+        overlay.classList.add('active');
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    }
+};
+
+window.hideInsightOverlay = function(indicatorKey) {
+    const overlay = document.getElementById(`analysis-${indicatorKey}`);
+    if (overlay) overlay.classList.remove('active');
+    
+    // También quitar clase active de las pestañas
+    const tabs = document.getElementById(`tabs-${indicatorKey}`)?.querySelectorAll('.insight-tab-btn');
+    if (tabs) tabs.forEach(t => t.classList.remove('active'));
+};
 
 // Colores por indicador
 function getIndicatorColor(key, alpha = 1) {
@@ -465,7 +549,7 @@ function updateSingleChart(indicatorKey) {
                         anchor: 'end',
                         align: 'top',
                         offset: 4,
-                        formatter: (v) => v.toFixed(2),
+                        formatter: (v) => v != null ? v.toFixed(2) : '-',
                         font: { size: 10, weight: 'bold' },
                         color: getIndicatorColor(indicatorKey)
                     }
@@ -480,7 +564,7 @@ function updateSingleChart(indicatorKey) {
                     legend: { display: true, position: 'top', labels: { font: { size: 10 } } },
                     tooltip: {
                         callbacks: {
-                            label: (ctx) => `${monthLabel} ${ctx.label}: ${ctx.raw.toFixed(2)}`
+                            label: (ctx) => `${monthLabel} ${ctx.label}: ${ctx.raw != null ? ctx.raw.toFixed(2) : '-'}`
                         }
                     }
                 },
@@ -524,7 +608,7 @@ function updateSingleChart(indicatorKey) {
                         display: values.length < 20,
                         align: 'top',
                         font: { size: 9, weight: 'bold' },
-                        formatter: (v) => v.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                        formatter: (v) => v != null ? v.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '-'
                     }
                 }]
             },
@@ -538,7 +622,7 @@ function updateSingleChart(indicatorKey) {
                     datalabels: { color: getIndicatorColor(indicatorKey) },
                     tooltip: {
                         callbacks: {
-                            label: (ctx) => `${metadata.name[currentLanguage]}: ${ctx.raw.toFixed(2)}`
+                            label: (ctx) => `${metadata.name[currentLanguage]}: ${ctx.raw != null ? ctx.raw.toFixed(2) : '-'}`
                         }
                     }
                 },
@@ -556,7 +640,18 @@ function updateSingleChart(indicatorKey) {
 }
 
 function updateAllCharts() {
-    indicatorKeys.forEach(updateSingleChart);
+    indicatorKeys.forEach(k => {
+        try {
+            updateSingleChart(k);
+        } catch (err) {
+            console.error('Error rendering chart', k, err);
+            const overlay = document.getElementById(`no-data-${k}`);
+            if (overlay) {
+                overlay.innerHTML = `<p style="color:red; font-size:10px;">Error: ${err.message}</p>`;
+                overlay.classList.remove('hidden');
+            }
+        }
+    });
     updateDictamen();
     if (typeof lucide !== 'undefined') lucide.createIcons();
 }
@@ -572,18 +667,33 @@ document.getElementById('languageFilter').addEventListener('change', (e) => {
 
 // Inicialización
 async function initializeDashboard() {
+    if (empresaId !== 1) {
+        liquidityDataSolvency = [];
+        window.liquidityDataSolvency = [];
+    }
+    updateAllCharts();
+
     try {
-        const empresaId = 1;
         const apiData = await DashboardAPI.getIndicadoresData(empresaId, 'solvencia');
         if (apiData && apiData.length > 0) {
             liquidityDataSolvency = apiData;
+            window.liquidityDataSolvency = apiData; // FIX: Update window object
             console.log(`[Dashboard] Dynamically loaded ${apiData.length} records for Solvencia`);
         } else {
-            console.warn("[Dashboard] API returned empty indicators. Using static fallback.");
+            console.warn("[Dashboard] API returned empty indicators. Setting empty state.");
+            liquidityDataSolvency = []; 
+            window.liquidityDataSolvency = [];
+        }
+
+        // Cargar Insights desde la BD
+        const insightsRes = await DashboardAPI.getInsights(empresaId, 'solvencia');
+        if (insightsRes && insightsRes.insights) {
+            dbInsights = insightsRes.insights;
+            console.log(`[Dashboard] Loaded ${dbInsights.length} AI insights for Solvencia from DB`);
         }
     } catch (error) {
         dynamicDataError = true;
-        console.error("[Dashboard] Failed to fetch indicators from DB. Using static fallback.", error);
+        console.error("[Dashboard] Failed to fetch dynamic data from DB. Using static fallback.", error);
     }
     updateAllCharts();
 }

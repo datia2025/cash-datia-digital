@@ -1,0 +1,69 @@
+﻿Idioma,Tipo,Indicador,Definición,Fórmula,Meta / Target,Orden,Categoria,Culture,Nombre Slicer
+Español,Actividad,Rotación de Cartera,Veces al año que se cobra la cartera de clientes.,Ventas Crédito​ / Promedio CxC,> 6.0 x,1,2,es-ES,Rotación de Cartera|Receivables Turnover
+Español,Actividad,Días de Cartera (DSO),Días promedio que tarda la empresa en cobrar.,360​ / Rotación Cartera,< 60 Días,3,2,es-ES,Días de Cartera (DSO)|Days Sales Outstanding
+Español,Actividad,Rotación de Inventarios,Veces al año que se vende y repone el stock.,Costo Ventas​ / Promedio Inventarios,> 4.0 x,5,2,es-ES,Rotación de Inventarios|Inventory Turnover
+Español,Actividad,Días de Inventario (DIO),Días promedio que la mercancía pasa en bodega.,360​ /Rotación Inventarios,< 90 Días,7,2,es-ES,Días de Inventario (DIO)|Days Inv. Outstanding
+Español,Actividad,Ciclo de Conversión (CCC),Días netos que el efectivo está comprometido en la operación.,DSO + DIO - DPO,< 90 Días,9,2,es-ES,Ciclo de Conversión (CCC)|Cash Conversion Cycle
+Español,Actividad,Rotación Activos Totales,Eficiencia de los activos totales para generar ventas.,Ventas Totales​ / Promedio Activos,> 1.0 x,11,2,es-ES,Rotación Activos Totales|Total Asset Turnover
+Español,Estructura,Cobertura de Cargos Fijos,Capacidad de pagar intereses y gastos fijos (arriendos) con la utilidad operativa.,(EBIT + Arriendos​) / (Intereses + Arriendos),> 1.50 x(Seguridad),1,5,es-ES,Cobertura de Cargos Fijos|Fixed Charge Coverage
+Español,Estructura,Cobertura Servicio Deuda,Capacidad de caja operativa para pagar cuota completa (Capital + Interés).,(EBITDA - Impuestos) / (Capital + Intereses),> 1.20 x(Vital),3,5,es-ES,Cobertura Servicio Deuda|Debt Service Coverage (DSCR)
+Español,Estructura,Ratio de Solvencia Patrimonial,Respaldo patrimonial por cada peso de deuda (Inverso a Deuda/Patrimonio).,Pasivo Total / Patrimonio​,> 1.00 x(Alto respaldo),5,5,es-ES,Ratio de Solvencia Patrimonial|Equity Solvency Ratio
+Español,Estructura,Deuda a Activos Tangibles,Porcentaje de activos físicos (reales) que están financiados con deuda.,Pasivo Total​ / (Activos - Intangibles),Bajo / Low(< 0.50),7,5,es-ES,Deuda a Activos Tangibles|Debt to Tangible Assets
+Español,Liquidez,Razón Corriente,Capacidad de cubrir deudas de corto plazo con activos corrientes.,Activo Corriente / Pasivo Corriente​,1.50 - 2.00 x,1,1,es-ES,Razón Corriente | Current Ratio
+Español,Liquidez,Prueba Ácida,Liquidez inmediata sin depender de la venta de inventarios.,(Activo Corriente - Inventarios) / Pasivo Corriente​,~ 1.00 x,3,1,es-ES,Prueba Ácida | Current Ratio
+Español,Liquidez,Capital de Trabajo,Dinero operativo disponible tras pagar deudas inmediatas.,Activo Corriente − Pasivo Corriente,> 0 (Positivo),5,1,es-ES,Capital de Trabajo | Working Capital
+Español,Liquidez,Ratio de Efectivo,Capacidad de pago inmediato solo con efectivo disponible.,Efectivo y Equivalentes / Pasivo Corriente,0.30 - 0.50 x,7,1,es-ES,Ratio de Efectivo | Cash Ratio
+Español,Rentabilidad,Margen Bruto,Porcentaje de venta que queda tras descontar el costo directo.,Utilidad Bruta​ / Ventas,> 40% (0.40),1,4,es-ES,Margen Bruto|Gross Profit Margin
+Español,Rentabilidad,Margen Operativo,Ganancia pura del negocio antes de impuestos e intereses.,Utilidad Operacional​ / Ventas,> 15% (0.15),3,4,es-ES,Margen Operativo|Operating Margin
+Español,Rentabilidad,Margen EBITDA,Caja operativa generada por cada peso vendido.,EBITDA​ / Ventas,> 20% (0.20),5,4,es-ES,Margen EBITDA|EBITDA Margin
+Español,Rentabilidad,Margen Neto,Ganancia final para los accionistas por cada peso vendido.,Utilidad Neta​ / Ventas,> 10% (0.10),7,4,es-ES,Margen Neto|Net Profit Margin
+Español,Rentabilidad,ROA (Retorno s/ Activos),Rentabilidad generada sobre el total de activos invertidos.,Utilidad Neta​ / Total Activos,> 5% (0.05),9,4,es-ES,ROA (Retorno s/ Activos)|ROA (Return on Assets)
+Español,Rentabilidad,ROE (Retorno s/ Patrimonio),Rentabilidad sobre el dinero invertido por los dueños.,Utilidad Neta​ / Patrimonio,> 15% (0.15),11,4,es-ES,ROE (Retorno s/ Patrimonio)|ROE (Return on Equity)
+Español,Solvencia,Relación Deuda/Patrimonio,Cuánta deuda existe por cada peso de los dueños.,Pasivo Total​ / Patrimonio,< 1.50 x,1,3,es-ES,Relación Deuda/Patrimonio|Debt-to-Equity Ratio
+Español,Solvencia,Multiplicador de Capital,Nivel de apalancamiento total de los activos.,Activo Total​ / Patrimonio,< 2.50 x,3,3,es-ES,Multiplicador de Capital|Equity Multiplier
+Español,Solvencia,Ratio de Capitalización,Peso de la deuda en la estructura de largo plazo.,Deuda Largo Plazo / (Deuda largo Plazo +Patrimonio)​,< 50% (0.50),5,3,es-ES,Ratio de Capitalización|Capitalization Ratio
+Español,Solvencia,Ratio de Propiedad,Porcentaje de activos que realmente pertenecen a los dueños.,Patrimonio​ Total / Activo Total,> 40% (0.40),7,3,es-ES,Ratio de Propiedad|Equity Ratio
+Español,Solvencia,Apalancamiento Financiero,Relación de deuda costosa (bancos) frente al patrimonio.,Deuda Bancaria​ / Patrimonio,< 50% (0.50),9,3,es-ES,Apalancamiento Financiero|Gearing Ratio
+Español,Solvencia,Cobertura de Intereses,Capacidad de la utilidad operativa para pagar intereses.,EBIT / Gastos Intereses,> 3.0 x,11,3,es-ES,Cobertura de Intereses|Interest Coverage
+Español,Solvencia,Deuda Neta / EBITDA,Años necesarios para pagar la deuda con la utilidad operativa.,((Deuda Financiera CP + LP) - Efectivo y Equivalentes) / EBITDA,< 3.0 x,13,3,es-ES,Deuda Neta / EBITDA|Net Debt to EBITDA
+English,Activity,Receivables Turnover,Times per year receivables are collected.,Credit Sales​ / Average Receivables,> 6.0 x,2,2,en-US,Rotación de Cartera|Receivables Turnover
+English,Activity,Days Sales Outstanding,Average number of days to collect payment.,360 / Receivables Turnover,< 60 Days,4,2,en-US,Días de Cartera (DSO)|Days Sales Outstanding
+English,Activity,Inventory Turnover,Times per year stock is sold and replaced.,COGS​ (Cost Of Good sold ) /Average Inventory,> 4.0 x,6,2,en-US,Rotación de Inventarios|Inventory Turnover
+English,Activity,Days Inv. Outstanding,Average days inventory is held before sale.,360 / Inventory Turnover,< 90 Days,8,2,en-US,Días de Inventario (DIO)|Days Inv. Outstanding
+English,Activity,Cash Conversion Cycle,Net days cash is tied up in operations.,DSO + DIO - DPO,< 90 Days,10,2,en-US,Ciclo de Conversión (CCC)|Cash Conversion Cycle
+English,Activity,Total Asset Turnover,Efficiency of total assets in generating sales.,Total Sales​ / Average Total Assets,> 1.0 x,12,2,en-US,Rotación Activos Totales|Total Asset Turnover
+English,Liquidity,Current Ratio,Ability to cover short-term debts with current assets.,Current Assets​ / Current Liabilities,1.50 - 2.00 x,2,1,en-US,Razón Corriente | Current Ratio
+English,Liquidity,Quick Ratio,Immediate liquidity without relying on inventory sales.,(Current Assets−Inv​entories ) / Current Liabilities,~ 1.00 x,4,1,en-US,Prueba Ácida | Current Ratio
+English,Liquidity,Working Capital,Operating cash available after paying immediate debts.,Current Assets − Current Liabilities,> 0 (Positive),6,1,en-US,Capital de Trabajo | Working Capital
+English,Liquidity,Cash Ratio,Immediate payment ability using only available cash.,Cash​ / Current Liabilities ,0.30 - 0.50 x,8,1,en-US,Ratio de Efectivo | Cash Ratio
+English,Profitability,Gross Profit Margin,Percentage of sales remaining after direct costs (COGS).,Gross Profit​ / Sales,> 40% (0.40),2,4,en-US,Margen Bruto|Gross Profit Margin
+English,Profitability,Operating Margin,Pure business profit before tax and interest.,Operating Income​ / Sales,> 15% (0.15),4,4,en-US,Margen Operativo|Operating Margin
+English,Profitability,EBITDA Margin,Operating cash generated for every dollar sold.,EBITDA​ / Sales,> 20% (0.20),6,4,en-US,Margen EBITDA|EBITDA Margin
+English,Profitability,Net Profit Margin,Final profit for shareholders for every dollar sold.,Net Income​/ Sales,> 10% (0.10),8,4,en-US,Margen Neto|Net Profit Margin
+English,Profitability,ROA (Return on Assets),Profitability generated on total assets invested.,Net Income​/ Total Assets,> 5% (0.05),10,4,en-US,ROA (Retorno s/ Activos)|ROA (Return on Assets)
+English,Profitability,ROE (Return on Equity),Profitability on the money invested by shareholders.,Net Income​ / Equity,> 15% (0.15),12,4,en-US,ROE (Retorno s/ Patrimonio)|ROE (Return on Equity)
+English,Solvency,Debt-to-Equity Ratio,Amount of debt per dollar of equity.,Total Liabilities / Equity,< 1.50 x,2,3,en-US,Relación Deuda/Patrimonio|Debt-to-Equity Ratio
+English,Solvency,Equity Multiplier,Total leverage level of assets.,Total Assets​ / Equity,< 2.50 x,4,3,en-US,Multiplicador de Capital|Equity Multiplier
+English,Solvency,Capitalization Ratio,Weight of debt in the long-term capital structure.,Long Term Debt / (Long Term Debt  + Equity),< 50% (0.50),6,3,en-US,Ratio de Capitalización|Capitalization Ratio
+English,Solvency,Equity Ratio,Percentage of assets truly owned by shareholders.,Equity​ / Total Assets,> 40% (0.40),8,3,en-US,Ratio de Propiedad|Equity Ratio
+English,Solvency,Gearing Ratio,Ratio of interest-bearing debt to equity.,Bank Debt / Equity,< 50% (0.50),10,3,en-US,Apalancamiento Financiero|Gearing Ratio
+English,Solvency,Interest Coverage,Ability of operating profit to pay interest expenses.,EBIT / Interest Expense,> 3.0 x,12,3,en-US,Cobertura de Intereses|Interest Coverage
+English,Solvency,Net Debt to EBITDA,Years needed to pay off debt using operating profit.,((Total Financial Debt Short-Term + Long-Term) - Cash and Cash Equivalents) / EBITDA,< 3.0 x,14,3,en-US,Deuda Neta / EBITDA|Net Debt to EBITDA
+English,Structure,Fixed Charge Coverage,Ability to cover interest and fixed charges (leases) with operating income.,(EBIT + Lease Expenses)​ / (Interest+Lease Expenses),> 1.50 x(Safety),2,5,en-US,Cobertura de Cargos Fijos|Fixed Charge Coverage
+English,Structure,Debt Service Coverage (DSCR),Ability of operating cash to pay full debt service (Principal + Interest).,(EBITDA - Tax)​ / (Principal+Interest),> 1.20 x(Vital),4,5,en-US,Cobertura Servicio Deuda|Debt Service Coverage (DSCR)
+English,Structure,Equity Solvency Ratio,Equity backing for every dollar of debt (Inverse of Debt-to-Equity).,Total Liabilities / Equity​,> 1.00 x(High backing),6,5,en-US,Ratio de Solvencia Patrimonial|Equity Solvency Ratio
+English,Structure,Debt to Tangible Assets,Percentage of physical (real) assets financed by debt.,Total Liabilities / (Assets−Intangibles),Low(< 0.50),8,5,en-US,Deuda a Activos Tangibles|Debt to Tangible Assets
+Español,Solvencia,Endeudamiento Total,Años necesarios para pagar la deuda con la utilidad operativa.,(Pasivos Totales x 100) / Activos Totales,< 40% (0.50),13,3,es-ES,Endeudamiento Total|Total Debt
+English,Solvency,Total Debt,Años necesarios para pagar la deuda con la utilidad operativa.,(Total Liabilities X 100) / Total Assets,< 40% (0.50),13,3,es-ES,Endeudamiento Total|Total Debt
+Español,Actividad,Rotación de Proveedores,Veces al año que se paga a los proveedores.,Costo de Ventas / Promedio CxP,> 6.0 x,1,2,es-ES,Rotación de Proveedores|Accounts Payable Turnover
+Español,Actividad,Días de Proveedores (DPO),Días promedio que tarda la empresa en pagar.,360 / Rotación de Proveedores,< 60 Días,3,2,es-ES,Días de Proveedores (DPO)|Days Payable Outstanding (DPO)
+English,Activity,Accounts Payable Turnover,Times per year suppliers are paid.,Cost of Sales / Average AP,> 6.0 x,2,2,en-US,Rotación de Proveedores|Accounts Payable Turnover
+English,Activity,Days Payable Outstanding (DPO),Average days the company takes to pay.,360 / Accounts Payable Turnover,< 60 Days,4,2,en-US,Días de Proveedores (DPO)|Days Payable Outstanding (DPO)
+Español,Estructura,Estructura de la deuda,Muestra la proporción de deuda total respecto al patrimonio de la empresa.,Pasivo Total / Patrimonio Total,< 1.0 x,1,5,es-ES,Estructura de la deuda|Debt Structure
+English,Structure,Debt Structure,Shows the proportion of total debt relative to the company's equity.,Total Liabilities / Total Equity,< 1.0 x,2,5,en-US,Estructura de la deuda|Debt Structure
+Español,Estructura,Cobertura de Activos Fijos,Mide qué parte de los activos fijos se financia con recursos permanentes (largo plazo).,(Patrimonio + Pasivo No Cte) / Activo Fijo,> 1.0 x,1,5,es-ES,Cobertura de Activos Fijos|Fixed Asset Coverage
+English,Structure,Fixed Asset Coverage,Measures the portion of fixed assets financed by permanent (long-term) resources.,(Equity + Non-Current Liab) / Fixed Assets,> 1.0 x,1,5,en-US,Cobertura de Activos Fijos|Fixed Asset Coverage
+
+
+
+,,,,

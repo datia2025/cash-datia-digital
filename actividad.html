@@ -2,370 +2,556 @@
 <html lang="es">
 
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Actividad | Signum Financial</title>
     <!-- Anti-flash: oculta header/nav ANTES del primer render si está en iframe -->
     <script>if (window.self !== window.top) { document.documentElement.classList.add('in-iframe'); }</script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --bg-blur: rgba(255, 255, 255, 0.8);
+            --accent-blue: #0A1F44;
+            --accent-vibrant: #1E4E79;
+            --text-primary: #000000;
+            --text-secondary: #7A7A7A;
+            --border-soft: rgba(0, 0, 0, 0.06);
+            --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: #F5F5F5;
+            color: var(--text-primary);
+            overflow-x: hidden;
+        }
+
+        /* Ocultar elementos heredados si estamos en Iframe (start.html) */
         .in-iframe #main-header,
         .in-iframe #main-nav {
             display: none !important;
         }
-    </style>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Financiero - Actividad</title>
-    <!-- Tailwind CSS CDN para el estilizado -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <script
-        src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
-    <!-- Marked library for Markdown parsing -->
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <!-- Lucide Icons para la sección de análisis -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <style>
-        /* Normalización global para consistencia entre pestañas */
-        html {
-            scrollbar-gutter: stable;
-            overflow-y: scroll;
+
+        /* ── FILTROS PREMIUM (SIGNUM STYLE) ── */
+        .premium-filter-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            padding: 24px 32px;
+            background: white;
+            border-bottom: 1px solid var(--border-soft);
+            align-items: center;
         }
 
-        body {
-            font-family: 'Segoe UI', system-ui, sans-serif;
-            overflow-x: hidden;
-        }
-
-        #main-header {
-            min-height: 120px;
+        .filter-group {
+            position: relative;
             display: flex;
             flex-direction: column;
-            justify-content: center;
+            gap: 6px;
         }
 
-        /* ── Filtros compactos ── */
-        .filter-bar label {
-            font-family: 'Segoe UI', system-ui, sans-serif;
-            font-size: 0.75rem;
+        .filter-group label {
+            font-size: 0.65rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-secondary);
+            padding-left: 4px;
+        }
+
+        .filter-group select {
+            appearance: none;
+            background: #F8F9FA;
+            border: 1px solid var(--border-soft);
+            padding: 10px 36px 10px 16px;
+            border-radius: 12px;
+            font-size: 0.85rem;
             font-weight: 600;
-            color: #374151;
-            letter-spacing: 0.02em;
-        }
-
-        .filter-bar select {
-            font-family: 'Segoe UI', system-ui, sans-serif;
-            font-size: 0.75rem;
-            padding: 3px 8px 3px 6px;
-            border-radius: 5px;
-            border: 1px solid #d1d5db;
-            color: #111827;
-            background: #fff;
+            color: var(--text-primary);
             cursor: pointer;
+            transition: all 0.2s ease;
+            min-width: 140px;
         }
 
-        .filter-bar select:focus {
+        .filter-group::after {
+            content: '↓';
+            position: absolute;
+            right: 14px;
+            bottom: 12px;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            pointer-events: none;
+            opacity: 0.5;
+        }
+
+        .filter-group select:hover {
+            background: #FFF;
+            border-color: var(--accent-vibrant);
+        }
+
+        .filter-group select:focus {
             outline: none;
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 3px rgba(30, 78, 121, 0.1);
+        }
+
+        /* ── TARJETAS SIGNUM ── */
+        .signum-card {
+            background: white;
+            border-radius: 20px;
+            padding: 28px;
+            border: 1px solid var(--border-soft);
+            box-shadow: var(--card-shadow);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .signum-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 20px;
+        }
+
+        .card-badge {
+            font-size: 0.65rem;
+            font-weight: 800;
+            padding: 4px 10px;
+            border-radius: 8px;
+            text-transform: uppercase;
+        }
+
+        .card-title {
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: var(--accent-blue);
+            margin-bottom: 4px;
+        }
+
+        .card-subtitle {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+            line-height: 1.4;
+        }
+
+        .chart-container-inner {
+            height: 280px;
+            width: 100%;
+            margin: 16px 0;
+            position: relative;
+        }
+
+        .analysis-block {
+            margin-top: auto;
+            border-top: 1px solid var(--border-soft);
+            padding-top: 20px;
+        }
+
+        /* ── TV-STYLE OVERLAY & TABS (SIGNUM PREMIUM) ── */
+        .insight-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 4px;
+        }
+
+        .insight-tab-btn {
+            border: 1px solid var(--border-soft);
+            background: white;
+            padding: 6px 12px;
+            border-radius: 10px;
+            font-size: 0.65rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .insight-tab-btn i {
+            width: 12px;
+            height: 12px;
+        }
+
+        .insight-tab-btn:hover {
+            background: #F8F9FA;
+            border-color: var(--accent-vibrant);
+            color: var(--text-primary);
+        }
+
+        .insight-tab-btn.active {
+            background: var(--accent-blue);
+            color: white;
+            border-color: var(--accent-blue);
+            box-shadow: 0 4px 12px rgba(10, 31, 68, 0.2);
+        }
+
+        .insight-overlay {
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 100%;
+            max-height: 85%;
+            background: rgba(248, 250, 252, 0.98); /* Light Glacier - Executive Style */
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            color: #1e293b;
+            border-top: 1px solid #e2e8f0;
+            padding: 28px 24px 24px 24px;
+            transform: translateY(105%);
+            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 20;
+            overflow-y: auto;
+            box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.05);
+        }
+
+        .insight-overlay.active {
+            transform: translateY(0);
+        }
+
+        .glow-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+        }
+
+        .close-overlay {
+            position: absolute;
+            top: 14px;
+            right: 14px;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.03);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .close-overlay:hover {
+            background: rgba(0, 0, 0, 0.08);
+            transform: rotate(90deg);
         }
     </style>
+    <!-- Librerías Críticas -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 
 <body class="bg-gray-50">
     <div id="dashboard-container">
-        <!-- Encabezado Principal -->
-        <div id="main-header" class="bg-gradient-to-r from-blue-700 to-blue-900 text-white p-8 shadow-lg">
-            <h1 class="text-4xl font-bold mb-2">Dashboard Financiero</h1>
-            <p class="text-blue-200">Análisis Integral de Gestión de Activos y Operaciones</p>
-            <p class="text-sm text-blue-300 mt-2">Monitoreo y Auditoría de Eficiencia Operativa</p>
-        </div>
-
-        <!-- Navegación de Pestañas -->
-        <div id="main-nav" class="bg-white shadow-md flex overflow-x-auto">
-            <a href="index.html" class="px-6 py-3 font-semibold transition-all bg-white text-blue-600 hover:bg-blue-50">
-                <i data-lucide="droplets" class="w-4 h-4 inline-block mr-1"></i>
-                Liquidez
-            </a>
-            <a href="rentabilidad.html"
-                class="px-6 py-3 font-semibold transition-all bg-white text-blue-600 hover:bg-blue-50">
-                <i data-lucide="trending-up" class="w-4 h-4 inline-block mr-1"></i>
-                Rentabilidad
-            </a>
-            <a href="solvencia.html"
-                class="px-6 py-3 font-semibold transition-all bg-white text-blue-600 hover:bg-blue-50">
-                <i data-lucide="landmark" class="w-4 h-4 inline-block mr-1"></i>
-                Solvencia
-            </a>
-            <button class="px-6 py-3 font-semibold transition-all bg-blue-600 text-white border-b-4 border-orange-500">
-                <i data-lucide="activity" class="w-4 h-4 inline-block mr-1"></i>
-                Actividad
-            </button>
-        </div>
-
         <!-- ==================== CONTENIDO: ACTIVIDAD ==================== -->
         <div id="actividad" class="tab-content">
-            <!-- Controles de filtro -->
-            <div class="bg-white shadow-md p-4">
-                <div class="flex flex-wrap gap-4 items-center filter-bar">
-                    <div class="flex items-center gap-2">
-                        <label class="font-semibold text-gray-700">Año:</label>
-                        <select id="yearFilter"
-                            class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600">
-                            <option value="all">Todos</option>
-                            <option value="2025" selected>2025</option>
-                            <option value="2024">2024</option>
-                            <option value="2023">2023</option>
-                        </select>
-                    </div>
+            <!-- Controles de filtro PREMIUM -->
+            <div class="premium-filter-container">
+                <div class="filter-group">
+                    <label>Año de análisis</label>
+                    <select id="yearFilter">
+                        <option value="all">Todos los años</option>
+                        <option value="2025" selected>2025</option>
+                        <option value="2024">2024</option>
+                        <option value="2023">2023</option>
+                    </select>
+                </div>
 
-                    <div class="flex items-center gap-2">
-                        <label class="font-semibold text-gray-700">Trimestre:</label>
-                        <select id="quarterFilter"
-                            class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600">
-                            <option value="all" selected>Todos</option>
-                            <option value="1Q">1Q</option>
-                            <option value="2Q">2Q</option>
-                            <option value="3Q">3Q</option>
-                            <option value="4Q">4Q</option>
-                        </select>
-                    </div>
+                <div class="filter-group">
+                    <label>Trimestre</label>
+                    <select id="quarterFilter">
+                        <option value="all" selected>Año completo</option>
+                        <option value="1Q">1Q</option>
+                        <option value="2Q">2Q</option>
+                        <option value="3Q">3Q</option>
+                        <option value="4Q">4Q</option>
+                    </select>
+                </div>
 
-                    <div class="flex items-center gap-2">
-                        <label class="font-semibold text-gray-700">Mes:</label>
-                        <select id="monthFilter"
-                            class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600">
-                            <option value="all" selected>Todos</option>
-                            <option value="1">Enero</option>
-                            <option value="2">Febrero</option>
-                            <option value="3">Marzo</option>
-                            <option value="4">Abril</option>
-                            <option value="5">Mayo</option>
-                            <option value="6">Junio</option>
-                            <option value="7">Julio</option>
-                            <option value="8">Agosto</option>
-                            <option value="9">Septiembre</option>
-                            <option value="10">Octubre</option>
-                            <option value="11">Noviembre</option>
-                            <option value="12">Diciembre</option>
-                        </select>
-                    </div>
+                <div class="filter-group">
+                    <label>Mes específico</label>
+                    <select id="monthFilter">
+                        <option value="all" selected>Todos los meses</option>
+                        <option value="1">Enero</option>
+                        <option value="2">Febrero</option>
+                        <option value="3">Marzo</option>
+                        <option value="4">Abril</option>
+                        <option value="5">Mayo</option>
+                        <option value="6">Junio</option>
+                        <option value="7">Julio</option>
+                        <option value="8">Agosto</option>
+                        <option value="9">Septiembre</option>
+                        <option value="10">Octubre</option>
+                        <option value="11">Noviembre</option>
+                        <option value="12">Diciembre</option>
+                    </select>
+                </div>
 
-                    <div class="flex items-center gap-2">
-                        <label class="font-semibold text-gray-700">Lenguaje:</label>
-                        <select id="languageFilter"
-                            class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600">
-                            <option value="es" selected>Español</option>
-                            <option value="en">English</option>
-                        </select>
-                    </div>
+                <div class="filter-group">
+                    <label>Idioma Visual</label>
+                    <select id="languageFilter">
+                        <option value="es" selected>Español</option>
+                        <option value="en">English</option>
+                    </select>
+                </div>
+
+                <div class="ml-auto opacity-40 text-[10px] font-bold uppercase tracking-widest hidden md:block">
+                    Activity Dashboard | v2.0
                 </div>
             </div>
 
-            <!-- Grid de 8 Gráficos (2 columnas x 4 filas) -->
+            <!-- Sección de Realidad Financiera Anual (Cross-Indicator) - ARRIBA -->
+            <!-- Contenedor para el Dictamen Dinámico (Lean Premium) -->
+            <div id="dictamen-container" class="px-8 mt-6"></div>
+
+            <!-- Grid de 8 Gráficos -->
             <div class="p-8">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <!-- 1. Ciclo de Conversión de Efectivo -->
-                    <div class="bg-white rounded-lg shadow-md p-6 border-t-4 border-blue-800">
-                        <h3 id="chart-title-ciclo_efectivo" class="text-xl font-semibold text-blue-900 mb-1">Ciclo de
-                            Conversión de Efectivo</h3>
-                        <div class="text-sm text-gray-500 mb-4">
-                            <span>DSO + DIO - DPO</span>
-                            <span class="ml-3">Target: < 90 días</span>
-                        </div>
-                        <div>
-                            <div id="no-data-ciclo_efectivo" class="text-center py-8 hidden">
-                                <i data-lucide="alert-circle" class="w-12 h-12 mx-auto text-gray-400 mb-2"></i>
-                                <p class="text-gray-500">No hay datos disponibles</p>
+                    <div class="signum-card">
+                        <div class="card-header border-b border-gray-50 pb-4 mb-2">
+                            <div>
+                                <h3 id="chart-title-ciclo_efectivo" class="card-title">Ciclo de Conversión de Efectivo</h3>
+                                <p class="card-subtitle">Tiempo que tarda la empresa en convertir inventario y otros activos en efectivo.</p>
                             </div>
-                            <div class="h-[300px] w-full">
-                                <canvas id="chartCiclo_efectivo"></canvas>
-                            </div>
+                            <span class="card-badge bg-blue-100 text-blue-800">Target: < 90 días</span>
                         </div>
-                        <div id="analysis-ciclo_efectivo" class="mt-4"></div>
+                        <div class="insight-tabs" id="tabs-ciclo_efectivo"></div>
+                        <div class="chart-container-inner relative overflow-hidden">
+                            <div id="no-data-ciclo_efectivo" class="absolute inset-0 flex flex-col items-center justify-center bg-gray-50 bg-opacity-80 z-10 hidden">
+                                <i data-lucide="alert-circle" class="w-8 h-8 text-gray-400 mb-2"></i>
+                                <p class="text-xs font-bold text-gray-500">DISTRIBUCIÓN NO DISPONIBLE</p>
+                            </div>
+                            <canvas id="chartCiclo_efectivo"></canvas>
+                            <div id="analysis-ciclo_efectivo" class="insight-overlay"></div>
+                        </div>
                     </div>
 
                     <!-- 2. Días de Cartera (DSO) -->
-                    <div class="bg-white rounded-lg shadow-md p-6 border-t-4 border-green-600">
-                        <h3 id="chart-title-dso" class="text-xl font-semibold text-blue-900 mb-1">Días de Cartera (DSO)
-                        </h3>
-                        <div class="text-sm text-gray-500 mb-4">
-                            <span>(Cuentas por Cobrar / Ventas) * 365</span>
-                            <span class="ml-3">Target: < 60 días</span>
-                        </div>
-                        <div>
-                            <div id="no-data-dso" class="text-center py-8 hidden">
-                                <i data-lucide="alert-circle" class="w-12 h-12 mx-auto text-gray-400 mb-2"></i>
-                                <p class="text-gray-500">No hay datos disponibles</p>
+                    <div class="signum-card">
+                        <div class="card-header border-b border-gray-50 pb-4 mb-2">
+                            <div>
+                                <h3 id="chart-title-dso" class="card-title">Días de Cartera (DSO)</h3>
+                                <p class="card-subtitle">Número promedio de días que tarda la empresa en cobrar sus cuentas.</p>
                             </div>
-                            <div class="h-[300px] w-full">
-                                <canvas id="chartDso"></canvas>
-                            </div>
+                            <span class="card-badge bg-green-100 text-green-800">Target: < 60 días</span>
                         </div>
-                        <div id="analysis-dso" class="mt-4"></div>
+                        <div class="insight-tabs" id="tabs-dso"></div>
+                        <div class="chart-container-inner relative overflow-hidden">
+                            <div id="no-data-dso" class="absolute inset-0 flex flex-col items-center justify-center bg-gray-50 bg-opacity-80 z-10 hidden">
+                                <i data-lucide="alert-circle" class="w-8 h-8 text-gray-400 mb-2"></i>
+                                <p class="text-xs font-bold text-gray-500">DISTRIBUCIÓN NO DISPONIBLE</p>
+                            </div>
+                            <canvas id="chartDso"></canvas>
+                            <div id="analysis-dso" class="insight-overlay"></div>
+                        </div>
                     </div>
 
                     <!-- 3. Días de Inventario (DIO) -->
-                    <div class="bg-white rounded-lg shadow-md p-6 border-t-4 border-orange-500">
-                        <h3 id="chart-title-dio" class="text-xl font-semibold text-blue-900 mb-1">Días de Inventario
-                            (DIO)</h3>
-                        <div class="text-sm text-gray-500 mb-4">
-                            <span>(Inventario / Costo de Ventas) * 365</span>
-                            <span class="ml-3">Target: < 45 días</span>
-                        </div>
-                        <div>
-                            <div id="no-data-dio" class="text-center py-8 hidden">
-                                <i data-lucide="alert-circle" class="w-12 h-12 mx-auto text-gray-400 mb-2"></i>
-                                <p class="text-gray-500">No hay datos disponibles</p>
+                    <div class="signum-card">
+                        <div class="card-header border-b border-gray-50 pb-4 mb-2">
+                            <div>
+                                <h3 id="chart-title-dio" class="card-title">Días de Inventario (DIO)</h3>
+                                <p class="card-subtitle">Número promedio de días que el inventario permanece almacenado.</p>
                             </div>
-                            <div class="h-[300px] w-full">
-                                <canvas id="chartDio"></canvas>
-                            </div>
+                            <span class="card-badge bg-orange-100 text-orange-800">Target: < 45 días</span>
                         </div>
-                        <div id="analysis-dio" class="mt-4"></div>
+                        <div class="insight-tabs" id="tabs-dio"></div>
+                        <div class="chart-container-inner relative overflow-hidden">
+                            <div id="no-data-dio" class="absolute inset-0 flex flex-col items-center justify-center bg-gray-50 bg-opacity-80 z-10 hidden">
+                                <i data-lucide="alert-circle" class="w-8 h-8 text-gray-400 mb-2"></i>
+                                <p class="text-xs font-bold text-gray-500">DISTRIBUCIÓN NO DISPONIBLE</p>
+                            </div>
+                            <canvas id="chartDio"></canvas>
+                            <div id="analysis-dio" class="insight-overlay"></div>
+                        </div>
                     </div>
 
                     <!-- 4. Días de Proveedores (DPO) -->
-                    <div class="bg-white rounded-lg shadow-md p-6 border-t-4 border-yellow-500">
-                        <h3 id="chart-title-dpo" class="text-xl font-semibold text-blue-900 mb-1">Días de Proveedores
-                            (DPO)</h3>
-                        <div class="text-sm text-gray-500 mb-4">
-                            <span>(Cuentas por Pagar / Compras) * 365</span>
-                            <span class="ml-3">Target: > 30 días</span>
-                        </div>
-                        <div>
-                            <div id="no-data-dpo" class="text-center py-8 hidden">
-                                <i data-lucide="alert-circle" class="w-12 h-12 mx-auto text-gray-400 mb-2"></i>
-                                <p class="text-gray-500">No hay datos disponibles</p>
+                    <div class="signum-card">
+                        <div class="card-header border-b border-gray-50 pb-4 mb-2">
+                            <div>
+                                <h3 id="chart-title-dpo" class="card-title">Días de Proveedores (DPO)</h3>
+                                <p class="card-subtitle">Número promedio de días que la empresa tarda en pagar a sus proveedores.</p>
                             </div>
-                            <div class="h-[300px] w-full">
-                                <canvas id="chartDpo"></canvas>
-                            </div>
+                            <span class="card-badge bg-yellow-100 text-yellow-800">Target: > 30 días</span>
                         </div>
-                        <div id="analysis-dpo" class="mt-4"></div>
+                        <div class="insight-tabs" id="tabs-dpo"></div>
+                        <div class="chart-container-inner relative overflow-hidden">
+                            <div id="no-data-dpo" class="absolute inset-0 flex flex-col items-center justify-center bg-gray-50 bg-opacity-80 z-10 hidden">
+                                <i data-lucide="alert-circle" class="w-8 h-8 text-gray-400 mb-2"></i>
+                                <p class="text-xs font-bold text-gray-500">DISTRIBUCIÓN NO DISPONIBLE</p>
+                            </div>
+                            <canvas id="chartDpo"></canvas>
+                            <div id="analysis-dpo" class="insight-overlay"></div>
+                        </div>
                     </div>
 
                     <!-- 5. Rotación de Activos Totales -->
-                    <div class="bg-white rounded-lg shadow-md p-6 border-t-4 border-red-600">
-                        <h3 id="chart-title-rotacion_activos" class="text-xl font-semibold text-blue-900 mb-1">Rotación
-                            Activos Totales</h3>
-                        <div class="text-sm text-gray-500 mb-4">
-                            <span>Ventas / Activos Totales</span>
-                            <span class="ml-3">Target: > 0.50 x</span>
-                        </div>
-                        <div>
-                            <div id="no-data-rotacion_activos" class="text-center py-8 hidden">
-                                <i data-lucide="alert-circle" class="w-12 h-12 mx-auto text-gray-400 mb-2"></i>
-                                <p class="text-gray-500">No hay datos disponibles</p>
+                    <div class="signum-card">
+                        <div class="card-header border-b border-gray-50 pb-4 mb-2">
+                            <div>
+                                <h3 id="chart-title-rotacion_activos" class="card-title">Rotación de Activos Totales</h3>
+                                <p class="card-subtitle">Eficiencia con la que la empresa utiliza sus activos para generar ventas.</p>
                             </div>
-                            <div class="h-[300px] w-full">
-                                <canvas id="chartRotacion_activos"></canvas>
-                            </div>
+                            <span class="card-badge bg-red-100 text-red-800">Target: > 0.50 x</span>
                         </div>
-                        <div id="analysis-rotacion_activos" class="mt-4"></div>
+                        <div class="insight-tabs" id="tabs-rotacion_activos"></div>
+                        <div class="chart-container-inner relative overflow-hidden">
+                            <div id="no-data-rotacion_activos" class="absolute inset-0 flex flex-col items-center justify-center bg-gray-50 bg-opacity-80 z-10 hidden">
+                                <i data-lucide="alert-circle" class="w-8 h-8 text-gray-400 mb-2"></i>
+                                <p class="text-xs font-bold text-gray-500">DISTRIBUCIÓN NO DISPONIBLE</p>
+                            </div>
+                            <canvas id="chartRotacion_activos"></canvas>
+                            <div id="analysis-rotacion_activos" class="insight-overlay"></div>
+                        </div>
                     </div>
 
                     <!-- 6. Rotación de Cartera -->
-                    <div class="bg-white rounded-lg shadow-md p-6 border-t-4 border-indigo-600">
-                        <h3 id="chart-title-rotacion_cartera" class="text-xl font-semibold text-blue-900 mb-1">Rotación
-                            de Cartera</h3>
-                        <div class="text-sm text-gray-500 mb-4">
-                            <span>Ventas / Cuentas por Cobrar</span>
-                            <span class="ml-3">Target: > 6.0 x</span>
-                        </div>
-                        <div>
-                            <div id="no-data-rotacion_cartera" class="text-center py-8 hidden">
-                                <i data-lucide="alert-circle" class="w-12 h-12 mx-auto text-gray-400 mb-2"></i>
-                                <p class="text-gray-500">No hay datos disponibles</p>
+                    <div class="signum-card">
+                        <div class="card-header border-b border-gray-50 pb-4 mb-2">
+                            <div>
+                                <h3 id="chart-title-rotacion_cartera" class="card-title">Rotación de Cartera</h3>
+                                <p class="card-subtitle">Velocidad con la que las cuentas por cobrar se convierten en efectivo.</p>
                             </div>
-                            <div class="h-[300px] w-full">
-                                <canvas id="chartRotacion_cartera"></canvas>
-                            </div>
+                            <span class="card-badge bg-indigo-100 text-indigo-800">Target: > 0.80 x</span>
                         </div>
-                        <div id="analysis-rotacion_cartera" class="mt-4"></div>
+                        <div class="insight-tabs" id="tabs-rotacion_cartera"></div>
+                        <div class="chart-container-inner relative overflow-hidden">
+                            <div id="no-data-rotacion_cartera" class="absolute inset-0 flex flex-col items-center justify-center bg-gray-50 bg-opacity-80 z-10 hidden">
+                                <i data-lucide="alert-circle" class="w-8 h-8 text-gray-400 mb-2"></i>
+                                <p class="text-xs font-bold text-gray-500">DISTRIBUCIÓN NO DISPONIBLE</p>
+                            </div>
+                            <canvas id="chartRotacion_cartera"></canvas>
+                            <div id="analysis-rotacion_cartera" class="insight-overlay"></div>
+                        </div>
                     </div>
 
                     <!-- 7. Rotación de Inventarios -->
-                    <div class="bg-white rounded-lg shadow-md p-6 border-t-4 border-purple-600">
-                        <h3 id="chart-title-rotacion_inventarios" class="text-xl font-semibold text-blue-900 mb-1">
-                            Rotación de Inventarios</h3>
-                        <div class="text-sm text-gray-500 mb-4">
-                            <span>Costo de Ventas / Inventario</span>
-                            <span class="ml-3">Target: > 8.0 x</span>
-                        </div>
-                        <div>
-                            <div id="no-data-rotacion_inventarios" class="text-center py-8 hidden">
-                                <i data-lucide="alert-circle" class="w-12 h-12 mx-auto text-gray-400 mb-2"></i>
-                                <p class="text-gray-500">No hay datos disponibles</p>
+                    <div class="signum-card">
+                        <div class="card-header border-b border-gray-50 pb-4 mb-2">
+                            <div>
+                                <h3 id="chart-title-rotacion_inventarios" class="card-title">Rotación de Inventarios</h3>
+                                <p class="card-subtitle">Número de veces que se renueva el inventario durante un periodo.</p>
                             </div>
-                            <div class="h-[300px] w-full">
-                                <canvas id="chartRotacion_inventarios"></canvas>
-                            </div>
+                            <span class="card-badge bg-purple-100 text-purple-800">Target: > 4.00 x</span>
                         </div>
-                        <div id="analysis-rotacion_inventarios" class="mt-4"></div>
+                        <div class="insight-tabs" id="tabs-rotacion_inventarios"></div>
+                        <div class="chart-container-inner relative overflow-hidden">
+                            <div id="no-data-rotacion_inventarios" class="absolute inset-0 flex flex-col items-center justify-center bg-gray-50 bg-opacity-80 z-10 hidden">
+                                <i data-lucide="alert-circle" class="w-8 h-8 text-gray-400 mb-2"></i>
+                                <p class="text-xs font-bold text-gray-500">DISTRIBUCIÓN NO DISPONIBLE</p>
+                            </div>
+                            <canvas id="chartRotacion_inventarios"></canvas>
+                            <div id="analysis-rotacion_inventarios" class="insight-overlay"></div>
+                        </div>
                     </div>
 
                     <!-- 8. Rotación de Proveedores -->
-                    <div class="bg-white rounded-lg shadow-md p-6 border-t-4 border-pink-600">
-                        <h3 id="chart-title-rotacion_proveedores" class="text-xl font-semibold text-blue-900 mb-1">
-                            Rotación de Proveedores</h3>
-                        <div class="text-sm text-gray-500 mb-4">
-                            <span>Compras / Cuentas por Pagar</span>
-                            <span class="ml-3">Target: 4.0 - 6.0 x</span>
-                        </div>
-                        <div>
-                            <div id="no-data-rotacion_proveedores" class="text-center py-8 hidden">
-                                <i data-lucide="alert-circle" class="w-12 h-12 mx-auto text-gray-400 mb-2"></i>
-                                <p class="text-gray-500">No hay datos disponibles</p>
+                    <div class="signum-card">
+                        <div class="card-header border-b border-gray-50 pb-4 mb-2">
+                            <div>
+                                <h3 id="chart-title-rotacion_proveedores" class="card-title">Rotación de Proveedores</h3>
+                                <p class="card-subtitle">Velocidad con la que la empresa liquida sus cuentas por pagar.</p>
                             </div>
-                            <div class="h-[300px] w-full">
-                                <canvas id="chartRotacion_proveedores"></canvas>
-                            </div>
+                            <span class="card-badge bg-pink-100 text-pink-800">Target: < 6.00 x</span>
                         </div>
-                        <div id="analysis-rotacion_proveedores" class="mt-4"></div>
+                        <div class="insight-tabs" id="tabs-rotacion_proveedores"></div>
+                        <div class="chart-container-inner relative overflow-hidden">
+                            <div id="no-data-rotacion_proveedores" class="absolute inset-0 flex flex-col items-center justify-center bg-gray-50 bg-opacity-80 z-10 hidden">
+                                <i data-lucide="alert-circle" class="w-8 h-8 text-gray-400 mb-2"></i>
+                                <p class="text-xs font-bold text-gray-500">DISTRIBUCIÓN NO DISPONIBLE</p>
+                            </div>
+                            <canvas id="chartRotacion_proveedores"></canvas>
+                            <div id="analysis-rotacion_proveedores" class="insight-overlay"></div>
+                        </div>
                     </div>
-                </div>
-
-                <!-- SECCIÓN: ANÁLISIS GLOBAL DE ACTIVIDAD -->
-                <div id="dictamen-container" class="mt-8 hidden">
-                    <!-- Dinámico -->
                 </div>
             </div>
         </div>
 
         <!-- Botón flotante de ayuda -->
         <button id="glossary-btn"
-            class="fixed bottom-6 right-6 z-50 bg-blue-700 hover:bg-blue-800 text-white rounded-full p-4 shadow-lg transition-all duration-300 hover:scale-110">
+            class="fixed bottom-6 right-6 z-50 bg-blue-700 hover:bg-blue-800 text-white rounded-full p-4 shadow-lg transition-all duration-300 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
             <i data-lucide="book-open" class="w-6 h-6"></i>
         </button>
 
-        <!-- Overlay y Sidebar de Glosario -->
-        <div id="glossary-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden"></div>
+        <!-- Overlay oscuro -->
+        <div id="glossary-overlay"
+            class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden transition-opacity duration-300 opacity-0"></div>
+
+        <!-- Sidebar de Glosario -->
         <div id="glossary-sidebar"
-            class="fixed top-0 right-0 h-full w-80 bg-white shadow-2xl z-50 transform translate-x-full transition-transform duration-300 overflow-hidden flex flex-col">
+            class="fixed top-0 right-0 h-full w-80 bg-white shadow-2xl z-50 transform translate-x-full transition-transform duration-300 ease-in-out overflow-hidden flex flex-col">
+            <!-- Header del Sidebar -->
             <div class="bg-gradient-to-r from-blue-700 to-blue-900 text-white p-4">
                 <div class="flex justify-between items-center">
-                    <h2 class="text-lg font-bold">Glosario Actividad</h2>
-                    <button id="glossary-close"><i data-lucide="x" class="w-5 h-5"></i></button>
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="book-marked" class="w-5 h-5"></i>
+                        <h2 class="text-lg font-bold">Glosario Técnico</h2>
+                    </div>
+                    <button id="glossary-close" class="hover:bg-blue-600 rounded-full p-1 transition-colors">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
                 </div>
+                <p class="text-blue-200 text-xs mt-1">Indicadores de Actividad</p>
             </div>
-            <div class="p-4 border-b">
-                <select id="glossary-select" class="w-full px-3 py-2 border rounded-lg text-sm">
+
+            <!-- Selector de Términos -->
+            <div class="p-4 border-b border-gray-200">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Seleccione un indicador:</label>
+                <select id="glossary-select"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 text-sm">
                     <option value="">-- Elija un término --</option>
                 </select>
             </div>
+
+            <!-- Área de Detalle -->
             <div id="glossary-detail" class="flex-1 overflow-y-auto p-4">
                 <div id="glossary-placeholder" class="text-center text-gray-400 py-8">
+                    <i data-lucide="info" class="w-12 h-12 mx-auto mb-2 opacity-50"></i>
                     <p class="text-sm">Seleccione un indicador para ver su información.</p>
                 </div>
                 <div id="glossary-content" class="hidden space-y-4">
-                    <div class="bg-blue-50 p-3 border-l-4 border-blue-600">
-                        <strong class="text-xs uppercase text-blue-800 block mb-1">Definición</strong>
-                        <p id="glossary-definicion" class="text-gray-700 text-sm"></p>
+                    <!-- Definición -->
+                    <div class="bg-blue-50 rounded-lg p-3 border-l-4 border-blue-600">
+                        <div class="flex items-center gap-2 text-blue-800 font-semibold text-xs uppercase mb-1">
+                            <i data-lucide="lightbulb" class="w-4 h-4"></i>
+                            Definición
+                        </div>
+                        <p id="glossary-definicion" class="text-gray-700 text-sm leading-relaxed"></p>
                     </div>
-                    <div class="bg-purple-50 p-3 border-l-4 border-purple-600">
-                        <strong class="text-xs uppercase text-purple-800 block mb-1">Fórmula</strong>
-                        <p id="glossary-formula" class="text-gray-700 text-sm font-mono bg-white p-1"></p>
+                    <!-- Fórmula -->
+                    <div class="bg-purple-50 rounded-lg p-3 border-l-4 border-purple-600">
+                        <div class="flex items-center gap-2 text-purple-800 font-semibold text-xs uppercase mb-1">
+                            <i data-lucide="calculator" class="w-4 h-4"></i>
+                            Fórmula
+                        </div>
+                        <p id="glossary-formula" class="text-gray-700 text-sm font-mono bg-white px-2 py-1 rounded"></p>
                     </div>
-                    <div class="bg-green-50 p-3 border-l-4 border-green-600">
-                        <strong class="text-xs uppercase text-green-800 block mb-1">Target</strong>
+                    <!-- Margen Target -->
+                    <div class="bg-green-50 rounded-lg p-3 border-l-4 border-green-600">
+                        <div class="flex items-center gap-2 text-green-800 font-semibold text-xs uppercase mb-1">
+                            <i data-lucide="target" class="w-4 h-4"></i>
+                            Margen Recomendado
+                        </div>
                         <p id="glossary-margen" class="text-gray-700 text-lg font-bold"></p>
                     </div>
                 </div>
@@ -379,70 +565,66 @@
     <script src="data_actividad.js"></script>
     <script src="app_actividad.js"></script>
     <script>
-        // Lógica de UI
+        // ========== GLOSSARY SIDEBAR LOGIC ==========
         (function () {
             const btn = document.getElementById('glossary-btn');
             const overlay = document.getElementById('glossary-overlay');
             const sidebar = document.getElementById('glossary-sidebar');
             const closeBtn = document.getElementById('glossary-close');
+            const select = document.getElementById('glossary-select');
+            const placeholder = document.getElementById('glossary-placeholder');
+            const content = document.getElementById('glossary-content');
+            const defEl = document.getElementById('glossary-definicion');
+            const formEl = document.getElementById('glossary-formula');
+            const margEl = document.getElementById('glossary-margen');
 
-            btn.addEventListener('click', () => {
-                overlay.classList.remove('hidden');
-                sidebar.classList.remove('translate-x-full');
-            });
-            closeBtn.addEventListener('click', () => {
-                overlay.classList.add('hidden');
-                sidebar.classList.add('translate-x-full');
-            });
-            overlay.addEventListener('click', () => {
-                overlay.classList.add('hidden');
-                sidebar.classList.add('translate-x-full');
-            });
-
-            document.addEventListener('DOMContentLoaded', () => {
-                if (typeof lucide !== 'undefined') lucide.createIcons();
-
-                // Popular selector de glosario
-                const select = document.getElementById('glossary-select');
-                const placeholder = document.getElementById('glossary-placeholder');
-                const content = document.getElementById('glossary-content');
-                const defEl = document.getElementById('glossary-definicion');
-                const formEl = document.getElementById('glossary-formula');
-                const margEl = document.getElementById('glossary-margen');
-
-                if (typeof glossaryData !== 'undefined') {
-                    // Filtrar solo los indicadores relevantes para Actividad o mostrar todos
-                    glossaryData.forEach((item, index) => {
-                        const opt = document.createElement('option');
-                        opt.value = index;
-                        opt.textContent = item.indicador;
-                        select.appendChild(opt);
-                    });
-                }
-
-                select.addEventListener('change', function () {
-                    const idx = this.value;
-                    if (idx === '' || typeof glossaryData === 'undefined') {
-                        placeholder.classList.remove('hidden');
-                        content.classList.add('hidden');
-                        return;
-                    }
-                    const item = glossaryData[parseInt(idx)];
-                    if (item) {
-                        defEl.textContent = item.definicion;
-                        formEl.textContent = item.formula;
-                        margEl.textContent = item.margen;
-                        placeholder.classList.add('hidden');
-                        content.classList.remove('hidden');
-                    }
+            // Populate select options
+            if (typeof glossaryData !== 'undefined') {
+                glossaryData.forEach((item, index) => {
+                    const opt = document.createElement('option');
+                    opt.value = index;
+                    opt.textContent = item.indicador;
+                    select.appendChild(opt);
                 });
+            }
 
-                // Hide header and nav if in iframe
-                if (window.self !== window.top) {
-                    const header = document.getElementById('main-header');
-                    const nav = document.getElementById('main-nav');
-                    if (header) header.style.display = 'none';
-                    if (nav) nav.style.display = 'none';
+            function openSidebar() {
+                overlay.classList.remove('hidden');
+                setTimeout(() => overlay.classList.remove('opacity-0'), 10);
+                sidebar.classList.remove('translate-x-full');
+            }
+
+            function closeSidebar() {
+                overlay.classList.add('opacity-0');
+                sidebar.classList.add('translate-x-full');
+                setTimeout(() => overlay.classList.add('hidden'), 300);
+            }
+
+            btn.addEventListener('click', openSidebar);
+            closeBtn.addEventListener('click', closeSidebar);
+            overlay.addEventListener('click', closeSidebar);
+
+            select.addEventListener('change', function () {
+                const idx = this.value;
+                if (idx === '' || typeof glossaryData === 'undefined') {
+                    placeholder.classList.remove('hidden');
+                    content.classList.add('hidden');
+                    return;
+                }
+                const item = glossaryData[parseInt(idx)];
+                if (item) {
+                    defEl.textContent = item.definicion;
+                    formEl.textContent = item.formula;
+                    margEl.textContent = item.margen;
+                    placeholder.classList.add('hidden');
+                    content.classList.remove('hidden');
+                }
+            });
+
+            // Refresh Lucide icons after DOM ready
+            document.addEventListener('DOMContentLoaded', () => {
+                if (typeof lucide !== 'undefined') {
+                    lucide.createIcons();
                 }
             });
         })();

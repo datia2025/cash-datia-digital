@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carga de Datos - ETL</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            background-color: #f8fafc;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
+        }
+    </style>
+</head>
+
+<body class="p-8">
+    <div class="max-w-4xl mx-auto">
+        <header class="mb-8">
+            <h1 class="text-3xl font-extrabold text-slate-900 flex items-center gap-3">
+                <i data-lucide="upload-cloud" class="text-blue-600"></i>
+                Gestión de Cargas de Datos
+            </h1>
+            <p class="text-slate-500 mt-2">Sube tus archivos de Master Account y Movimientos para generar indicadores y
+                análisis con IA.</p>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <!-- NocoDB Form Iframe Placeholder -->
+            <div class="glass-card rounded-2xl p-6 border-l-4 border-l-blue-600">
+                <h2 class="text-xl font-bold mb-4 flex items-center gap-2 text-slate-800">
+                    <i data-lucide="file-plus" class="w-5 h-5"></i>
+                    Nuevo Proceso
+                </h2>
+                <p class="text-sm text-slate-600 mb-6">Completa el formulario oficial de NocoDB para iniciar el
+                    procesamiento automatizado por n8n.</p>
+                <div
+                    class="aspect-square bg-slate-100 rounded-xl flex items-center justify-center border-2 border-dashed border-slate-300">
+                    <div class="text-center p-4">
+                        <i data-lucide="form-input" class="w-12 h-12 text-slate-400 mx-auto mb-2"></i>
+                        <p class="text-xs font-medium text-slate-400">Aquí se integrará el Form View de NocoDB</p>
+                        <button
+                            class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors">
+                            Abrir Formulario de Carga
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Flow Metadata -->
+            <div class="flex flex-col gap-6">
+                <div class="glass-card rounded-2xl p-6 border-l-4 border-l-amber-500">
+                    <h2 class="text-lg font-bold mb-2 text-slate-800 flex items-center gap-2">
+                        <i data-lucide="settings" class="w-5 h-5"></i>
+                        Configuración Requerida
+                    </h2>
+                    <ul class="space-y-3 text-sm text-slate-600">
+                        <li class="flex items-center gap-2"><i data-lucide="check-circle"
+                                class="w-4 h-4 text-green-500"></i> Master Account (XLSX)</li>
+                        <li class="flex items-center gap-2"><i data-lucide="check-circle"
+                                class="w-4 h-4 text-green-500"></i> Movimientos (CSV/XLSX)</li>
+                        <li class="flex items-center gap-2"><i data-lucide="check-circle"
+                                class="w-4 h-4 text-green-500"></i> Definición de Empresa y Año</li>
+                    </ul>
+                </div>
+
+                <div class="glass-card rounded-2xl p-6 border-l-4 border-l-emerald-500">
+                    <h2 class="text-lg font-bold mb-2 text-slate-800 flex items-center gap-2">
+                        <i data-lucide="activity" class="w-5 h-5"></i>
+                        Estado del Pipeline
+                    </h2>
+                    <div
+                        class="flex items-center justify-between p-3 bg-emerald-50 rounded-lg border border-emerald-100">
+                        <span class="text-xs font-bold text-emerald-700 uppercase">n8n Worker</span>
+                        <span class="flex items-center gap-1 text-xs font-bold text-emerald-600">
+                            <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
+                            ACTIVE
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Latest Results Section placeholder -->
+        <div class="glass-card rounded-2xl p-8 text-center border-2 border-dashed border-slate-200">
+            <i data-lucide="database" class="w-12 h-12 text-slate-300 mx-auto mb-4"></i>
+            <h3 class="text-lg font-bold text-slate-400">Histórico de Cargas Reales</h3>
+            <p class="text-slate-400 text-sm">Próximamente verás aquí la tabla de PostgreSQL con el estado de tus
+                procesos.</p>
+        </div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,147 @@
+
+DATOS ADICIONALES
+ necesito que analices estos datos y digas si se pueden procesar con el modelo que ya tenemos. no ejecutes codigo, solo dame un concepto de auditor experto con 20 años de experiencia
+
+Voy a explorar el contenido de esa carpeta y también revisar el modelo existente para darte un concepto fundamentado.
+
+Analyzed
+c:\Users\gutie\OneDrive\FERFILES\DATIA\PROPUESTAS\COLOMBIA\MASCONSULTA\DATOS ADICIONALES
+Analyzed
+Ahora déjame ver el worker principal y los archivos de datos para tener el cuadro completo:
+
+Analyzed
+2 results
+Ahora déjame revisar el 
+
+calculate_indicators.py
+ para entender la estructura de datos que espera el motor:
+
+Analyzed
+Ahora tengo todos los elementos necesarios para darte un concepto experto. Déjame revisar rápidamente las hojas de los archivos de datos nuevos antes de emitir el dictamen:
+
+2 results
+1 result
+Analyzed
+c:\Users\gutie\OneDrive\FERFILES\DATIA\PROPUESTAS\COLOMBIA\MASCONSULTA\LiquidityDashboard\sources
+Tengo toda la información que necesito. Ahora tengo el cuadro completo para emitir el concepto experto. Los datos son:
+
+Nuevos archivos en DATOS ADICIONALES:
+
+Mov 2023.xlsx — 128 KB
+Mov 2024.xlsx — 1.0 MB
+Mov 2025 DEF.xlsx — 1.3 MB
+
+PUC.xlsx
+ — 72 KB
+Datos actuales en sources:
+
+Mov 2021.csv a Mov 2025.csv en formato CSV
+Master Account.xlsx
+Aquí va el concepto técnico:
+
+🧾 Concepto Técnico de Auditoría — Archivos "DATOS ADICIONALES"
+Emitido por: Análisis forense del modelo LiquidityDashboard v2.0
+Fecha: 10 de marzo de 2026
+Referencia: Carpeta DATOS ADICIONALES vs. Motor 
+
+calculate_indicators.py
+
+✅ DICTAMEN GENERAL: PROCESABLES CON AJUSTES MENORES
+El motor existente ya está preparado para consumir estos archivos. No se requieren cambios estructurales. A continuación los hallazgos por archivo:
+
+📁 1. Mov 2023.xlsx, Mov 2024.xlsx, Mov 2025 DEF.xlsx
+Compatibilidad: ✅ ALTA
+
+El parser 
+
+_parse_mov_xlsx()
+ del motor fue diseñado explícitamente para este formato. El motor busca archivos con el patrón Mov*.xlsx mediante 
+
+discover_mov_files()
+ y extrae el año del nombre con un regex 
+
+(\d{4})
+. Los tres archivos cumplen ese patrón.
+
+Puntos a verificar antes de cargar:
+
+#	Criterio	Riesgo	Nota
+1	Columna layout: Col 0=Línea, Col 1=Fecha, Col 2=Código, Col 10=Débito, Col 11=Crédito	Alto	Si las columnas difieren (ej. columnas extra insertadas), el parser leerá valores incorrectos silenciosamente
+2	Formato de fecha en Col 1	Medio	El parser acepta datetime nativo de Excel O string DD/MM/YYYY (con fallback a YYYY-MM-DD HH:MM:SS). Funciona si el archivo fue exportado desde Siigo
+3	Filas "Comprobante:" para detección del asiento 998 (cierre anual)	Medio	Si el archivo 2025 DEF.xlsx no contiene esas cabeceras, el cierre anual no se detectará y los P&L no se aislarán —los indicadores de Patrimonio y EBITDA de dic-2025 quedarán distorsionados
+4	Hoja activa (wb.active)	Bajo	El parser lee sólo la primera hoja. Si el archivo tiene múltiples hojas, sólo se procesa la primera
+5	Tamaño 2025: 1.3 MB	Info	Normal para un año completo. No excede límites de openpyxl
+⚠️ Hallazgo crítico sobre el 2025: El archivo se llama Mov 2025 DEF.xlsx (sufijo DEF). El regex del motor busca cualquier año de 4 dígitos en el nombre — lo encontrará como año 2025, sin problema. Sin embargo, si este archivo cubre el año completo enero-diciembre 2025, hay adicionalmente un solapamiento con el archivo Mov 2025.csv que actualmente existe en sources. El motor da prioridad al 
+
+.xlsx
+ sobre el 
+
+.csv
+ para el mismo año (línea if year not in found or ext == 'xlsx'), por lo que el CSV sería reemplazado automáticamente. Esto es el comportamiento correcto, pero debe documentarse para trazabilidad.
+
+📁 2. 
+
+PUC.xlsx
+ (72 KB)
+Compatibilidad: ⚠️ CONDICIONAL — Requiere análisis antes de procesar
+
+Este archivo es el elemento más sensible del lote. El motor no consume un archivo 
+
+PUC.xlsx
+ directamente; en su lugar, consume el Master Account.xlsx que tiene una estructura muy específica con tres hojas obligatorias:
+
+Hoja	Propósito en el motor
+Accounts	Clasificación de cuentas PUC con columnas en posiciones exactas (Col B=código, Col E=clase, Col M=tipo, Col N=grupo, Col R=EBITDA flag)
+List	Mapeo Grupo → Termino (Corto/Largo Plazo), usado para clasificar activos y pasivos corrientes
+El 
+
+PUC.xlsx
+ traído de afuera puede ser:
+
+a) Un catálogo PUC estándar de Siigo/DIAN → No compatible directamente, las columnas no coinciden con el layout del Master Account.xlsx
+b) Una versión actualizada del propio Master Account.xlsx → Potencialmente compatible, pero debe verificarse columna por columna
+Escenario más probable con 20 años de experiencia: El 
+
+PUC.xlsx
+ es el Plan Único de Cuentas corporativo de la empresa cliente, posiblemente exportado de Siigo o un ERP, con las columnas en orden diferente al del Master Account.xlsx que el sistema espera. Cargarlo "as is" produciría clasificaciones de cuentas incorrectas —el motor leería como "clase" lo que en realidad es "código", y el 100% de los indicadores resultaría erróneo o en cero.
+
+Recomendación: Antes de cualquier procesamiento, abrir 
+
+PUC.xlsx
+ e identificar si sus columnas coinciden con el layout del Master Account.xlsx. Si no, se debe mapear y transformar al formato requerido.
+
+🔬 Valoración Global de Riesgo
+Archivo	Procesable	Riesgo
+Mov 2023.xlsx	SÍ, directo	Bajo — verificar columnas
+Mov 2024.xlsx	SÍ, directo	Bajo — verificar columnas
+Mov 2025 DEF.xlsx	SÍ, con caveat	Medio — verificar comprobante 998 y solapamiento con CSV existente
+
+PUC.xlsx
+NO directamente	Alto — requiere transformación al formato Master Account.xlsx
+💡 Recomendación de Auditor
+Los tres archivos Mov se pueden subir al sistema via NocoDB en el campo 
+
+mov_csv
+ (el nombre del campo es heredado; acepta 
+
+.xlsx
+). El motor los procesará automáticamente.
+
+El 
+
+PUC.xlsx
+ NO debe cargarse al campo master_account sin validar primero que su estructura interna replica las hojas Accounts y List del Master Account.xlsx vigente.
+
+Si lo que se busca es actualizar el plan de cuentas con el 
+
+PUC.xlsx
+, el proceso correcto es: abrir ambos archivos en paralelo, verificar las columnas clave (código, clase, tipo, grupo, EBITDA flag), y si el 
+
+PUC.xlsx
+ tiene cuentas nuevas o reclasificadas, integrarlas en el Master Account.xlsx existente —no reemplazarlo de golpe.
+
+Existe además una oportunidad de valor: si el 
+
+PUC.xlsx
+ contiene cuentas del período 2023-2025 que no están en el Master Account.xlsx actual, esas cuentas habrán estado cayendo en el ⚠️ No key mapping for... y sus valores no habrían sido capturados. Una reconciliación mejoraría la precisión de los 33 indicadores.
+

@@ -2,6 +2,9 @@
 let charts = {};
 let currentLanguage = 'es';
 let dynamicDataError = false;
+let dbInsights = []; // Almacén para insights desde la BD
+
+// El empresaId y currentCompany ya se definen en api.js
 
 // Lista de 8 indicadores de actividad
 const indicatorKeys = [
@@ -10,46 +13,86 @@ const indicatorKeys = [
 ];
 
 // Metadatos de los indicadores para el Glosario y UI
-const indicatorMetadata = {
+const activityIndicators = {
     ciclo_efectivo: {
         name: { es: 'Ciclo de Conversión de Efectivo', en: 'Cash Conversion Cycle' },
+        definition: {
+            es: 'Mide el tiempo en días que transcurre desde la inversión en inventarios hasta el cobro efectivo.',
+            en: 'Measures the time in days from inventory investment to effective collection.'
+        },
         formula: 'DSO + DIO - DPO',
-        target: '< 90 días'
+        target: '< 60 días',
+        unit: ' días'
     },
     dso: {
         name: { es: 'Días de Cartera (DSO)', en: 'Days Sales Outstanding' },
+        definition: {
+            es: 'Indica el número promedio de días que tarda la empresa en cobrar sus cuentas.',
+            en: 'Indicates the average number of days the company takes to collect its accounts.'
+        },
         formula: '(Cuentas por Cobrar / Ventas) * 365',
-        target: '< 60 días'
+        target: '< 90 días',
+        unit: ' días'
     },
     dio: {
         name: { es: 'Días de Inventario (DIO)', en: 'Days Inventory Outstanding' },
+        definition: {
+            es: 'Representa el número promedio de días que el inventario permanece almacenado.',
+            en: 'Represents the average number of days inventory remains stored.'
+        },
         formula: '(Inventario / Costo de Ventas) * 365',
-        target: '< 45 días'
+        target: '< 45 días',
+        unit: ' días'
     },
     dpo: {
         name: { es: 'Días de Proveedores (DPO)', en: 'Days Payables Outstanding' },
+        definition: {
+            es: 'Mide el número promedio de días que la empresa tarda en pagar a sus proveedores.',
+            en: 'Measures the average number of days the company takes to pay its suppliers.'
+        },
         formula: '(Cuentas por Pagar / Compras) * 365',
-        target: '> 30 días'
+        target: '> 30 días',
+        unit: ' días'
     },
     rotacion_activos: {
         name: { es: 'Rotación de Activos Totales', en: 'Total Asset Turnover' },
+        definition: {
+            es: 'Eficiencia con la que la empresa utiliza sus activos para generar ventas.',
+            en: 'Efficiency with which the company uses its assets to generate sales.'
+        },
         formula: 'Ventas / Activos Totales',
-        target: '> 0.50 x'
+        target: '> 0.50 x',
+        unit: ' x'
     },
     rotacion_cartera: {
         name: { es: 'Rotación de Cartera', en: 'Receivables Turnover' },
+        definition: {
+            es: 'Velocidad con que las cuentas por cobrar se convierten en efectivo.',
+            en: 'Speed at which receivables are converted into cash.'
+        },
         formula: 'Ventas / Cuentas por Cobrar',
-        target: '> 6.0 x'
+        target: '> 0.80 x',
+        unit: ' x'
     },
     rotacion_inventarios: {
         name: { es: 'Rotación de Inventarios', en: 'Inventory Turnover' },
+        definition: {
+            es: 'Número de veces que se renueva el inventario durante un periodo.',
+            en: 'Number of times inventory is renewed during a period.'
+        },
         formula: 'Costo de Ventas / Inventario',
-        target: '> 8.0 x'
+        target: '> 4.00 x',
+        unit: ' x'
     },
     rotacion_proveedores: {
         name: { es: 'Rotación de Proveedores', en: 'Payables Turnover' },
+        definition: {
+            es: 'Velocidad con que la empresa liquida sus cuentas por pagar.',
+            en: 'Speed at which the company settles its payables.'
+        },
         formula: 'Compras / Cuentas por Pagar',
-        target: '4.0 - 6.0 x'
+        target: '< 6.00 x',
+        unit: ' x'
     }
 };
 
@@ -59,7 +102,13 @@ function filterData() {
     const quarterFilter = document.getElementById('quarterFilter').value;
     const monthFilter = document.getElementById('monthFilter')?.value || 'all';
 
-    let filtered = activityData.filter(d => d.year && d.period);
+    // Usar window.activityData o la global (ahora se actualizan juntas en initializeDashboard)
+    let localData = window.activityData && window.activityData.length > 0 ? window.activityData : 
+                   (typeof activityData !== 'undefined' ? activityData : []);
+    
+    if (!localData || localData.length === 0) return [];
+
+    let filtered = localData.filter(d => d.year && d.period);
 
     if (yearFilter !== 'all' && yearFilter !== 'Todos') {
         filtered = filtered.filter(d => d.year === parseInt(yearFilter));
@@ -139,111 +188,143 @@ function getComparativeInsights(filter) {
 }
 
 
-// Función para actualizar el análisis (Audit Insights) con segmentación por colores
+// Función para actualizar el análisis (Audit Insights) con el diseño de pestañas (TV Style)
 function updateAnalysis(indicatorKey) {
     const yearFilter = document.getElementById('yearFilter').value;
     const quarterFilter = document.getElementById('quarterFilter').value;
     const monthFilter = document.getElementById('monthFilter')?.value || 'all';
-
-    const analysisContainer = document.getElementById(`analysis-${indicatorKey}`);
-    if (!analysisContainer) return;
-
-    if (typeof auditRepositoryActividad === 'undefined') {
-        analysisContainer.innerHTML = '';
-        return;
-    }
+    
+    const tabsContainer = document.getElementById(`tabs-${indicatorKey}`);
+    if (!tabsContainer) return;
+    tabsContainer.innerHTML = '';
 
     let itemToRender = null;
     let isComparative = (yearFilter === 'all' || yearFilter === 'Todos');
 
-    if (isComparative) {
-        const compData = getComparativeInsights(monthFilter !== 'all' ? monthFilter : quarterFilter);
-        if (compData) {
-            if (compData.indicators && compData.indicators[indicatorKey]) {
+    // 1. PRIORIDAD: Búsqueda dinámica en BD
+    if (dbInsights && dbInsights.length > 0) {
+        let dynamicInsight = null;
+
+        if (!isComparative) {
+            // AÑO ESPECÍFICO: Buscar por año + periodo (Q o Annual)
+            dynamicInsight = dbInsights.find(ins => 
+                ins.year === parseInt(yearFilter) && 
+                (ins.period_key === quarterFilter || (quarterFilter === 'all' && ins.period_key === 'Annual')) &&
+                ins.indicador_key === indicatorKey
+            );
+        } else if (monthFilter !== 'all' && monthFilter !== 'Todos') {
+            // MODO INTERANUAL: Buscar llave comparativa del mes (ej: DSO_M2)
+            const monthKey = `${indicatorKey}_M${monthFilter}`.toUpperCase();
+            dynamicInsight = dbInsights.find(ins => 
+                ins.indicador_key.toUpperCase() === monthKey
+            );
+        }
+
+        if (dynamicInsight) {
+            itemToRender = {
+                title: dynamicInsight.titulo || "Análisis de Indicador",
+                text: dynamicInsight.contenido || (
+                    (dynamicInsight.analisis_positivo ? `**Aspecto Positivo:** ${dynamicInsight.analisis_positivo}\n\n` : '') +
+                    (dynamicInsight.analisis_negativo ? `**Aspecto Negativo:** ${dynamicInsight.analisis_negativo}\n\n` : '') +
+                    (dynamicInsight.recomendacion ? `**Recomendación:** ${dynamicInsight.recomendacion}` : '')
+                ),
+                type: dynamicInsight.tipo || dynamicInsight.status || 'info'
+            };
+        }
+    }
+
+    // 2. Fallback al repositorio estático si no hay    // FALLBACK - Only for MAS CONSULTA (empresaId 1)
+    if (!itemToRender && empresaId === 1) {
+        if (isComparative) {
+            const compData = getComparativeInsights(monthFilter !== 'all' ? monthFilter : quarterFilter);
+            if (compData && compData.indicators) {
                 itemToRender = compData.indicators[indicatorKey];
-            } else if (compData.findings) {
-                itemToRender = compData.findings[0];
+            }
+        } else {
+            const yearData = getAuditInsights(yearFilter, quarterFilter);
+            if (yearData && yearData.indicators) {
+                itemToRender = yearData.indicators[indicatorKey];
             }
         }
-    } else {
-        const yearData = getAuditInsights(yearFilter, quarterFilter);
-        if (yearData && yearData.indicators) {
-            itemToRender = yearData.indicators[indicatorKey];
-        }
     }
 
-    if (!itemToRender) {
-        analysisContainer.innerHTML = `
-            <div class="bg-gray-50 p-4 rounded-lg border-l-4 border-gray-300 text-xs text-gray-500 italic">
-                ${currentLanguage === 'es' ? 'Sin hallazgos específicos para este periodo.' : 'No specific findings for this period.'}
-            </div>
-        `;
-        return;
-    }
+    if (!itemToRender) return;
 
     const rawText = itemToRender.text || '';
-    const positivoMatch = rawText.match(/\*\*Aspecto Positivo:\*\*\s*([\s\S]*?)(?=\*\*Aspecto Negativo:|$)/);
-    const negativoMatch = rawText.match(/\*\*Aspecto Negativo:\*\*\s*([\s\S]*?)(?=\*\*Recomendación:|$)/);
-    const recomendacionMatch = rawText.match(/\*\*Recomendación:\*\*\s*([\s\S]*?)$/);
-
-    const positivo = positivoMatch ? positivoMatch[1].trim() : '';
-    const negativo = negativoMatch ? negativoMatch[1].trim() : '';
-    const recomendacion = recomendacionMatch ? recomendacionMatch[1].trim() : '';
-
-    let sections;
-    if (!positivo && !negativo && !recomendacion && rawText.trim()) {
-        const tendenciaClean = rawText.replace(/^\*\*Tendencia\s*\d{4}-\d{4}:\*\*\s*/i, '').trim();
-        sections = [
-            { label: 'Análisis Interanual', icon: 'bar-chart-2', bg: '#dbeafe', border: '#1e3a8a', text: tendenciaClean }
-        ];
-    } else {
-        sections = [
-            { label: 'Aspecto Positivo', icon: 'check-circle', bg: '#c6f6d5', border: '#22543d', text: positivo },
-            { label: 'Aspecto Negativo', icon: 'alert-triangle', bg: '#fed7d7', border: '#742a2a', text: negativo },
-            { label: 'Recomendación', icon: 'lightbulb', bg: '#fefcbf', border: '#975a16', text: recomendacion }
-        ];
-    }
-
-    const headerStyle = 'background: linear-gradient(to right, #1d4ed8, #1e3a8a);';
-    const yearLabel = isComparative ? 'Análisis Comparativo Interanual' : `Auditoría de Cierre Anual ${yearFilter}`;
-
-    let html = `
-        <div style="margin-top: 1rem; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
-            <div style="${headerStyle} padding: 0.75rem 1rem; color: white;">
-                <div style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; opacity: 0.8;">
-                    ${yearLabel}
-                </div>
-                <div style="font-size: 0.9rem; font-weight: 600; margin-top: 0.25rem;">
-                    ${itemToRender.title}
-                </div>
-            </div>
-            <div style="padding: 0.75rem; display: flex; flex-direction: column; gap: 0.5rem;">
-    `;
+    const sections = [
+        { id: 'positivo', label: 'POSITIVO', icon: 'check-circle', color: '#059669', title: 'FORTALEZA DETECTADA', regex: /\*\*Aspecto Positivo:\*\*\s*([\s\S]*?)(?=\*\*Aspecto Negativo:|\*\*Recomendación:|$)/ },
+        { id: 'negativo', label: 'ALERTA', icon: 'alert-triangle', color: '#dc2626', title: 'ALERTA DE SEGURIDAD', regex: /\*\*Aspecto Negativo:\*\*\s*([\s\S]*?)(?=\*\*Recomendación:|$)/ },
+        { id: 'recomendacion', label: 'ACCIÓN', icon: 'zap', color: '#2563eb', title: 'RECOMENDACIÓN DE AUDITORÍA', regex: /\*\*Recomendación:\*\*\s*([\s\S]*?)$/ }
+    ];
 
     sections.forEach(section => {
-        if (section.text) {
-            html += `
-                <div style="display: flex; align-items: flex-start; gap: 0.6rem; padding: 0.6rem; background-color: ${section.bg}; border-radius: 6px; border-left: 3px solid ${section.border};">
-                    <div style="min-width: 18px; color: ${section.border}; padding-top: 1px;">
-                        <i data-lucide="${section.icon}" style="width: 16px; height: 16px;"></i>
-                    </div>
-                    <div>
-                        <strong style="display: block; color: ${section.border}; font-size: 0.7rem; margin-bottom: 0.2rem; text-transform: uppercase;">
-                            ${section.label}
-                        </strong>
-                        <span style="color: #2d3748; font-size: 0.72rem; line-height: 1.45; display: block;">
-                            ${section.text}
-                        </span>
-                    </div>
-                </div>
-            `;
+        const match = rawText.match(section.regex);
+        const text = match ? match[1].trim() : '';
+        
+        if (text) {
+            const btn = document.createElement('button');
+            btn.className = 'insight-tab-btn';
+            btn.innerHTML = `<i data-lucide="${section.icon}" style="color: ${section.color}"></i> ${section.label}`;
+            btn.onclick = () => toggleInsightOverlay(indicatorKey, { ...section, text }, btn);
+            tabsContainer.appendChild(btn);
         }
     });
 
-    html += `</div></div>`;
-    analysisContainer.innerHTML = html;
+    // Fallback para texto plano si no hay secciones pero sí texto
+    if (tabsContainer.innerHTML === '' && rawText.trim()) {
+        const btn = document.createElement('button');
+        btn.className = 'insight-tab-btn';
+        btn.innerHTML = `<i data-lucide="info" style="color: #1e3a8a"></i> ANÁLISIS`;
+        btn.onclick = () => toggleInsightOverlay(indicatorKey, { id: 'general', label: 'ANÁLISIS', icon: 'info', color: '#1e3a8a', title: 'Análisis de Auditoría', text: rawText }, btn);
+        tabsContainer.appendChild(btn);
+    }
+
     if (typeof lucide !== 'undefined') lucide.createIcons();
 }
+
+// Función global corregida (estilo Liquidez) para manejar el overlay y pestañas
+window.toggleInsightOverlay = function(indicatorKey, section, btn) {
+    const overlay = document.getElementById(`analysis-${indicatorKey}`);
+    const tabs = document.getElementById(`tabs-${indicatorKey}`).querySelectorAll('.insight-tab-btn');
+    const isActive = btn.classList.contains('active');
+
+    // Resetear todas las pestañas de esta tarjeta
+    tabs.forEach(t => t.classList.remove('active'));
+
+    if (isActive) {
+        overlay.classList.remove('active');
+    } else {
+        btn.classList.add('active');
+        overlay.innerHTML = `
+            <div class="glow-bar" style="background: linear-gradient(90deg, ${section.color}, transparent);"></div>
+            <div class="close-overlay" onclick="event.stopPropagation(); hideInsightOverlay('${indicatorKey}');">
+                <i data-lucide="x" style="width: 14px; height: 14px; color: #1e293b;"></i>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+                <div style="color: ${section.color}; display: flex; align-items: center; justify-content: center;">
+                    <i data-lucide="${section.icon}" style="width: 18px; height: 18px;"></i>
+                </div>
+                <div style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.12em; font-weight: 800; color: #1e293b;">
+                    ${section.title}
+                </div>
+            </div>
+            <div style="color: #475569; font-size: 0.85rem; line-height: 1.65; font-weight: 500; padding-right: 25px;">
+                ${typeof marked !== 'undefined' ? marked.parse(section.text) : section.text}
+            </div>
+        `;
+        overlay.classList.add('active');
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    }
+};
+
+window.hideInsightOverlay = function(indicatorKey) {
+    const overlay = document.getElementById(`analysis-${indicatorKey}`);
+    if (overlay) overlay.classList.remove('active');
+    
+    // También quitar clase active de las pestañas
+    const tabs = document.getElementById(`tabs-${indicatorKey}`)?.querySelectorAll('.insight-tab-btn');
+    if (tabs) tabs.forEach(t => t.classList.remove('active'));
+};
 
 // Colores por indicador
 function getIndicatorColor(key, alpha = 1) {
@@ -329,7 +410,10 @@ function updateSingleChart(indicatorKey) {
                     datalabels: {
                         display: true,
                         anchor: 'end', align: 'top', offset: 4,
-                        formatter: (v) => v.toFixed(2),
+                        formatter: (v) => {
+                            if (v === null || v === undefined) return '0.0';
+                            return typeof v === 'number' ? v.toFixed(2) : v;
+                        },
                         font: { size: 10, weight: 'bold' },
                         color: getIndicatorColor(indicatorKey)
                     }
@@ -342,7 +426,7 @@ function updateSingleChart(indicatorKey) {
                 plugins: {
                     legend: { display: true, position: 'top', labels: { font: { size: 10 } } },
                     tooltip: {
-                        callbacks: { label: (ctx) => `${monthLabel} ${ctx.label}: ${ctx.raw.toFixed(2)}${metadata.unit}` }
+                        callbacks: { label: (ctx) => `${monthLabel} ${ctx.label}: ${ctx.raw != null ? ctx.raw.toFixed(2) : '-'}${metadata.unit}` }
                     }
                 },
                 scales: {
@@ -373,32 +457,67 @@ function updateSingleChart(indicatorKey) {
             data: {
                 labels: labels,
                 datasets: [{
-                    label: metadata.name,
+                    label: metadata.name[currentLanguage] || metadata.name.es,
                     data: values,
                     borderColor: getIndicatorColor(indicatorKey),
                     backgroundColor: getIndicatorColor(indicatorKey, 0.1),
-                    borderWidth: 2, tension: 0.3, fill: true, pointRadius: 3,
+                    borderWidth: 3,
+                    tension: 0.4,
+                    fill: {
+                        target: 'origin',
+                        above: getIndicatorColor(indicatorKey, 0.05)
+                    },
+                    pointRadius: 4,
+                    pointBackgroundColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointHoverRadius: 6,
                     datalabels: {
                         display: values.length < 24,
-                        align: 'top', font: { size: 9, weight: 'bold' },
-                        formatter: (v) => v.toFixed(2)
+                        align: 'top',
+                        font: { size: 10, weight: '600', family: 'Inter' },
+                        formatter: (v) => {
+                            if (v === null || v === undefined) return '0.0' + (metadata.unit || '');
+                            return (typeof v === 'number' ? v.toFixed(1) : v) + (metadata.unit || '');
+                        },
+                        color: getIndicatorColor(indicatorKey),
+                        padding: 4
                     }
                 }]
             },
             plugins: [timeLabelsPlugin, ChartDataLabels],
             options: {
-                responsive: true, maintainAspectRatio: false,
-                layout: { padding: { bottom: 40, left: 10, right: 10, top: 20 } },
+                responsive: true,
+                maintainAspectRatio: false,
+                layout: { padding: { bottom: 45, left: 10, right: 10, top: 25 } },
                 plugins: {
                     legend: { display: false },
-                    datalabels: { color: getIndicatorColor(indicatorKey) },
                     tooltip: {
-                        callbacks: { label: (ctx) => `${metadata.name}: ${ctx.raw.toFixed(2)}${metadata.unit}` }
+                        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                        titleColor: '#1e293b',
+                        bodyColor: '#1e293b',
+                        borderColor: '#e2e8f0',
+                        borderWidth: 1,
+                        padding: 12,
+                        boxPadding: 6,
+                        usePointStyle: true,
+                        callbacks: {
+                            label: (ctx) => {
+                                const val = ctx.raw;
+                                const formattedVal = (val !== null && val !== undefined) ? (typeof val === 'number' ? val.toFixed(2) : val) : '0.00';
+                                return ` ${metadata.name[currentLanguage] || metadata.name.es}: ${formattedVal}${metadata.unit || ''}`;
+                            }
+                        }
                     }
                 },
                 scales: {
-                    y: { grid: { borderDash: [2, 2] }, ticks: { font: { size: 9 } } },
-                    x: { grid: { display: false }, ticks: { display: false } }
+                    y: {
+                        grid: { color: '#f1f5f9', borderDash: [4, 4], drawBorder: false },
+                        ticks: { font: { size: 10, family: 'Inter' }, color: '#64748b' }
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: { display: false }
+                    }
                 }
             }
         };
@@ -409,7 +528,7 @@ function updateSingleChart(indicatorKey) {
     updateAnalysis(indicatorKey);
 }
 
-// Función para actualizar el dictamen ejecutivo
+// Función para mostrar el Reporte de Realida// Función para mostrar el Reporte de Realidad Financiera Anual (estilo Lean Premium - siempre visible)
 function updateDictamen() {
     const yearFilter = document.getElementById('yearFilter').value;
     const quarterFilter = document.getElementById('quarterFilter').value;
@@ -417,63 +536,163 @@ function updateDictamen() {
 
     if (!container) return;
 
-    let targetYear = yearFilter;
-    if (targetYear === 'all' || targetYear === 'Todos') targetYear = "2025";
+    let targetYear = (yearFilter === 'all' || yearFilter === 'Todos') ? 2025 : parseInt(yearFilter);
+    let periodKey = (quarterFilter === 'all' || quarterFilter === 'Todos') ? "Annual" : quarterFilter;
 
-    let data = auditRepositoryActividad[targetYear];
-    if (quarterFilter !== 'all' && quarterFilter !== 'Todos') {
-        data = data?.[quarterFilter];
-    } else {
-        data = data?.Annual;
+    // 1. PRIORIDAD: Buscar en Insights dinámicos (Base de Datos)
+    let dynamicReport = null;
+    if (dbInsights && dbInsights.length > 0) {
+        dynamicReport = dbInsights.find(ins => 
+            ins.year === targetYear && 
+            ins.period_key === periodKey &&
+            (ins.indicador_key === 'report' || ins.indicador_key === 'insight-actividad-ai')
+        );
     }
 
-    if (!data || !data.report) {
-        container.classList.add('hidden');
-        return;
-    }
-
-    container.classList.remove('hidden');
-    const report = data.report;
-    const title = report.title[currentLanguage] || report.title.es;
-    const text = report.text[currentLanguage] || report.text.es;
-
-    const statusColors = {
-        success: { bg: 'linear-gradient(135deg, #065f46 0%, #10b981 100%)', badge: '#10b981', icon: 'file-check-2' },
-        warning: { bg: 'linear-gradient(135deg, #92400e 0%, #f59e0b 100%)', badge: '#f59e0b', icon: 'alert-triangle' },
-        danger: { bg: 'linear-gradient(135deg, #991b1b 0%, #ef4444 100%)', badge: '#ef4444', icon: 'alert-octagon' }
-    };
-    const colors = statusColors[report.status] || statusColors.warning;
+    const pos = dynamicReport?.analisis_positivo || (currentLanguage === 'es' ? "No se registran hallazgos positivos." : "No positive findings.");
+    const neg = dynamicReport?.analisis_negativo || (currentLanguage === 'es' ? "No hay alertas criticas en este periodo." : "No critical alerts.");
+    const acc = dynamicReport?.recomendacion || (currentLanguage === 'es' ? "Mantener monitoreo operativo mensual." : "Maintain monthly monitoring.");
 
     container.innerHTML = `
-        <div style="margin-top: 2rem; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.1); background: white;">
-            <div style="background: ${colors.bg}; padding: 1.25rem 1.5rem; color: white;">
-                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
-                    <div style="display: flex; align-items: center; gap: 1rem;">
-                        <div style="background: rgba(255,255,255,0.2); padding: 0.6rem; border-radius: 10px;">
-                            <i data-lucide="${colors.icon}" style="width: 28px; height: 28px;"></i>
-                        </div>
-                        <div>
-                            <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.15em; opacity: 0.9; font-weight: 700;">Dictamen de Auditoría de Gestión</div>
-                            <h2 style="margin: 0; font-size: 1.2rem; font-weight: 800; letter-spacing: -0.02em;">${title}</h2>
-                        </div>
-                    </div>
-                    <div style="text-align: center; background: white; padding: 0.6rem 1.2rem; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
-                        <div style="font-size: 0.65rem; text-transform: uppercase; color: #64748b; font-weight: 700; letter-spacing: 0.05em; margin-bottom: 2px;">Score</div>
-                        <div style="font-size: 1.6rem; font-weight: 900; color: ${colors.badge}; line-height: 1;">${report.score}</div>
-                    </div>
+        <style>
+            .dictamen-lean {
+                background: white;
+                border-radius: 12px;
+                padding: 24px;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+                border: 1px solid #f1f5f9;
+                margin-bottom: 20px;
+                animation: fadeIn 0.4s ease-out;
+            }
+            .lean-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 20px;
+                padding-bottom: 12px;
+                border-bottom: 1px solid #f8fafc;
+            }
+            .company-name-lean {
+                font-size: 0.9rem;
+                font-weight: 800;
+                color: #0f172a;
+                text-transform: uppercase;
+                letter-spacing: -0.01em;
+            }
+            .status-tag {
+                font-size: 0.65rem;
+                font-weight: 700;
+                color: #10b981;
+                display: flex;
+                align-items: center;
+                gap: 5px;
+            }
+            .insight-columns-grid {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 20px;
+            }
+            .insight-card {
+                padding: 16px;
+                border-radius: 10px;
+                font-size: 0.85rem;
+                line-height: 1.6;
+                color: #475569;
+                border-left: 4px solid #e2e8f0;
+                background: #fbfcfd;
+                transition: all 0.2s ease;
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+            }
+            .insight-card:hover {
+                background: white;
+                box-shadow: 0 6px 15px rgba(0,0,0,0.05);
+                transform: translateY(-2px);
+            }
+            .card-header-icon {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                font-weight: 800;
+                font-size: 0.75rem;
+                text-transform: uppercase;
+            }
+            .card-pos { border-color: #10b981; }
+            .card-neg { border-color: #f59e0b; }
+            .card-acc { border-color: #3b82f6; }
+            .insight-text-render {
+                text-align: justify;
+                hyphens: auto;
+            }
+            @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        </style>
+        
+        <div class="dictamen-lean">
+            <div class="lean-header">
+                <div class="company-name-lean">
+                    ${currentCompany.name.toUpperCase()}
+                    <span class="text-slate-400 font-normal ml-2 lowercase" style="font-size: 0.72rem">Sector: ${currentCompany.sector || 'Consultoría / Servicios'} | Diagnóstico de Actividad</span>
+                </div>
+                <div class="status-tag">
+                    <div style="width: 5px; height: 5px; border-radius: 50%; background: #10b981; box-shadow: 0 0 6px #10b981"></div>
+                    PERFIL ACTIVO
                 </div>
             </div>
-            <div style="padding: 1.5rem 2rem;">
-                <div class="prose max-w-none" style="font-size: 0.9rem; line-height: 1.8; color: #334155;">
-                    ${typeof marked !== 'undefined' ? marked.parse(text) : text.replace(/\n/g, '<br>')}
+
+            <div class="insight-columns-grid">
+                
+                <!-- POSITIVO -->
+                <div class="insight-card card-pos">
+                    <div class="card-header-icon" style="color: #059669">
+                        <i data-lucide="check-circle" size="16"></i> POSITIVO
+                    </div>
+                    <div class="insight-text-render">${pos}</div>
                 </div>
+
+                <!-- ALERTA -->
+                <div class="insight-card card-neg">
+                    <div class="card-header-icon" style="color: #d97706">
+                        <i data-lucide="alert-triangle" size="16"></i> ALERTA
+                    </div>
+                    <div class="insight-text-render">${neg}</div>
+                </div>
+
+                <!-- ACCION -->
+                <div class="insight-card card-acc">
+                    <div class="card-header-icon" style="color: #2563eb">
+                        <i data-lucide="zap" size="16"></i> ACCIÓN
+                    </div>
+                    <div class="insight-text-render">${acc}</div>
+                </div>
+
             </div>
         </div>
     `;
+
     if (typeof lucide !== 'undefined') lucide.createIcons();
 }
 
+
+// Función para sincronizar metadatos con la UI (Títulos, Subtítulos y Targets)
+function updateDashboardMetadata() {
+    indicatorKeys.forEach(key => {
+        const metadata = activityIndicators[key];
+        if (!metadata) return;
+
+        const titleEl = document.getElementById(`chart-title-${key}`);
+        const cardHeader = titleEl?.closest('.card-header');
+        const badge = cardHeader?.querySelector('.card-badge');
+        const subtitle = titleEl?.nextElementSibling;
+
+        if (titleEl) titleEl.textContent = metadata.name[currentLanguage] || metadata.name.es;
+        if (subtitle) subtitle.textContent = metadata.definition[currentLanguage] || metadata.definition.es;
+        if (badge) badge.textContent = `Target: ${metadata.target}`;
+    });
+}
+
 function updateAllCharts() {
+    updateDashboardMetadata();
     indicatorKeys.forEach(updateSingleChart);
     updateDictamen();
     if (typeof lucide !== 'undefined') lucide.createIcons();
@@ -488,23 +707,54 @@ document.getElementById('languageFilter').addEventListener('change', (e) => {
     updateAllCharts();
 });
 
+// Asegurar que activityData sea global si no existe
+if (typeof window.activityData === 'undefined') {
+    window.activityData = typeof activityData !== 'undefined' ? activityData : [];
+}
+
 // Inicialización
 async function initializeDashboard() {
+    console.log("[Dashboard] Initializing...");
+    
+    // Clear static fallback if not MAS CONSULTA (Empresa 1)
+    if (empresaId !== 1) {
+        activityData = [];
+        window.activityData = [];
+        dbInsights = [];
+    }
+    
+    updateAllCharts();
+
     try {
-        const empresaId = 1;
+        console.log(`[Dashboard] Fetching indicators from API for Empresa ${empresaId}...`);
         const apiData = await DashboardAPI.getIndicadoresData(empresaId, 'actividad');
+        
         if (apiData && apiData.length > 0) {
-            // Overwrite static data array
             activityData = apiData;
+            window.activityData = apiData; // << FIX MISSING WINDOW UPDATE
             console.log(`[Dashboard] Dynamically loaded ${apiData.length} records for Actividad`);
+            updateAllCharts(); 
         } else {
-            console.warn("[Dashboard] API returned empty indicators. Using static fallback.");
+            console.warn("[Dashboard] API returned empty indicators. Setting empty state.");
+            activityData = []; // Clear hardcoded fallback
+            window.activityData = [];
+            updateAllCharts();
+        }
+
+        console.log(`[Dashboard] Fetching insights from API for Empresa ${empresaId}...`);
+        const insightsRes = await DashboardAPI.getInsights(empresaId);
+        if (insightsRes && insightsRes.insights && insightsRes.insights.length > 0) {
+            dbInsights = insightsRes.insights;
+            console.log(`[Dashboard] Loaded ${dbInsights.length} AI insights for Actividad from DB`);
+            updateAllCharts(); 
+        } else {
+            dbInsights = []; // Clear
+            updateAllCharts();
         }
     } catch (error) {
         dynamicDataError = true;
-        console.error("[Dashboard] Failed to fetch indicators from DB. Using static fallback.", error);
+        console.error("[Dashboard] Error loading dynamic data:", error);
     }
-    updateAllCharts();
 }
 
 document.addEventListener('DOMContentLoaded', initializeDashboard);

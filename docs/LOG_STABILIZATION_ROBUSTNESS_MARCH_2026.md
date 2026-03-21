@@ -63,6 +63,12 @@ Se detectó una inconsistencia crítica en el sistema de autenticación durante 
 > [!NOTE]
 > Todos estos ajustes han sido validados mediante auditoría visual directa en navegador (Chrome/Edge) y cumplen con los estándares de diseño premium exigidos para la suite de Datia.
 
+---
+> [!CAUTION]
+> **INCIDENCIA DE IDENTIDAD (19 de Marzo, 2026)**:
+> Se detectó un error de orquestación donde el analista (IA) utilizó el **ID 3103** para **Compulearning SAS**, basándose en logs de sesiones anteriores, cuando el ID real en producción es **3105**.
+> *   **Acción**: Se bloqueó la inyección y se documentó la obligatoriedad de validación previa `GET /api/empresas` antes de generar narrativas.
+
 ## 7. Automatización de Esquema y Aprovisionamiento (Identity Ops)
 **Fecha**: 19 de Marzo, 2026 (07:00 COT)
 

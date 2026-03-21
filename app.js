@@ -2,6 +2,7 @@
 let charts = {};
 let currentLanguage = 'es';
 let dynamicDataError = false;
+let dbInsights = []; // Almacén para insights desde la BD
 
 // Lista de indicadores
 const indicatorKeys = ['razon', 'capital', 'prueba', 'efectivo'];
@@ -64,29 +65,30 @@ const yearQuarterPlugin = {
             const centerX = (startX + endX) / 2;
 
             // Dibujar Año
-            ctx.font = 'bold 10px Segoe UI';
-            ctx.fillStyle = '#2d3748';
-            ctx.fillText(year, centerX, chart.chartArea.bottom + 35);
+            ctx.font = '800 10px Inter';
+            ctx.fillStyle = '#1E4E79';
+            ctx.fillText(year, centerX, chart.chartArea.bottom + 32);
 
             // Dibujar Trimestres
-            ctx.font = '8px Segoe UI';
-            ctx.fillStyle = '#718096';
+            ctx.font = '600 8px Inter';
+            ctx.fillStyle = '#7A7A7A';
             Object.keys(group.quarters).forEach(q => {
                 const qGroup = group.quarters[q];
                 const qStartX = xAxis.getPixelForValue(qGroup.startIndex);
                 const qEndX = xAxis.getPixelForValue(qGroup.endIndex);
                 const qCenterX = (qStartX + qEndX) / 2;
-                ctx.fillText(q, qCenterX, chart.chartArea.bottom + 22);
+                ctx.fillText(q, qCenterX, chart.chartArea.bottom + 20);
             });
 
             // Línea separadora de años
             if (group.startIndex > 0) {
-                ctx.strokeStyle = '#e2e8f0';
+                ctx.strokeStyle = '#F1F1F1';
                 ctx.lineWidth = 1;
                 ctx.beginPath();
-                const lineX = startX - (xAxis.getPixelForValue(1) - xAxis.getPixelForValue(0)) / 2;
+                const barSpacing = (xAxis.getPixelForValue(1) - xAxis.getPixelForValue(0)) / 2;
+                const lineX = startX - barSpacing;
                 ctx.moveTo(lineX, chart.chartArea.top);
-                ctx.lineTo(lineX, chart.chartArea.bottom + 40);
+                ctx.lineTo(lineX, chart.chartArea.bottom + 36);
                 ctx.stroke();
             }
         });
@@ -134,181 +136,186 @@ function updateAnalysis(indicatorKey) {
     const isSpecificQuarter = quarterFilter !== 'all' && quarterFilter !== 'Todos';
     const isSpecificMonth = monthFilter !== 'all' && monthFilter !== 'Todos';
 
-    const analysisContainer = document.getElementById(`analysis-${indicatorKey}`);
-    if (!analysisContainer) return;
+    const overlayContainer = document.getElementById(`analysis-${indicatorKey}`);
+    const tabsContainer = document.getElementById(`tabs-${indicatorKey}`);
+    
+    if (!overlayContainer || !tabsContainer) return;
+
+    // Reset containers
+    overlayContainer.innerHTML = '';
+    tabsContainer.innerHTML = '';
+    overlayContainer.classList.remove('active');
 
     let itemToRender = null;
     let isComparative = false;
-    let comparativeLabel = '';
 
-    // COMPARATIVE MODE: All years + specific quarter or month
-    if (isAllYears && (isSpecificQuarter || isSpecificMonth)) {
-        isComparative = true;
-        const comparative = auditRepository.Comparative;
-        if (!comparative) {
-            analysisContainer.innerHTML = '';
-            return;
+    const keyMapping = {
+        'razon': 'razon_corriente',
+        'capital': 'capital_trabajo',
+        'prueba': 'prueba_acida',
+        'efectivo': 'ratio_efectivo'
+    };
+    const dbKey = keyMapping[indicatorKey] || indicatorKey;
+
+    // Helper interno: transforma un insight de BD al formato itemToRender
+    const mapDbInsight = (ins) => ({
+        title: ins.titulo || "Análisis AI",
+        text: (
+            (ins.analisis_positivo ? `**Aspecto Positivo:** ${ins.analisis_positivo}\n\n` : '') +
+            (ins.analisis_negativo ? `**Aspecto Negativo:** ${ins.analisis_negativo}\n\n` : '') +
+            (ins.recomendacion ? `**Recomendación:** ${ins.recomendacion}` : '')
+        ),
+        type: ins.tipo || ins.status || 'info'
+    });
+
+    // 1. PRIORIDAD: Búsqueda dinámica en BD
+    if (dbInsights && dbInsights.length > 0) {
+        let dynamicInsight = null;
+
+        if (!isAllYears) {
+            // AÑO ESPECÍFICO: Buscar por año + periodo (Q o Annual)
+            dynamicInsight = dbInsights.find(ins => 
+                ins.year === parseInt(yearFilter) && 
+                (ins.period_key === quarterFilter || (quarterFilter === 'all' && ins.period_key === 'Annual')) &&
+                ins.indicador_key === dbKey
+            );
+        } else if (isSpecificMonth) {
+            // MODO INTERANUAL: Buscar llave comparativa del mes (ej: RAZON_CORRIENTE_M2)
+            const monthKey = `${dbKey}_M${monthFilter}`.toUpperCase();
+            dynamicInsight = dbInsights.find(ins => 
+                ins.indicador_key.toUpperCase() === monthKey
+            );
         }
 
-        if (isSpecificMonth && comparative.Months && comparative.Months[monthFilter]) {
-            const monthData = comparative.Months[monthFilter];
-            if (monthData.indicators && monthData.indicators[indicatorKey]) {
-                itemToRender = monthData.indicators[indicatorKey];
-                comparativeLabel = `Mes ${monthFilter} (2023-2025)`;
-            }
-        } else if (isSpecificQuarter && comparative[quarterFilter]) {
-            const quarterData = comparative[quarterFilter];
-            if (quarterData.findings && quarterData.findings.length > 0) {
-                // Use first finding for comparative quarters (general trend)
-                itemToRender = quarterData.findings[0];
-                comparativeLabel = `${quarterFilter} (2023-2025)`;
-            }
+        if (dynamicInsight) {
+            itemToRender = mapDbInsight(dynamicInsight);
         }
-
-        if (!itemToRender) {
-            analysisContainer.innerHTML = '';
-            return;
-        }
-    } else {
-        // STANDARD MODE: Specific year or default to 2025
-        let yearKey = isAllYears ? "2025" : yearFilter;
-        let periodKey = quarterFilter === 'all' || quarterFilter === 'Todos' ? "Annual" : quarterFilter;
-
-        const yearData = auditRepository[yearKey];
-        if (!yearData || !yearData[periodKey]) {
-            analysisContainer.innerHTML = '';
-            return;
-        }
-
-        const periodData = yearData[periodKey];
-
-        // Map indicator keys to their corresponding index in the findings array
-        const indicatorIndexMap = {
-            'razon': 0,
-            'capital': 1,
-            'prueba': 2,
-            'efectivo': 3
-        };
-
-        // Priority 1: Use the findings array (Quarterly view)
-        if (periodData.findings && periodData.findings.length > 0) {
-            const index = indicatorIndexMap[indicatorKey];
-            if (index !== undefined && periodData.findings[index]) {
-                itemToRender = periodData.findings[index];
-            }
-        }
-        // Priority 2: Use the indicators object (Annual view)
-        else if (periodData.indicators && periodData.indicators[indicatorKey]) {
-            itemToRender = periodData.indicators[indicatorKey];
-        }
-
-        if (!itemToRender) {
-            analysisContainer.innerHTML = '';
-            return;
-        }
-
-        comparativeLabel = `${periodKey === 'Annual' ? 'Anual' : periodKey} ${yearKey}`;
     }
 
-    // Parse the text into sections (Aspecto Positivo, Aspecto Negativo, Recomendación)
-    const rawText = itemToRender.text || '';
+    // 1b. MODO INTERANUAL (todos los años + mes/trimestre específico):
+    //     Usar el insight anual más reciente disponible en BD como referencia contextual.
+    //     Aplica también cuando isAllYears=true sin mes/trimestre específico (vista histórica completa).
+    if (!itemToRender && isAllYears && dbInsights && dbInsights.length > 0) {
+        // Candidatos: insights anuales (period_key=Annual) o trimestrales que coincidan
+        const candidates = dbInsights
+            .filter(ins => ins.indicador_key === dbKey && ins.period_key === 'Annual')
+            .sort((a, b) => b.year - a.year); // más reciente primero
 
-    // Extract sections using regex
+        if (candidates.length > 0) {
+            const ref = candidates[0]; // insight anual más reciente
+            const refYear = ref.year;
+            // Añadimos nota de contexto interanual al texto
+            const contextNote = `*(Referencia: análisis anual ${refYear} — seleccione un año específico para el detalle completo de cada periodo.)*`;
+            itemToRender = {
+                title: ref.titulo || `Análisis Interanual — Ref. ${refYear}`,
+                text: (
+                    (ref.analisis_positivo ? `**Aspecto Positivo:** ${ref.analisis_positivo}\n\n` : '') +
+                    (ref.analisis_negativo ? `**Aspecto Negativo:** ${ref.analisis_negativo}\n\n` : '') +
+                    (ref.recomendacion ? `**Recomendación:** ${ref.recomendacion}\n\n` : '') +
+                    contextNote
+                ),
+                type: ref.tipo || ref.status || 'info'
+            };
+        }
+    }
+
+    // 2. FALLBACK: Repositorio estático (solo empresaId 1)
+    if (!itemToRender && empresaId === 1 && typeof auditRepository !== 'undefined') {
+        if (isAllYears && (isSpecificQuarter || isSpecificMonth)) {
+            const comparative = auditRepository.Comparative;
+            if (isSpecificMonth && comparative?.Months?.[monthFilter]) {
+                const monthData = comparative.Months[monthFilter];
+                if (monthData.indicators && monthData.indicators[indicatorKey]) {
+                    itemToRender = monthData.indicators[indicatorKey];
+                }
+            } else if (isSpecificQuarter && comparative?.[quarterFilter]) {
+                const quarterData = comparative[quarterFilter];
+                if (quarterData.findings?.[0]) {
+                    itemToRender = quarterData.findings[0];
+                }
+            }
+        } else {
+            let yearKey = isAllYears ? "2025" : yearFilter;
+            let periodKey = quarterFilter === 'all' || quarterFilter === 'Todos' ? "Annual" : quarterFilter;
+            const periodData = auditRepository[yearKey]?.[periodKey];
+
+            if (periodData) {
+                const indicatorIndexMap = { 'razon': 0, 'capital': 1, 'prueba': 2, 'efectivo': 3 };
+                if (periodData.findings && periodData.findings.length > 0) {
+                    itemToRender = periodData.findings[indicatorIndexMap[indicatorKey]];
+                } else if (periodData.indicators && periodData.indicators[indicatorKey]) {
+                    itemToRender = periodData.indicators[indicatorKey];
+                }
+            }
+        }
+    }
+
+    if (!itemToRender) return;
+
+    const rawText = itemToRender.text || '';
     const positivoMatch = rawText.match(/\*\*Aspecto Positivo:\*\*\s*([\s\S]*?)(?=\*\*Aspecto Negativo:|$)/);
     const negativoMatch = rawText.match(/\*\*Aspecto Negativo:\*\*\s*([\s\S]*?)(?=\*\*Recomendación:|$)/);
     const recomendacionMatch = rawText.match(/\*\*Recomendación:\*\*\s*([\s\S]*?)$/);
 
-    const positivo = positivoMatch ? positivoMatch[1].trim() : '';
-    const negativo = negativoMatch ? negativoMatch[1].trim() : '';
-    const recomendacion = recomendacionMatch ? recomendacionMatch[1].trim() : '';
+    const sections = [
+        { id: 'pos', label: 'Positivo', icon: 'check-circle', color: '#059669', title: 'Aspecto Positivo', text: positivoMatch ? positivoMatch[1].trim() : '' },
+        { id: 'neg', label: 'Alerta', icon: 'alert-triangle', color: '#dc2626', title: 'Aspecto Negativo', text: negativoMatch ? negativoMatch[1].trim() : '' },
+        { id: 'rec', label: 'Acción', icon: 'zap', color: '#2563eb', title: 'Recomendación de Auditoría', text: recomendacionMatch ? recomendacionMatch[1].trim() : '' }
+    ];
 
-    let sections;
-
-    // If no standard sections found, check for Tendencia format (comparative months)
-    if (!positivo && !negativo && !recomendacion && rawText.trim()) {
-        // Strip the **Tendencia 2023-2025:** prefix if present
-        const tendenciaClean = rawText.replace(/^\*\*Tendencia\s*\d{4}-\d{4}:\*\*\s*/i, '').trim();
-        sections = [
-            {
-                label: 'Análisis Interanual',
-                icon: 'bar-chart-2',
-                bg: '#dbeafe',
-                border: '#1e3a8a',
-                text: tendenciaClean
-            }
-        ];
-    } else {
-        // Section configurations with icons and colors
-        sections = [
-            {
-                label: 'Aspecto Positivo',
-                icon: 'check-circle',
-                bg: '#c6f6d5',
-                border: '#22543d',
-                text: positivo
-            },
-            {
-                label: 'Aspecto Negativo',
-                icon: 'alert-triangle',
-                bg: '#fed7d7',
-                border: '#742a2a',
-                text: negativo
-            },
-            {
-                label: 'Recomendación',
-                icon: 'lightbulb',
-                bg: '#fefcbf',
-                border: '#975a16',
-                text: recomendacion
-            }
-        ];
+    // If no standard sections, it might be a general trend text
+    if (!sections.some(s => s.text) && rawText.trim()) {
+        sections.push({ id: 'trend', label: 'Tendencia', icon: 'bar-chart-2', color: '#1e3a8a', title: 'Análisis Interanual', text: rawText.replace(/^\*\*Tendencia.*?\*\* /i, '').trim() });
     }
 
-    // Build the HTML with separated sections
-    let html = `
-        <div class="audit-insight-card" style="margin-top: 1rem; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
-            <div style="background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); padding: 0.75rem 1rem; color: white;">
-                <div style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; opacity: 0.8;">
-                    ${isComparative ? 'Análisis Comparativo Interanual' : 'Auditoría de Cierre'} ${comparativeLabel}
-                </div>
-                <div style="font-size: 0.9rem; font-weight: 600; margin-top: 0.25rem;">
-                    ${itemToRender.title}
-                </div>
-            </div>
-            <div style="padding: 0.75rem; display: flex; flex-direction: column; gap: 0.5rem;">
-    `;
-
+    // Build Tabs
     sections.forEach(section => {
-        if (section.text) {
-            html += `
-                <div style="display: flex; align-items: flex-start; gap: 0.6rem; padding: 0.6rem; background-color: ${section.bg}; border-radius: 6px; border-left: 3px solid ${section.border};">
-                    <div style="min-width: 18px; color: ${section.border}; padding-top: 1px;">
-                        <i data-lucide="${section.icon}" style="width: 16px; height: 16px;"></i>
-                    </div>
-                    <div>
-                        <strong style="display: block; color: ${section.border}; font-size: 0.7rem; margin-bottom: 0.2rem; text-transform: uppercase;">
-                            ${section.label}
-                        </strong>
-                        <span style="color: #2d3748; font-size: 0.72rem; line-height: 1.45; display: block;">
-                            ${section.text}
-                        </span>
-                    </div>
-                </div>
-            `;
-        }
+        if (!section.text) return;
+        
+        const btn = document.createElement('button');
+        btn.className = 'insight-tab-btn';
+        btn.innerHTML = `<i data-lucide="${section.icon}" style="color: ${section.color}"></i> ${section.label}`;
+        btn.onclick = () => toggleInsightOverlay(indicatorKey, section, btn);
+        tabsContainer.appendChild(btn);
     });
 
-    html += `
-            </div>
-        </div>
-    `;
+    // Helper function to toggle overlay
+    window.toggleInsightOverlay = (key, section, btn) => {
+        const overlay = document.getElementById(`analysis-${key}`);
+        const tabs = document.getElementById(`tabs-${key}`).querySelectorAll('.insight-tab-btn');
+        const isActive = btn.classList.contains('active');
 
-    analysisContainer.innerHTML = html;
+        // Reset all tabs in this card
+        tabs.forEach(t => t.classList.remove('active'));
 
-    // Refresh Lucide icons after inserting HTML
-    if (typeof lucide !== 'undefined') {
-        lucide.createIcons();
-    }
+        if (isActive) {
+            overlay.classList.remove('active');
+        } else {
+            btn.classList.add('active');
+            overlay.innerHTML = `
+                <div class="glow-bar" style="background: linear-gradient(90deg, ${section.color}, transparent);"></div>
+                <div class="close-overlay" onclick="event.stopPropagation(); document.getElementById('analysis-${key}').classList.remove('active'); document.getElementById('tabs-${key}').querySelectorAll('.insight-tab-btn').forEach(t => t.classList.remove('active'));">
+                    <i data-lucide="x" style="width: 14px; height: 14px; color: #1e293b;"></i>
+                </div>
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+                    <div style="color: ${section.color}; display: flex; align-items: center; justify-content: center;">
+                        <i data-lucide="${section.icon}" style="width: 18px; height: 18px;"></i>
+                    </div>
+                    <div style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.12em; font-weight: 800; color: #1e293b;">
+                        ${section.title}
+                    </div>
+                </div>
+                <div style="color: #475569; font-size: 0.85rem; line-height: 1.65; font-weight: 500; padding-right: 25px;">
+                    ${section.text}
+                </div>
+                </div>
+            `;
+            overlay.classList.add('active');
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        }
+    };
+
+    if (typeof lucide !== 'undefined') lucide.createIcons();
 }
 
 // Colores por año para el modo comparativo mensual
@@ -340,7 +347,7 @@ function updateSingleChart(indicatorKey) {
 
     if (!canvas) return;
 
-    const formatValue = indicator.formatValue || ((v) => v.toFixed(2));
+    const formatValue = indicator.formatValue || ((v) => v != null ? v.toFixed(2) : '-');
     const metadata = indicatorMetadata[indicatorKey];
 
     let config;
@@ -415,7 +422,7 @@ function updateSingleChart(indicatorKey) {
                                 if (indicator.formatValue) {
                                     return `${monthLabel}: ${indicator.formatValue(value)}`;
                                 }
-                                return `${monthLabel}: ${value.toFixed(2)}${indicator.unit}`;
+                                return `${monthLabel}: ${value != null ? value.toFixed(2) : '-'}${indicator.unit}`;
                             }
                         }
                     }
@@ -457,6 +464,11 @@ function updateSingleChart(indicatorKey) {
         const labels = data.map(d => d.period.toString());
         const values = data.map(d => d[indicator.field]);
 
+        // Si hay muchos puntos (todos los años), reducir densidad visual
+        const isManyPoints = data.length > 20;
+        const dynamicPointRadius = isManyPoints ? 2 : 3;
+        const dynamicDatalabels = isManyPoints ? false : true;
+
         config = {
             type: 'line',
             data: {
@@ -466,13 +478,13 @@ function updateSingleChart(indicatorKey) {
                     data: values,
                     borderColor: getIndicatorColor(indicatorKey),
                     backgroundColor: getIndicatorColor(indicatorKey, 0.1),
-                    borderWidth: 2,
+                    borderWidth: isManyPoints ? 1.5 : 2,
                     tension: 0.3,
                     fill: true,
-                    pointRadius: 3,
+                    pointRadius: dynamicPointRadius,
                     pointBackgroundColor: getIndicatorColor(indicatorKey),
                     datalabels: {
-                        display: true,
+                        display: dynamicDatalabels,
                         align: 'top',
                         offset: 3,
                         formatter: (v) => formatValue(v),
@@ -495,15 +507,13 @@ function updateSingleChart(indicatorKey) {
                                 if (indicator.formatValue) {
                                     return `${context.dataset.label}: ${indicator.formatValue(value)}`;
                                 }
-                                return `${context.dataset.label}: ${value.toFixed(2)}${indicator.unit}`;
+                                return `${context.dataset.label}: ${value != null ? value.toFixed(2) : '-'}${indicator.unit}`;
                             }
                         }
                     }
                 },
                 scales: {
                     y: {
-                        min: indicator.scaleMin,
-                        max: indicator.scaleMax,
                         ticks: {
                             font: { size: 9 },
                             callback: function (value) {
@@ -517,7 +527,14 @@ function updateSingleChart(indicatorKey) {
                     },
                     x: {
                         grid: { display: false },
-                        ticks: { font: { size: 8 }, padding: 3 }
+                        ticks: {
+                            font: { size: 8 },
+                            padding: 3,
+                            maxTicksLimit: isManyPoints ? 12 : 20,
+                            autoSkip: true,
+                            maxRotation: 0,
+                            minRotation: 0
+                        }
                     }
                 }
             }
@@ -548,13 +565,13 @@ function updateSingleChart(indicatorKey) {
     }
 }
 
-// Función para obtener color por indicador
+// Función para obtener color por indicador (SIGNUM PALETTE)
 function getIndicatorColor(key, alpha = 1) {
     const colors = {
-        razon: `rgba(72, 187, 120, ${alpha})`,    // Verde
-        capital: `rgba(66, 153, 225, ${alpha})`,   // Azul
-        prueba: `rgba(237, 137, 54, ${alpha})`,    // Naranja
-        efectivo: `rgba(159, 122, 234, ${alpha})` // Púrpura
+        razon: `rgba(30, 78, 121, ${alpha})`,     // Blue Vibrant
+        capital: `rgba(10, 31, 68, ${alpha})`,    // Deep Blue
+        prueba: `rgba(217, 119, 6, ${alpha})`,    // Orange Audit
+        efectivo: `rgba(5, 150, 105, ${alpha})`   // Green Success
     };
     return colors[key] || `rgba(128, 128, 128, ${alpha})`;
 }
@@ -576,108 +593,147 @@ function updateAllCharts() {
 
 
 // Función para mostrar el Reporte de Realidad Financiera Anual con diseño premium
+// Función para mostrar el Reporte de Realidad Financiera Anual con diseño de 3 columnas FULL WIDTH (dictamen)
 function updateAnnualReality() {
     const container = document.getElementById('annual-reality-container');
-    const yearFilter = document.getElementById('yearFilter').value;
+    const yearFilter = document.getElementById('yearFilter')?.value || 'all';
+    const quarterFilter = document.getElementById('quarterFilter')?.value || 'all';
 
     if (!container) return;
 
-    // Lógica para determinar qué año mostrar:
-    // Si se selecciona un año específico, mostrar ese.
-    // Si se selecciona "all", mostrar el más reciente (2025) por defecto.
-    let targetYear = yearFilter;
-    if (targetYear === 'all' || targetYear === 'Todos') {
-        targetYear = "2025";
+    let targetYear = (yearFilter === 'all' || yearFilter === 'Todos') ? 2025 : parseInt(yearFilter);
+    let periodKey = (quarterFilter === 'all' || quarterFilter === 'Todos') ? "Annual" : quarterFilter;
+
+    let dynamicDictamen = null;
+
+    if (typeof dbInsights !== 'undefined' && dbInsights.length > 0) {
+        dynamicDictamen = dbInsights.find(ins => 
+            ins.year === targetYear && 
+            ins.period_key === periodKey &&
+            ins.indicador_key === 'insight-liquidez-ai'
+        );
     }
 
-    const yearData = auditRepository[targetYear];
-
-    // Solo mostrar si existe reporte anual para ese año (por ahora centrado en Anual para Liquidez)
-    if (!yearData || !yearData.Annual || !yearData.Annual.report) {
-        container.classList.add('hidden');
-        container.innerHTML = '';
-        return;
-    }
-
-    const report = yearData.Annual.report;
-    const title = report.title[currentLanguage] || report.title.es;
-    const text = report.text[currentLanguage] || report.text.es;
-
-    container.classList.remove('hidden');
-
-    // Determine status colors
-    const statusColors = {
-        success: {
-            bg: 'linear-gradient(135deg, #065f46 0%, #10b981 100%)',
-            badge: '#10b981',
-            badgeBg: '#d1fae5',
-            icon: 'file-check-2'
-        },
-        warning: {
-            bg: 'linear-gradient(135deg, #92400e 0%, #f59e0b 100%)',
-            badge: '#f59e0b',
-            badgeBg: '#fef3c7',
-            icon: 'alert-triangle'
-        },
-        danger: {
-            bg: 'linear-gradient(135deg, #991b1b 0%, #ef4444 100%)',
-            badge: '#ef4444',
-            badgeBg: '#fee2e2',
-            icon: 'alert-octagon'
-        }
-    };
-    const colors = statusColors[report.status] || statusColors.warning;
+    const pos = dynamicDictamen?.analisis_positivo || (currentLanguage === 'es' ? "No se registran hallazgos positivos." : "No positive findings.");
+    const neg = dynamicDictamen?.analisis_negativo || (currentLanguage === 'es' ? "No hay alertas criticas en este periodo." : "No critical alerts.");
+    const acc = dynamicDictamen?.recomendacion || (currentLanguage === 'es' ? "Mantener monitoreo operativo mensual." : "Maintain monthly monitoring.");
 
     container.innerHTML = `
-        <div style="margin-top: 2rem; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.1); background: white;">
-            <!-- Header con gradiente -->
-            <div style="background: ${colors.bg}; padding: 1.25rem 1.5rem; color: white;">
-                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
-                    <div style="display: flex; align-items: center; gap: 1rem;">
-                        <div style="background: rgba(255,255,255,0.2); padding: 0.6rem; border-radius: 10px;">
-                            <i data-lucide="${colors.icon}" style="width: 28px; height: 28px;"></i>
-                        </div>
-                        <div>
-                            <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.15em; opacity: 0.9; font-weight: 700;">
-                                ${currentLanguage === 'es' ? 'Dictamen de Auditoría' : 'Audit Opinion'}
-                            </div>
-                            <h2 style="margin: 0; font-size: 1.2rem; font-weight: 800; letter-spacing: -0.02em;">
-                                ${title}
-                            </h2>
-                        </div>
-                    </div>
-                    <div style="text-align: center; background: white; padding: 0.6rem 1.2rem; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
-                        <div style="font-size: 0.65rem; text-transform: uppercase; color: #64748b; font-weight: 700; letter-spacing: 0.05em; margin-bottom: 2px;">Score</div>
-                        <div style="font-size: 1.6rem; font-weight: 900; color: ${colors.badge}; line-height: 1;">
-                            ${report.score}
-                        </div>
-                    </div>
+        <style>
+            .dictamen-lean {
+                background: white;
+                border-radius: 12px;
+                padding: 24px;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+                border: 1px solid #f1f5f9;
+                margin-bottom: 20px;
+                animation: fadeIn 0.4s ease-out;
+            }
+            .lean-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 20px;
+                padding-bottom: 12px;
+                border-bottom: 1px solid #f8fafc;
+            }
+            .company-name-lean {
+                font-size: 0.9rem;
+                font-weight: 800;
+                color: #0f172a;
+                text-transform: uppercase;
+                letter-spacing: -0.01em;
+            }
+            .status-tag {
+                font-size: 0.65rem;
+                font-weight: 700;
+                color: #10b981;
+                display: flex;
+                align-items: center;
+                gap: 5px;
+            }
+            .insight-columns-grid {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 20px;
+            }
+            .insight-card {
+                padding: 16px;
+                border-radius: 10px;
+                font-size: 0.85rem;
+                line-height: 1.6;
+                color: #475569;
+                border-left: 4px solid #e2e8f0;
+                background: #fbfcfd;
+                transition: all 0.2s ease;
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+            }
+            .insight-card:hover {
+                background: white;
+                box-shadow: 0 6px 15px rgba(0,0,0,0.05);
+                transform: translateY(-2px);
+            }
+            .card-header-icon {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                font-weight: 800;
+                font-size: 0.75rem;
+                text-transform: uppercase;
+            }
+            .card-pos { border-color: #10b981; }
+            .card-neg { border-color: #f59e0b; }
+            .card-acc { border-color: #3b82f6; }
+            .insight-text-render {
+                text-align: justify;
+                hyphens: auto;
+            }
+        </style>
+        
+        <div class="dictamen-lean">
+            <div class="lean-header">
+                <div class="company-name-lean">
+                    ${typeof currentCompany !== 'undefined' && currentCompany.name ? currentCompany.name.toUpperCase() : 'MAS CONSULTA SAS'}
+                    <span class="text-slate-400 font-normal ml-2 lowercase" style="font-size: 0.72rem">Sector: Servicios / Consultoría</span>
+                </div>
+                <div class="status-tag">
+                    <div style="width: 5px; height: 5px; border-radius: 50%; background: #10b981; box-shadow: 0 0 6px #10b981"></div>
+                    PERFIL ACTIVO
                 </div>
             </div>
-            
-            <!-- Body con contenido -->
-            <div style="padding: 1.5rem 2rem;">
-                <div class="prose max-w-none" style="font-size: 0.9rem; line-height: 1.8; color: #334155;">
-                    ${typeof marked !== 'undefined' ? marked.parse(text) : text.replace(/\n/g, '<br>')}
+
+            <div class="insight-columns-grid">
+                
+                <!-- POSITIVO -->
+                <div class="insight-card card-pos">
+                    <div class="card-header-icon" style="color: #059669">
+                        <i data-lucide="check-circle" size="16"></i> POSITIVO
+                    </div>
+                    <div class="insight-text-render">${pos}</div>
                 </div>
-            </div>
-            
-            <!-- Footer profesional -->
-            <div style="background: #f1f5f9; padding: 1rem 2rem; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
-                <div style="display: flex; align-items: center; gap: 0.6rem;">
-                    <i data-lucide="shield-check" style="width: 16px; height: 16px; color: #64748b;"></i>
-                    <span style="color: #64748b; font-size: 0.75rem; font-weight: 500;">
-                        ${currentLanguage === 'es' ? 'Informe verificado por Auditoría Financiera' : 'Report verified by Financial Audit'}
-                    </span>
+
+                <!-- ALERTA -->
+                <div class="insight-card card-neg">
+                    <div class="card-header-icon" style="color: #d97706">
+                        <i data-lucide="alert-triangle" size="16"></i> ALERTA
+                    </div>
+                    <div class="insight-text-render">${neg}</div>
                 </div>
-                <div style="font-size: 0.7rem; color: #94a3b8; font-style: italic;">
-                    ${new Date().toLocaleDateString()}
+
+                <!-- ACCION -->
+                <div class="insight-card card-acc">
+                    <div class="card-header-icon" style="color: #2563eb">
+                        <i data-lucide="zap" size="16"></i> ACCIÓN
+                    </div>
+                    <div class="insight-text-render">${acc}</div>
                 </div>
+
             </div>
         </div>
     `;
 
-    // Reinicializar iconos para este nuevo contenido
     if (typeof lucide !== 'undefined') {
         lucide.createIcons();
     }
@@ -740,13 +796,22 @@ document.getElementById('languageFilter').addEventListener('change', (e) => {
 // Inicialización
 async function initializeDashboard() {
     try {
-        const empresaId = 1;
         const apiData = await DashboardAPI.getIndicadoresData(empresaId, 'liquidez');
         if (apiData && apiData.length > 0) {
             liquidityData = apiData;
             console.log(`[Dashboard] Dynamically loaded ${apiData.length} records for Liquidez`);
         } else {
-            console.warn("[Dashboard] API returned empty indicators. Using static fallback.");
+            console.warn("[Dashboard] API returned empty indicators. Setting empty state.");
+            liquidityData = []; // Clear hardcoded fallback
+        }
+        
+        // Cargar Insights desde la BD
+        const insightsRes = await DashboardAPI.getInsights(empresaId);
+        if (insightsRes && insightsRes.insights) {
+            dbInsights = insightsRes.insights;
+            console.log(`[Dashboard] Loaded ${dbInsights.length} AI insights from DB`);
+        } else {
+            dbInsights = []; // Clear
         }
     } catch (error) {
         dynamicDataError = true;
@@ -760,5 +825,6 @@ async function initializeDashboard() {
     }
 }
 
+// Iniciar Dashboard
 document.addEventListener('DOMContentLoaded', initializeDashboard);
 

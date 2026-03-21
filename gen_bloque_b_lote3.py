@@ -1,0 +1,104 @@
+import json
+
+# Data para Lote 3: 2025 (8 Indicadores)
+lote3_2025 = [
+    {
+        "empresa_id": 3104,
+        "indicador_key": "ciclo_conversion_efectivo",
+        "periodo_ano": 2025,
+        "period_key": "Annual",
+        "tipo": "warning",
+        "analisis_positivo": "Has logrado revertir la tendencia crítica de inicio de año, cerrando diciembre con un ciclo de caja más controlado. La capacidad de MAS CONSULTA para movilizar recursos en el último trimestre demuestra una fortaleza operativa latente y una disposición de pago de tus clientes que debe ser aprovechada para el próximo ejercicio.",
+        "analisis_negativo": "El promedio anual de 57 días de ciclo de efectivo refleja una regresión frente al excelente desempeño de 2024. Volviste a financiar a tus clientes durante casi dos meses, lo que indica que perdiste la disciplina de recaudo estricta que habías consolidado en el año anterior, estresando nuevamente tu posición de liquidez.",
+        "recomendacion": "Debes institucionalizar el cierre de hitos semanal que te permitió mejorar en el último trimestre de 2025. Establece metas de ciclo de caja inferiores a los 20 días de manera permanente, penalizando internamente los retrasos en los reportes de facturación que son el primer eslabón del descalce financiero detectado.",
+        "metodologia": "Bloque B - Auditoría Anual 2025",
+        "generado_por": "antigravity"
+    },
+    {
+        "empresa_id": 3104,
+        "indicador_key": "dso",
+        "periodo_ano": 2025,
+        "period_key": "Annual",
+        "tipo": "danger",
+        "analisis_positivo": "El hito de alcanzar 64 días de cartera en diciembre de 2025 es un referente de éxito operativo. Estas demostrando que posees las herramientas y la fuerza de negociación necesaria para recaudar tus servicios en tiempos récord cuando aplicas protocolos de auditoría de cartera exhaustivos sobre tus clientes corporativos.",
+        "analisis_negativo": "El promedio anual de 121 días de DSO es el más alto de los últimos tres ejercicios fiscales, lo que borra los avances de 2024. Tu cartera se ha vuelto sumamente pesada e ineficiente, con picos de hasta 252 días de mora que ponen en riesgo real el cumplimiento de tus obligaciones tributarias y de nómina básica.",
+        "recomendacion": "Debes prohibir la extensión automática de plazos de pago para 2026. Implementa un sistema de gestión de crédito corporativo que bloquee la prestación de servicios a clientes con deudas mayores a 45 días, obligando a una renegociación de términos que priorice la liquidez inmediata sobre el volumen de ventas teóricas del mes.",
+        "metodologia": "Bloque B - Auditoría Anual 2025",
+        "generado_por": "antigravity"
+    },
+    {
+        "empresa_id": 3104,
+        "indicador_key": "dio",
+        "periodo_ano": 2025,
+        "period_key": "Annual",
+        "tipo": "success",
+        "analisis_positivo": "Mantener una operación de 'Cero Inventarios' físicos durante tres años consecutivos es una muestra de consistencia estructural admirable. Tu modelo de negocio en 2025 sigue siendo extremadamente ágil, permitiéndote operar con costos operativos variables mínimos y sin la carga financiera de activos que pierden valor por desuso.",
+        "analisis_negativo": "La ausencia de inventarios resalta el descontrol en tus otros activos operativos. Al no tener que preocuparte por stock físico, toda tu atención administrativa debería estar en la rotación de la cartera, y los datos muestran que no has sabido capitalizar esta ventaja competitiva de ligereza de activos en este ejercicio anual de auditoría.",
+        "recomendacion": "Debes aplicar la misma filosofía de 'Zero-Waste' que usas en inventarios a tu gestión de tiempos de consultoría. Implementa auditorías de horas semanales para asegurar que no existan 'tiempos muertos' que se carguen al costo del proyecto sin una factura correlativa emitida de manera inmediata al cierre de cada actividad consultiva mensual.",
+        "metodologia": "Bloque B - Auditoría Anual 2025",
+        "generado_por": "antigravity"
+    },
+    {
+        "empresa_id": 3104,
+        "indicador_key": "dpo",
+        "periodo_ano": 2025,
+        "period_key": "Annual",
+        "tipo": "success",
+        "analisis_positivo": "Has utilizado tu capacidad de apalancamiento con proveedores de manera inteligente en 2025, manteniendo un DPO de 64 días. Estás financiando gran parte de tu operación de servicios con recursos de terceros a costo cero, lo cual es la estrategia óptima para mitigar el efecto de un recaudo de cartera lento.",
+        "analisis_negativo": "La caída del DPO a cero en los meses de cierre de 2025 refleja una pérdida de financiamiento comercial que podría obligarte a recurrir a créditos bancarios con intereses elevados. Si no logras recuperar este margen de maniobra con tus proveedores, tu flujo de caja neto sufrirá una contracción severa para iniciar el año 2026.",
+        "recomendacion": "Debes formalizar acuerdos de pago estables con tus principales consultores asociados para el próximo periodo. No permitas que la relación comercial se desgaste por la falta de previsibilidad en las fechas de abono, asegurando que el apalancamiento sea una decisión comercial estratégica y no una consecuencia del agotamiento sistemático de tu disponible bancario.",
+        "metodologia": "Bloque B - Auditoría Anual 2025",
+        "generado_por": "antigravity"
+    },
+    {
+        "empresa_id": 3104,
+        "indicador_key": "rotacion_activos",
+        "periodo_ano": 2025,
+        "period_key": "Annual",
+        "tipo": "info",
+        "analisis_positivo": "Tu estructura de activos no financieros se mantiene en niveles óptimos, asegurando que MAS CONSULTA no esté cargando con excesos de activos fijos que no contribuyan a la meta de facturación anual. La ligereza de tu balance te permite una agilidad de respuesta ante cambios en la demanda de consultoría especializada.",
+        "analisis_negativo": "La rotación de solo 0.06X en 2025 es la más baja de los últimos tres años, lo que indica una pérdida progresiva de eficiencia corporativa. Estás necesitando cada vez más capital atrapado para generar la misma cantidad de ventas, lo que deteriora la rentabilidad final del negocio y compromete el retorno neto sobre la inversión total.",
+        "recomendacion": "Debes adelgazar tu balance mediante una depuración agresiva de activos incobrables y una mayor rotación de tus disponibilidades. Automatiza tus procesos de ventas y recaudo para que el ciclo de generación de ingresos sea mucho más veloz, permitiendo que la firma trabaje con una menor inyección de capital muerto mes a mes.",
+        "metodologia": "Bloque B - Auditoría Anual 2025",
+        "generado_por": "antigravity"
+    },
+    {
+        "empresa_id": 3104,
+        "indicador_key": "rotacion_cartera",
+        "periodo_ano": 2025,
+        "period_key": "Annual",
+        "tipo": "warning",
+        "analisis_positivo": "Mantenes la tracción comercial necesaria para seguir facturando proyectos de alto impacto a clientes de primer nivel en el mercado. El reconocimiento de marca de MAS CONSULTA como proveedora de soluciones estratégicas es el motor que mantiene con vida el flujo de nuevas cuentas por cobrar a pesar de los retrasos operativos.",
+        "analisis_negativo": "La rotación ha caído a 0.29X en 2025, lo que significa que tu cartera ahora tarda más de un año en dar una vuelta completa. Estás acumulando cuentas de muy difícil recaudo que inflan artificialmente tu activo pero no inyectan efectivo a la operación, poniendo en jaque tu viabilidad técnica diaria ante imprevistos salariales.",
+        "recomendacion": "Debes ejecutar un plan de descuento financiero por pago inmediato para recuperar la cartera vencida histórica de 2023-2025. Prefiere recibir hoy un 90% del valor de la factura en efectivo que mantener el 100% de la deuda estancada en el balance durante otro año más sin una certeza real de recaudo para la firma.",
+        "metodologia": "Bloque B - Auditoría Anual 2025",
+        "generado_por": "antigravity"
+    },
+    {
+        "empresa_id": 3104,
+        "indicador_key": "rotacion_inventarios",
+        "periodo_ano": 2025,
+        "period_key": "Annual",
+        "tipo": "success",
+        "analisis_positivo": "Confirmamos que tu modelo de negocio se mantiene fiel a su arquitectura digital sin dependencia de inventarios físicos gravosos. Esta resiliencia estructural te ha permitido sobrevivir a las presiones inflacionarias de insumos que han afectado a otros sectores, manteniendo tu margen operativo protegido de costos logísticos externos invisibles.",
+        "analisis_negativo": "El riesgo de este modelo sigue siendo tu dependencia 100% de la eficiencia en la ejecución del talento. Sin inventario físico que respalde las ventas, un error en la programación de tus consultores especialista o una demora técnica innecesaria en la entrega de proyectos en 2025 se traduce directamente en una venta perdida que nunca podrá ser recuperada.",
+        "recomendacion": "Digitaliza al máximo tus procesos de entrega de proyectos mediante plataformas de gestión colaborativa. Al optimizar los tiempos de resolución técnica de las fases de consultoría, estarás aumentando tu 'rotación de talento virtual' sin necesidad de incrementar el activo físico, elevando la rentabilidad por metro cuadrado de conocimiento comercializado.",
+        "metodologia": "Bloque B - Auditoría Anual 2025",
+        "generado_por": "antigravity"
+    },
+    {
+        "empresa_id": 3104,
+        "indicador_key": "rotacion_proveedores",
+        "periodo_ano": 2025,
+        "period_key": "Annual",
+        "tipo": "info",
+        "analisis_positivo": "Tu comportamiento como pagador ha sido flexible y adaptativo en 2025, manteniendo abiertas las líneas de crédito comercial que sostienen el crecimiento de la firma. Tienes aliados que entienden tu ciclo financiero y que están dispuestos a acompañar la expansión de MAS CONSULTA a cambio de una relación de largo plazo predecible.",
+        "analisis_negativo": "La rotación de proveedores ha bajado hasta 0.43X, lo que indica una demora extrema en el cumplimiento de tus obligaciones exigibles. Si bien esto alivia la caja, el riesgo de que tus socios técnicos dejen de priorizar tus proyectos es inminente si no estableces un esquema de depuración de deudas priorizado para el cierre de este ejercicio fiscal.",
+        "recomendacion": "Diseña una matriz de pago basada en el impacto operativo de cada proveedor. No permitas que la rotación baje de 1.0X anual con tus aliados premium. Debes asegurar que al menos una vez al mes se liberen pagos críticos para mantener la moral alta y la prioridad técnica sobre la competencia en este mercado de consultoría.",
+        "metodologia": "Bloque B - Auditoría Anual 2025",
+        "generado_por": "antigravity"
+    }
+]
+
+with open('payload_bloque_b_lote3_2025.json', 'w', encoding='utf-8') as f:
+    json.dump(lote3_2025, f, indent=2, ensure_ascii=False)

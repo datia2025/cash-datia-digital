@@ -4,11 +4,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Acceso | Dashboard Financiero</title>
+    <title>Acceso | Dashboard Financiero · Datia</title>
+    <meta name="description" content="Portal de acceso al Dashboard de Indicadores Financieros diseñado por Datia Digital.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Auth module (must load before inline script) -->
+    <script src="auth.js"></script>
+
+    <script>
+        // Redirect automatically if a valid session already exists
+        (function () {
+            const session = getSession();
+            if (session) {
+                window.location.replace('start.html?empresa=' + session.empresa);
+            }
+        })();
+    </script>
+
     <style>
         * {
             margin: 0;
@@ -27,157 +42,228 @@
             overflow: hidden;
         }
 
-        /* Overlay for extra depth */
+        /* Dark overlay for depth */
         .overlay {
             position: absolute;
             inset: 0;
-            background: rgba(15, 23, 42, 0.4);
+            background: linear-gradient(135deg,
+                    rgba(10, 31, 68, 0.70) 0%,
+                    rgba(30, 78, 121, 0.55) 100%);
             z-index: 1;
         }
 
+        /* ── Login Card ─── */
         .login-card {
             position: relative;
             z-index: 2;
             width: 100%;
-            max-width: 400px;
-            padding: 40px;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 24px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            max-width: 420px;
+            padding: 44px 40px;
+            background: rgba(255, 255, 255, 0.10);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.22);
+            border-radius: 28px;
+            box-shadow:
+                0 32px 64px -12px rgba(0, 0, 0, 0.55),
+                inset 0 1px 0 rgba(255, 255, 255, 0.15);
             text-align: center;
-            animation: fadeIn 0.8s ease-out;
+            animation: fadeSlideIn 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
         }
 
-        @keyframes fadeIn {
+        @keyframes fadeSlideIn {
             from {
                 opacity: 0;
-                transform: translateY(20px);
+                transform: translateY(28px) scale(0.97);
             }
 
             to {
                 opacity: 1;
-                transform: translateY(0);
+                transform: translateY(0) scale(1);
             }
         }
 
+        /* ── Logo ─── */
         .logo-container {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-            margin-bottom: 32px;
-            background: rgba(255, 255, 255, 0.9);
-            padding: 12px 20px;
-            border-radius: 16px;
             display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 36px;
+            background: rgba(255, 255, 255, 0.92);
+            padding: 10px 20px;
+            border-radius: 14px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
         }
 
         .logo-container img {
-            height: 24px;
+            height: 22px;
             width: auto;
         }
 
-        .divider {
+        .logo-divider {
             width: 1px;
-            height: 20px;
+            height: 18px;
             background: #cbd5e1;
         }
 
+        /* ── Headings ─── */
         h2 {
             color: white;
-            font-size: 1.5rem;
-            font-weight: 700;
-            margin-bottom: 8px;
-            letter-spacing: -0.025em;
+            font-size: 1.55rem;
+            font-weight: 800;
+            margin-bottom: 6px;
+            letter-spacing: -0.03em;
         }
 
         p.subtitle {
-            color: rgba(255, 255, 255, 0.6);
-            font-size: 0.875rem;
-            margin-bottom: 32px;
+            color: rgba(255, 255, 255, 0.57);
+            font-size: 0.85rem;
+            margin-bottom: 36px;
         }
 
+        /* ── Inputs ─── */
         .input-group {
             position: relative;
-            margin-bottom: 20px;
+            margin-bottom: 16px;
             text-align: left;
         }
 
-        .input-group i {
-            position: absolute;
-            left: 16px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: rgba(255, 255, 255, 0.5);
-            width: 18px;
-            height: 18px;
+        .input-group label {
+            display: block;
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.6);
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+            margin-bottom: 6px;
+            padding-left: 2px;
         }
 
-        input {
+        .input-icon {
+            position: absolute;
+            left: 16px;
+            bottom: 14px;
+            color: rgba(255, 255, 255, 0.4);
+            width: 17px;
+            height: 17px;
+        }
+
+        input[type="text"],
+        input[type="password"] {
             width: 100%;
             padding: 14px 16px 14px 48px;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.07);
+            border: 1px solid rgba(255, 255, 255, 0.13);
+            border-radius: 14px;
             color: white;
             font-size: 0.95rem;
             outline: none;
-            transition: all 0.2s;
+            transition: all 0.25s;
         }
 
-        input:focus {
-            background: rgba(255, 255, 255, 0.1);
-            border-color: rgba(255, 255, 255, 0.3);
-            box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.05);
+        input[type="text"]:focus,
+        input[type="password"]:focus {
+            background: rgba(255, 255, 255, 0.12);
+            border-color: rgba(255, 255, 255, 0.35);
+            box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.06);
         }
 
         input::placeholder {
-            color: rgba(255, 255, 255, 0.4);
+            color: rgba(255, 255, 255, 0.35);
         }
 
-        button {
+        /* ── Toggle contraseña ─── */
+        .toggle-pass {
+            position: absolute;
+            right: 14px;
+            bottom: 14px;
+            cursor: pointer;
+            color: rgba(255, 255, 255, 0.35);
+            width: 18px;
+            height: 18px;
+            transition: color 0.2s;
+        }
+
+        .toggle-pass:hover {
+            color: rgba(255, 255, 255, 0.75);
+        }
+
+        /* ── Submit Button ─── */
+        #btn-login {
             width: 100%;
-            padding: 14px;
-            margin-top: 10px;
-            background: #2563eb;
+            padding: 15px;
+            margin-top: 8px;
+            background: linear-gradient(135deg, #1E4E79 0%, #0A1F44 100%);
             color: white;
             border: none;
-            border-radius: 12px;
-            font-size: 1rem;
-            font-weight: 600;
+            border-radius: 14px;
+            font-size: 0.97rem;
+            font-weight: 700;
             cursor: pointer;
-            transition: all 0.2s;
-            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+            transition: all 0.25s;
+            box-shadow: 0 6px 20px rgba(10, 31, 68, 0.45);
+            letter-spacing: 0.01em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
         }
 
-        button:hover {
-            background: #1d4ed8;
-            transform: translateY(-1px);
-            box-shadow: 0 6px 16px rgba(37, 99, 235, 0.4);
+        #btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 28px rgba(10, 31, 68, 0.55);
         }
 
-        button:active {
+        #btn-login:active {
             transform: translateY(0);
         }
 
-        .error-message {
-            margin-top: 16px;
-            color: #fda4af;
-            font-size: 0.85rem;
-            display: none;
-            background: rgba(225, 29, 72, 0.1);
-            padding: 8px;
-            border-radius: 8px;
-            border: 1px solid rgba(225, 29, 72, 0.2);
+        #btn-login.loading {
+            opacity: 0.7;
+            pointer-events: none;
         }
 
+        /* ── Error ─── */
+        .error-message {
+            margin-top: 14px;
+            color: #fca5a5;
+            font-size: 0.83rem;
+            display: none;
+            background: rgba(239, 68, 68, 0.12);
+            padding: 10px 14px;
+            border-radius: 10px;
+            border: 1px solid rgba(239, 68, 68, 0.25);
+            text-align: center;
+        }
+
+        /* ── Footer ─── */
         .footer-text {
-            margin-top: 32px;
-            color: rgba(255, 255, 255, 0.4);
-            font-size: 0.75rem;
+            margin-top: 30px;
+            color: rgba(255, 255, 255, 0.3);
+            font-size: 0.72rem;
+        }
+
+        /* ── Shake animation for wrong credentials ─── */
+        @keyframes shake {
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            20%,
+            60% {
+                transform: translateX(-6px);
+            }
+
+            40%,
+            80% {
+                transform: translateX(6px);
+            }
+        }
+
+        .shake {
+            animation: shake 0.35s ease;
         }
     </style>
 </head>
@@ -185,68 +271,135 @@
 <body>
     <div class="overlay"></div>
 
-    <div class="login-card">
+    <div class="login-card" id="login-card">
+
+        <!-- Logos -->
         <div class="logo-container">
             <img src="https://datia.digital/assets/logo-CL9oxSYp.png" alt="Datia">
-            <div class="divider"></div>
-            <img src="assets/logo_mas.png" alt="MAS">
+            <div class="logo-divider"></div>
+            <img src="assets/logo_mas.png" alt="MAS Consulta">
         </div>
 
         <h2>Bienvenido</h2>
         <p class="subtitle">Identifíquese para acceder al Dashboard Financiero</p>
 
-        <form id="login-form">
+        <form id="login-form" novalidate>
+
+            <!-- Usuario -->
             <div class="input-group">
-                <i data-lucide="user"></i>
-                <input type="text" id="username" placeholder="Usuario" required autocomplete="username">
-            </div>
-            <div class="input-group">
-                <i data-lucide="lock"></i>
-                <input type="password" id="password" placeholder="Contraseña" required autocomplete="current-password">
+                <label for="username">Usuario</label>
+                <i data-lucide="user" class="input-icon"></i>
+                <input
+                    type="text"
+                    id="username"
+                    placeholder="Ingrese su usuario"
+                    required
+                    autocomplete="username"
+                    autofocus>
             </div>
 
-            <button type="submit">Iniciar Sesión</button>
-            <div id="error-msg" class="error-message">Credenciales incorrectas. Intente de nuevo.</div>
+            <!-- Contraseña -->
+            <div class="input-group">
+                <label for="password">Contraseña</label>
+                <i data-lucide="lock" class="input-icon"></i>
+                <input
+                    type="password"
+                    id="password"
+                    placeholder="Ingrese su contraseña"
+                    required
+                    autocomplete="current-password">
+                <i data-lucide="eye" class="toggle-pass" id="toggle-pass" title="Mostrar contraseña"></i>
+            </div>
+
+            <button type="submit" id="btn-login">
+                <i data-lucide="log-in" style="width:18px;height:18px;"></i>
+                Iniciar Sesión
+            </button>
+
+            <div id="error-msg" class="error-message">
+                <strong>Acceso denegado.</strong> Usuario o contraseña incorrectos.
+            </div>
         </form>
 
-        <p class="footer-text">Diseñado por Datia &copy; 2026</p>
+        <p class="footer-text">Diseñado por Datia &copy; 2026 &nbsp;·&nbsp; Uso interno y confidencial</p>
     </div>
 
     <script>
-        // Init Lucide icons
+        // ── Inicializar íconos Lucide ────────────────────────────────────────
         lucide.createIcons();
 
-        const form = document.getElementById('login-form');
+        const form     = document.getElementById('login-form');
         const errorMsg = document.getElementById('error-msg');
+        const card     = document.getElementById('login-card');
+        const btnLogin = document.getElementById('btn-login');
+        const passInput = document.getElementById('password');
+        const togglePass = document.getElementById('toggle-pass');
 
-        form.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const user = document.getElementById('username').value;
-            const pass = document.getElementById('password').value;
-
-            // Validación (admin / datia2026)
-            if (user === 'admin' && pass === 'datia2026') {
-                // Guardar sesión simple
-                localStorage.setItem('df_session', 'active_' + Date.now());
-                window.location.href = 'maestro.html';
-            } else {
-                errorMsg.style.display = 'block';
-                // Shake effect on error
-                document.querySelector('.login-card').animate([
-                    { transform: 'translateX(0)' },
-                    { transform: 'translateX(-5px)' },
-                    { transform: 'translateX(5px)' },
-                    { transform: 'translateX(0)' }
-                ], { duration: 200, iterations: 2 });
-            }
+        // ── Toggle mostrar / ocultar contraseña ─────────────────────────────
+        togglePass.addEventListener('click', () => {
+            const isHidden = passInput.type === 'password';
+            passInput.type = isHidden ? 'text' : 'password';
+            // Cambiar ícono
+            togglePass.setAttribute('data-lucide', isHidden ? 'eye-off' : 'eye');
+            lucide.createIcons();
         });
 
-        // Limpiar error al escribir
+        // ── Limpiar error al escribir ────────────────────────────────────────
         document.querySelectorAll('input').forEach(input => {
             input.addEventListener('input', () => {
                 errorMsg.style.display = 'none';
             });
         });
+
+        // ── Envío del formulario ─────────────────────────────────────────────
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const usuario  = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+
+            if (!usuario || !password) {
+                showError();
+                return;
+            }
+
+            // Estado de carga
+            btnLogin.classList.add('loading');
+            btnLogin.innerHTML = '<i data-lucide="loader" style="width:18px;height:18px;animation:spin 1s linear infinite;"></i> Verificando...';
+            lucide.createIcons();
+
+            try {
+                // Validación dinámica contra la API (ahora es asíncrona)
+                const user = await authenticateUser(usuario, password);
+
+                if (user) {
+                    saveSession(user);
+                    // Redirigir al dashboard con el empresa_id correcto
+                    window.location.href = 'start.html?empresa=' + user.empresa;
+                } else {
+                    throw new Error("Invalid credentials");
+                }
+            } catch (error) {
+                btnLogin.classList.remove('loading');
+                btnLogin.innerHTML = '<i data-lucide="log-in" style="width:18px;height:18px;"></i> Iniciar Sesión';
+                lucide.createIcons();
+                showError();
+            }
+        });
+
+        // ── Función de error con shake ───────────────────────────────────────
+        function showError() {
+            errorMsg.style.display = 'block';
+            card.classList.remove('shake');
+            // Force reflow para reiniciar la animación
+            void card.offsetWidth;
+            card.classList.add('shake');
+        }
+
+        // Agregar @keyframes spin al documento para el loader
+        const style = document.createElement('style');
+        style.textContent = `@keyframes spin { to { transform: rotate(360deg); } }`;
+        document.head.appendChild(style);
     </script>
 </body>
 

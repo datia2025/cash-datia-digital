@@ -1,0 +1,201 @@
+{
+    "name": "Financial Dashboard - Automated ETL & Notifications",
+    "nodes": [
+        {
+            "parameters": {
+                "httpMethod": "POST",
+                "path": "ingesta-financiera",
+                "responseMode": "lastNode",
+                "options": {}
+            },
+            "name": "Webhook (Recibe NocoDB)",
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 1,
+            "position": [
+                250,
+                300
+            ],
+            "webhookId": "generado-dinamicamente-url"
+        },
+        {
+            "parameters": {
+                "conditions": {
+                    "string": [
+                        {
+                            "value1": "={{$json.body.fileUrl}}",
+                            "operation": "isNotEmpty"
+                        }
+                    ]
+                }
+            },
+            "name": "Validar si adjuntó archivo",
+            "type": "n8n-nodes-base.if",
+            "typeVersion": 1,
+            "position": [
+                450,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "url": "={{$json.body.fileUrl}}",
+                "options": {
+                    "response": {
+                        "response": {
+                            "responseFormat": "file"
+                        }
+                    }
+                }
+            },
+            "name": "Descargar CSV/XLSX",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.1,
+            "position": [
+                650,
+                200
+            ]
+        },
+        {
+            "parameters": {
+                "method": "POST",
+                "url": "http://209.145.55.79:8000/api/cargas",
+                "sendBody": true,
+                "contentType": "multipart-form-data",
+                "bodyParameters": {
+                    "parameters": [
+                        {
+                            "name": "empresa_id",
+                            "value": "={{$node[\"Webhook (Recibe NocoDB)\"].json[\"body\"][\"empresa_id\"] || 1}}"
+                        },
+                        {
+                            "name": "empieza_en_fila",
+                            "value": "={{$node[\"Webhook (Recibe NocoDB)\"].json[\"body\"][\"empieza_en_fila\"] || 1}}"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "name": "Procesamiento Worker",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.1,
+            "position": [
+                850,
+                200
+            ]
+        },
+        {
+            "parameters": {
+                "conditions": {
+                    "string": [
+                        {
+                            "value1": "={{$json.status}}",
+                            "value2": "success"
+                        }
+                    ]
+                }
+            },
+            "name": "API Exitoso?",
+            "type": "n8n-nodes-base.if",
+            "typeVersion": 1,
+            "position": [
+                1050,
+                200
+            ]
+        },
+        {
+            "parameters": {
+                "channel": "Notificaciones-Financieras",
+                "text": "=✅ *Carga de Balance Exitosa* \n\nEl dashboard para la empresa *{{$node[\"Webhook (Recibe NocoDB)\"].json[\"body\"][\"empresa\"]}}* ha sido actualizado en PostgreSQL.\n\n*Mensaje del Motor:* {{$json.mensaje}}\n\nMíralo en vivo: https://panel.datia.digital/",
+                "otherOptions": {}
+            },
+            "name": "Alerta Éxito (Slack)",
+            "type": "n8n-nodes-base.slack",
+            "typeVersion": 2.1,
+            "position": [
+                1300,
+                100
+            ]
+        },
+        {
+            "parameters": {
+                "channel": "Alertas-Dashboard",
+                "text": "=🚨 *¡ERROR FATAL EN LA CARGA DE DATOS!*\n\nLa inyección del balance falló para la empresa *{{$node[\"Webhook (Recibe NocoDB)\"].json[\"body\"][\"empresa\"]}}*.\n\n*Detalles Técnicos:* \n```{{$json.message}}```\n\nPor favor, verifica el formato en NocoDB y reinténtalo.",
+                "otherOptions": {}
+            },
+            "name": "Alerta Fracaso (Slack)",
+            "type": "n8n-nodes-base.slack",
+            "typeVersion": 2.1,
+            "position": [
+                1300,
+                300
+            ]
+        }
+    ],
+    "connections": {
+        "Webhook (Recibe NocoDB)": {
+            "main": [
+                [
+                    {
+                        "node": "Validar si adjuntó archivo",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Validar si adjuntó archivo": {
+            "main": [
+                [
+                    {
+                        "node": "Descargar CSV/XLSX",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Descargar CSV/XLSX": {
+            "main": [
+                [
+                    {
+                        "node": "Procesamiento Worker",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Procesamiento Worker": {
+            "main": [
+                [
+                    {
+                        "node": "API Exitoso?",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "API Exitoso?": {
+            "main": [
+                [
+                    {
+                        "node": "Alerta Éxito (Slack)",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "Alerta Fracaso (Slack)",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "settings": {
+        "executionOrder": "v1"
+    }
+}

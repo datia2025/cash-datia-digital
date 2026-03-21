@@ -1,0 +1,38 @@
+[
+  {
+    "empresa_id": 3104,
+    "indicador_key": "dso",
+    "periodo_ano": 2023,
+    "period_key": "Annual",
+    "tipo": "danger",
+    "analisis_positivo": "Has logrado mantener una tracci\u00f3n operativa constante a pesar de un DSO promedio de 110 d\u00edas, lo que indica que tu modelo de negocio es resiliente y que los clientes valoran tu servicio lo suficiente como para mantener el flujo a pesar de los retrasos estructurales en la cobranza.",
+    "analisis_negativo": "La gesti\u00f3n de cartera en 2023 fue cr\u00edtica, con d\u00edas de calle superando los 110 en promedio anual. Operar con un ciclo tan largo significa que est\u00e1s financiando a tus clientes con caja propia, amarrando recursos que podr\u00edan estarse utilizando para expansi\u00f3n o para mejorar el margen operativo neto.",
+    "recomendacion": "Urge implementar una pol\u00edtica de cr\u00e9dito corporativa mucho m\u00e1s agresiva para el pr\u00f3ximo ejercicio. Debes establecer l\u00edmites de mora de m\u00e1ximo 45 d\u00edas e iniciar gestiones de cobro pre-jur\u00eddico de manera autom\u00e1tica apenas se cumplan 15 d\u00edas de vencimiento sin respuesta clara por parte del cliente.",
+    "metodologia": "Bloque B - Actividad - DSO Annual",
+    "generado_por": "antigravity"
+  },
+  {
+    "empresa_id": 3104,
+    "indicador_key": "dso",
+    "periodo_ano": 2024,
+    "period_key": "Annual",
+    "tipo": "warning",
+    "analisis_positivo": "La mejora es evidente comparada con el a\u00f1o anterior, reduciendo el promedio de recaudo a 82 d\u00edas. Has optimizado tus procesos de facturaci\u00f3n, logrando que el dinero regrese a la caja casi un mes antes que en 2023, lo que despeja el horizonte de liquidez inmediata.",
+    "analisis_negativo": "A pesar de la reducci\u00f3n, el DSO de 82 d\u00edas sigue duplicando el promedio ideal del sector de consultor\u00eda. Todav\u00eda existe una dependencia excesiva de pocos clientes corporativos que imponen sus propios plazos de pago por fuera de lo pactado, lo que genera intermitencia en tu flujo operativo disponible.",
+    "recomendacion": "Debes diversificar tu cartera de clientes para reducir el poder de negociaci\u00f3n de aquellos que retrasan los pagos. Considera implementar descuentos por pronto pago del 2% al 3% para incentivar a tus aliados estrat\u00e9gicos a liquidar sus facturas en los primeros 15 d\u00edas de emitida la orden.",
+    "metodologia": "Bloque B - Actividad - DSO Annual",
+    "generado_por": "antigravity"
+  },
+  {
+    "empresa_id": 3104,
+    "indicador_key": "dso",
+    "periodo_ano": 2025,
+    "period_key": "Annual",
+    "tipo": "danger",
+    "analisis_positivo": "El cierre de diciembre de 2025 con solo 64 d\u00edas de cartera es un hito monumental que demuestra que tu equipo puede cobrar con eficiencia quir\u00fargica cuando se lo propone. Es la mejor cifra interanual de los \u00faltimos tres ejercicios y debe servir como referente operativo.",
+    "analisis_negativo": "La volatilidad durante el a\u00f1o fue preocupante, elevando el promedio anual a 118 d\u00edas debido a picos extremos en el segundo semestre. La inconsistencia en el recaudo genera una 'monta\u00f1a rusa' financiera que dificulta la planificaci\u00f3n de inversiones a largo plazo y estresa excesivamente la caja operativa.",
+    "recomendacion": "No permitas que la eficiencia de diciembre sea un evento estacional. Institucionaliza el comit\u00e9 de cobranza semanal que se ejecut\u00f3 al cierre de a\u00f1o y asigna un responsable exclusivo de cartera que tenga metas claras de recaudo por debajo de los 45 d\u00edas de manera permanente y medible.",
+    "metodologia": "Bloque B - Actividad - DSO Annual",
+    "generado_por": "antigravity"
+  }
+]

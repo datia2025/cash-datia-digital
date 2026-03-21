@@ -59,13 +59,22 @@ Implementa una lógica de **doble validación**:
 
 ---
 
-## 5. Procedimiento para Soporte Técnico
+## 5. Procedimiento para Soporte Técnico (Reset de Claves)
 
-Si un cliente pierde su acceso o requiere un reset:
-1.  Localice al usuario en la tabla `usuarios` de PostgreSQL.
-2.  Actualice el campo `password` con una nueva clave.
-3.  El sistema reflejará el cambio de forma inmediata en el próximo login.
-4.  Alternativamente, el cliente puede volver a realizar una carga; el sistema le enviará un recordatorio de que su cuenta ya existe.
+Para gestionar incidencias de acceso, el Worker expone endpoints administrativos protegidos (uso interno/auditoría):
+
+1.  **Consulta de Credenciales**: `GET /api/admin/usuarios/{empresa_id}`
+    - Devuelve el listado de usuarios vinculados y sus contraseñas actuales (en texto plano/hash según configuración).
+2.  **Reset Forzado**: `POST /api/admin/reset_password/{empresa_id}`
+    - Permite establecer una nueva clave sin requerir que el usuario realice una nueva carga de archivos.
+    - Payload: `{"email": "...", "new_password": "..."}`.
+
+### 5.1 Protocolo de Emergencia
+En caso de pérdida total de acceso:
+1.  Verificar el ID de la empresa en `GET /api/empresas`.
+2.  Consultar el email registrado en `GET /api/admin/usuarios/{id}`.
+3.  Ejecutar el Reset Forzado vía API del Worker.
+4.  Notificar al cliente e instruir el refresco de sesión (`Ctrl + F5`).
 
 ---
 

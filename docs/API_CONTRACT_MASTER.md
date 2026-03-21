@@ -39,10 +39,19 @@ Este es el punto de entrada neurálgico para la automatización. El endpoint ha 
 Endpoint de observabilidad crítica que informa sobre el estado de las dependencias vitales del sistema.
 - **Respuesta**: `{"status": "ok", "service": "liquidity-worker", "database": "connected"}`.
 
-### 2.3 `DELETE /api/admin/clear_empresa/{empresa_id}` (Hard-Purge de Auditoría)
+### 2.3 `GET /api/admin/usuarios/{empresa_id}` (Auditoría de Acceso)
+Endpoint de consulta para verificar usuarios y contraseñas actuales asociados a una entidad.
+- **Uso**: Recuperación de credenciales para soporte técnico inicial.
+- **Nota**: Por simplicidad en esta fase (v2), las claves se almacenan/exponen como texto plano/hash temporal.
+
+### 2.4 `POST /api/admin/reset_password/{empresa_id}` (Reset Administrativo)
+Punto de control para forzar el cambio de clave de un usuario existente sin re-procesamiento de datos.
+- **Payload**: `{"email": "...", "new_password": "..."}`.
+- **Respuesta**: Confirmación de la actualización (`UPDATE 1`).
+
+### 2.5 `DELETE /api/admin/clear_empresa/{empresa_id}` (Hard-Purge de Auditoría)
 Endpoint administrativo de alta criticidad para limpieza profunda de datos.
 - **Función**: Elimina en cascada indicadores, insights, cargas, usuarios y el registro maestro de la empresa.
-- **Uso**: Reinicio de instancias para auditoría o corrección de cargas masivas fallidas.
 
 ---
 

@@ -1,0 +1,2022 @@
+{
+  "empresa_id": 3104,
+  "total": 392,
+  "indicadores": [
+    {
+      "indicador_key": "ciclo_conversion_efectivo",
+      "unidad": "x",
+      "modulo": "actividad",
+      "data": [
+        {
+          "year": 2021,
+          "month": 12,
+          "valor": 0.0
+        },
+        {
+          "year": 2022,
+          "month": 1,
+          "valor": -10.6008
+        },
+        {
+          "year": 2022,
+          "month": 2,
+          "valor": 32.6422
+        },
+        {
+          "year": 2022,
+          "month": 3,
+          "valor": 140.2248
+        },
+        {
+          "year": 2022,
+          "month": 4,
+          "valor": 25.107
+        },
+        {
+          "year": 2022,
+          "month": 5,
+          "valor": 125.8524
+        },
+        {
+          "year": 2022,
+          "month": 6,
+          "valor": 34.2133
+        },
+        {
+          "year": 2022,
+          "month": 7,
+          "valor": 44.4089
+        },
+        {
+          "year": 2022,
+          "month": 8,
+          "valor": 67.2345
+        },
+        {
+          "year": 2022,
+          "month": 9,
+          "valor": 27.0806
+        },
+        {
+          "year": 2022,
+          "month": 10,
+          "valor": 42.7532
+        },
+        {
+          "year": 2022,
+          "month": 11,
+          "valor": 105.9324
+        },
+        {
+          "year": 2022,
+          "month": 12,
+          "valor": 38.3612
+        },
+        {
+          "year": 2023,
+          "month": 1,
+          "valor": 258.5489
+        },
+        {
+          "year": 2023,
+          "month": 2,
+          "valor": 27.2243
+        },
+        {
+          "year": 2023,
+          "month": 3,
+          "valor": 69.094
+        },
+        {
+          "year": 2023,
+          "month": 4,
+          "valor": 74.2323
+        },
+        {
+          "year": 2023,
+          "month": 5,
+          "valor": 62.1924
+        },
+        {
+          "year": 2023,
+          "month": 6,
+          "valor": 96.1665
+        },
+        {
+          "year": 2023,
+          "month": 7,
+          "valor": 19.2518
+        },
+        {
+          "year": 2023,
+          "month": 8,
+          "valor": 90.2342
+        },
+        {
+          "year": 2023,
+          "month": 9,
+          "valor": 55.5603
+        },
+        {
+          "year": 2023,
+          "month": 10,
+          "valor": 135.6272
+        },
+        {
+          "year": 2023,
+          "month": 11,
+          "valor": 58.6469
+        },
+        {
+          "year": 2023,
+          "month": 12,
+          "valor": 135.2035
+        },
+        {
+          "year": 2024,
+          "month": 1,
+          "valor": 11.7334
+        },
+        {
+          "year": 2024,
+          "month": 2,
+          "valor": 43.5473
+        },
+        {
+          "year": 2024,
+          "month": 3,
+          "valor": 177.7798
+        },
+        {
+          "year": 2024,
+          "month": 4,
+          "valor": 47.7213
+        },
+        {
+          "year": 2024,
+          "month": 5,
+          "valor": 81.7345
+        },
+        {
+          "year": 2024,
+          "month": 6,
+          "valor": 55.1673
+        },
+        {
+          "year": 2024,
+          "month": 7,
+          "valor": 22.0831
+        },
+        {
+          "year": 2024,
+          "month": 8,
+          "valor": 0.817
+        },
+        {
+          "year": 2024,
+          "month": 9,
+          "valor": -39.7208
+        },
+        {
+          "year": 2024,
+          "month": 10,
+          "valor": -63.3474
+        },
+        {
+          "year": 2024,
+          "month": 11,
+          "valor": -165.306
+        },
+        {
+          "year": 2024,
+          "month": 12,
+          "valor": -100.0898
+        },
+        {
+          "year": 2025,
+          "month": 1,
+          "valor": 63.6466
+        },
+        {
+          "year": 2025,
+          "month": 2,
+          "valor": -98.9323
+        },
+        {
+          "year": 2025,
+          "month": 3,
+          "valor": 40.443
+        },
+        {
+          "year": 2025,
+          "month": 4,
+          "valor": 22.1467
+        },
+        {
+          "year": 2025,
+          "month": 5,
+          "valor": 116.1257
+        },
+        {
+          "year": 2025,
+          "month": 6,
+          "valor": 53.597
+        },
+        {
+          "year": 2025,
+          "month": 7,
+          "valor": 1.4572
+        },
+        {
+          "year": 2025,
+          "month": 8,
+          "valor": 17.5158
+        },
+        {
+          "year": 2025,
+          "month": 9,
+          "valor": 127.1559
+        },
+        {
+          "year": 2025,
+          "month": 10,
+          "valor": 129.9898
+        },
+        {
+          "year": 2025,
+          "month": 11,
+          "valor": 151.9397
+        },
+        {
+          "year": 2025,
+          "month": 12,
+          "valor": 64.4762
+        }
+      ]
+    },
+    {
+      "indicador_key": "dio",
+      "unidad": "d\u00edas",
+      "modulo": "actividad",
+      "data": [
+        {
+          "year": 2021,
+          "month": 12,
+          "valor": 0.0
+        },
+        {
+          "year": 2022,
+          "month": 1,
+          "valor": 0.0
+        },
+        {
+          "year": 2022,
+          "month": 2,
+          "valor": 0.0
+        },
+        {
+          "year": 2022,
+          "month": 3,
+          "valor": 0.0
+        },
+        {
+          "year": 2022,
+          "month": 4,
+          "valor": 0.0
+        },
+        {
+          "year": 2022,
+          "month": 5,
+          "valor": 0.0
+        },
+        {
+          "year": 2022,
+          "month": 6,
+          "valor": 0.0
+        },
+        {
+          "year": 2022,
+          "month": 7,
+          "valor": 0.0
+        },
+        {
+          "year": 2022,
+          "month": 8,
+          "valor": 0.0
+        },
+        {
+          "year": 2022,
+          "month": 9,
+          "valor": 0.0
+        },
+        {
+          "year": 2022,
+          "month": 10,
+          "valor": 0.0
+        },
+        {
+          "year": 2022,
+          "month": 11,
+          "valor": 0.0
+        },
+        {
+          "year": 2022,
+          "month": 12,
+          "valor": 0.0
+        },
+        {
+          "year": 2023,
+          "month": 1,
+          "valor": 0.0
+        },
+        {
+          "year": 2023,
+          "month": 2,
+          "valor": 0.0
+        },
+        {
+          "year": 2023,
+          "month": 3,
+          "valor": 0.0
+        },
+        {
+          "year": 2023,
+          "month": 4,
+          "valor": 0.0
+        },
+        {
+          "year": 2023,
+          "month": 5,
+          "valor": 0.0
+        },
+        {
+          "year": 2023,
+          "month": 6,
+          "valor": 0.0
+        },
+        {
+          "year": 2023,
+          "month": 7,
+          "valor": 0.0
+        },
+        {
+          "year": 2023,
+          "month": 8,
+          "valor": 0.0
+        },
+        {
+          "year": 2023,
+          "month": 9,
+          "valor": 0.0
+        },
+        {
+          "year": 2023,
+          "month": 10,
+          "valor": 0.0
+        },
+        {
+          "year": 2023,
+          "month": 11,
+          "valor": 0.0
+        },
+        {
+          "year": 2023,
+          "month": 12,
+          "valor": 0.0
+        },
+        {
+          "year": 2024,
+          "month": 1,
+          "valor": 0.0
+        },
+        {
+          "year": 2024,
+          "month": 2,
+          "valor": 0.0
+        },
+        {
+          "year": 2024,
+          "month": 3,
+          "valor": 0.0
+        },
+        {
+          "year": 2024,
+          "month": 4,
+          "valor": 0.0
+        },
+        {
+          "year": 2024,
+          "month": 5,
+          "valor": 0.0
+        },
+        {
+          "year": 2024,
+          "month": 6,
+          "valor": 0.0
+        },
+        {
+          "year": 2024,
+          "month": 7,
+          "valor": 0.0
+        },
+        {
+          "year": 2024,
+          "month": 8,
+          "valor": 0.0
+        },
+        {
+          "year": 2024,
+          "month": 9,
+          "valor": 0.0
+        },
+        {
+          "year": 2024,
+          "month": 10,
+          "valor": 0.0
+        },
+        {
+          "year": 2024,
+          "month": 11,
+          "valor": 0.0
+        },
+        {
+          "year": 2024,
+          "month": 12,
+          "valor": 0.0
+        },
+        {
+          "year": 2025,
+          "month": 1,
+          "valor": 0.0
+        },
+        {
+          "year": 2025,
+          "month": 2,
+          "valor": 0.0
+        },
+        {
+          "year": 2025,
+          "month": 3,
+          "valor": 0.0
+        },
+        {
+          "year": 2025,
+          "month": 4,
+          "valor": 0.0
+        },
+        {
+          "year": 2025,
+          "month": 5,
+          "valor": 0.0
+        },
+        {
+          "year": 2025,
+          "month": 6,
+          "valor": 0.0
+        },
+        {
+          "year": 2025,
+          "month": 7,
+          "valor": 0.0
+        },
+        {
+          "year": 2025,
+          "month": 8,
+          "valor": 0.0
+        },
+        {
+          "year": 2025,
+          "month": 9,
+          "valor": 0.0
+        },
+        {
+          "year": 2025,
+          "month": 10,
+          "valor": 0.0
+        },
+        {
+          "year": 2025,
+          "month": 11,
+          "valor": 0.0
+        },
+        {
+          "year": 2025,
+          "month": 12,
+          "valor": 0.0
+        }
+      ]
+    },
+    {
+      "indicador_key": "dpo",
+      "unidad": "d\u00edas",
+      "modulo": "actividad",
+      "data": [
+        {
+          "year": 2021,
+          "month": 12,
+          "valor": 0.0
+        },
+        {
+          "year": 2022,
+          "month": 1,
+          "valor": 10.6008
+        },
+        {
+          "year": 2022,
+          "month": 2,
+          "valor": 16.2037
+        },
+        {
+          "year": 2022,
+          "month": 3,
+          "valor": 37.6372
+        },
+        {
+          "year": 2022,
+          "month": 4,
+          "valor": 33.3876
+        },
+        {
+          "year": 2022,
+          "month": 5,
+          "valor": 17.5295
+        },
+        {
+          "year": 2022,
+          "month": 6,
+          "valor": 8.1908
+        },
+        {
+          "year": 2022,
+          "month": 7,
+          "valor": 8.7566
+        },
+        {
+          "year": 2022,
+          "month": 8,
+          "valor": 4.2845
+        },
+        {
+          "year": 2022,
+          "month": 9,
+          "valor": 4.6344
+        },
+        {
+          "year": 2022,
+          "month": 10,
+          "valor": 4.0579
+        },
+        {
+          "year": 2022,
+          "month": 11,
+          "valor": 2.3618
+        },
+        {
+          "year": 2022,
+          "month": 12,
+          "valor": 5.2512
+        },
+        {
+          "year": 2023,
+          "month": 1,
+          "valor": 22.0624
+        },
+        {
+          "year": 2023,
+          "month": 2,
+          "valor": 30.1325
+        },
+        {
+          "year": 2023,
+          "month": 3,
+          "valor": 22.336
+        },
+        {
+          "year": 2023,
+          "month": 4,
+          "valor": 12.4418
+        },
+        {
+          "year": 2023,
+          "month": 5,
+          "valor": 25.7297
+        },
+        {
+          "year": 2023,
+          "month": 6,
+          "valor": 27.2643
+        },
+        {
+          "year": 2023,
+          "month": 7,
+          "valor": 13.826
+        },
+        {
+          "year": 2023,
+          "month": 8,
+          "valor": 27.2759
+        },
+        {
+          "year": 2023,
+          "month": 9,
+          "valor": 3.9741
+        },
+        {
+          "year": 2023,
+          "month": 10,
+          "valor": 14.9558
+        },
+        {
+          "year": 2023,
+          "month": 11,
+          "valor": 55.484
+        },
+        {
+          "year": 2023,
+          "month": 12,
+          "valor": 6.66
+        },
+        {
+          "year": 2024,
+          "month": 1,
+          "valor": 87.7293
+        },
+        {
+          "year": 2024,
+          "month": 2,
+          "valor": 30.5314
+        },
+        {
+          "year": 2024,
+          "month": 3,
+          "valor": 59.6556
+        },
+        {
+          "year": 2024,
+          "month": 4,
+          "valor": 9.9139
+        },
+        {
+          "year": 2024,
+          "month": 5,
+          "valor": 10.0021
+        },
+        {
+          "year": 2024,
+          "month": 6,
+          "valor": 18.6565
+        },
+        {
+          "year": 2024,
+          "month": 7,
+          "valor": 60.3272
+        },
+        {
+          "year": 2024,
+          "month": 8,
+          "valor": 48.0533
+        },
+        {
+          "year": 2024,
+          "month": 9,
+          "valor": 124.2821
+        },
+        {
+          "year": 2024,
+          "month": 10,
+          "valor": 162.6385
+        },
+        {
+          "year": 2024,
+          "month": 11,
+          "valor": 216.8181
+        },
+        {
+          "year": 2024,
+          "month": 12,
+          "valor": 140.8453
+        },
+        {
+          "year": 2025,
+          "month": 1,
+          "valor": 47.7585
+        },
+        {
+          "year": 2025,
+          "month": 2,
+          "valor": 178.9772
+        },
+        {
+          "year": 2025,
+          "month": 3,
+          "valor": 100.7303
+        },
+        {
+          "year": 2025,
+          "month": 4,
+          "valor": 72.9288
+        },
+        {
+          "year": 2025,
+          "month": 5,
+          "valor": 51.8381
+        },
+        {
+          "year": 2025,
+          "month": 6,
+          "valor": 45.8382
+        },
+        {
+          "year": 2025,
+          "month": 7,
+          "valor": 73.732
+        },
+        {
+          "year": 2025,
+          "month": 8,
+          "valor": 56.2342
+        },
+        {
+          "year": 2025,
+          "month": 9,
+          "valor": 0.0
+        },
+        {
+          "year": 2025,
+          "month": 10,
+          "valor": 38.4554
+        },
+        {
+          "year": 2025,
+          "month": 11,
+          "valor": 100.0907
+        },
+        {
+          "year": 2025,
+          "month": 12,
+          "valor": 0.0
+        }
+      ]
+    },
+    {
+      "indicador_key": "dso",
+      "unidad": "d\u00edas",
+      "modulo": "actividad",
+      "data": [
+        {
+          "year": 2021,
+          "month": 12,
+          "valor": 0.0
+        },
+        {
+          "year": 2022,
+          "month": 1,
+          "valor": 0.0
+        },
+        {
+          "year": 2022,
+          "month": 2,
+          "valor": 48.8459
+        },
+        {
+          "year": 2022,
+          "month": 3,
+          "valor": 177.8621
+        },
+        {
+          "year": 2022,
+          "month": 4,
+          "valor": 58.4946
+        },
+        {
+          "year": 2022,
+          "month": 5,
+          "valor": 143.3819
+        },
+        {
+          "year": 2022,
+          "month": 6,
+          "valor": 42.4041
+        },
+        {
+          "year": 2022,
+          "month": 7,
+          "valor": 53.1655
+        },
+        {
+          "year": 2022,
+          "month": 8,
+          "valor": 71.5189
+        },
+        {
+          "year": 2022,
+          "month": 9,
+          "valor": 31.715
+        },
+        {
+          "year": 2022,
+          "month": 10,
+          "valor": 46.811
+        },
+        {
+          "year": 2022,
+          "month": 11,
+          "valor": 108.2942
+        },
+        {
+          "year": 2022,
+          "month": 12,
+          "valor": 43.6123
+        },
+        {
+          "year": 2023,
+          "month": 1,
+          "valor": 280.6113
+        },
+        {
+          "year": 2023,
+          "month": 2,
+          "valor": 57.3568
+        },
+        {
+          "year": 2023,
+          "month": 3,
+          "valor": 91.43
+        },
+        {
+          "year": 2023,
+          "month": 4,
+          "valor": 86.6741
+        },
+        {
+          "year": 2023,
+          "month": 5,
+          "valor": 87.9221
+        },
+        {
+          "year": 2023,
+          "month": 6,
+          "valor": 123.4308
+        },
+        {
+          "year": 2023,
+          "month": 7,
+          "valor": 33.0778
+        },
+        {
+          "year": 2023,
+          "month": 8,
+          "valor": 117.5101
+        },
+        {
+          "year": 2023,
+          "month": 9,
+          "valor": 59.5344
+        },
+        {
+          "year": 2023,
+          "month": 10,
+          "valor": 150.583
+        },
+        {
+          "year": 2023,
+          "month": 11,
+          "valor": 114.131
+        },
+        {
+          "year": 2023,
+          "month": 12,
+          "valor": 141.8635
+        },
+        {
+          "year": 2024,
+          "month": 1,
+          "valor": 99.4627
+        },
+        {
+          "year": 2024,
+          "month": 2,
+          "valor": 74.0787
+        },
+        {
+          "year": 2024,
+          "month": 3,
+          "valor": 237.4354
+        },
+        {
+          "year": 2024,
+          "month": 4,
+          "valor": 57.6351
+        },
+        {
+          "year": 2024,
+          "month": 5,
+          "valor": 91.7366
+        },
+        {
+          "year": 2024,
+          "month": 6,
+          "valor": 73.8238
+        },
+        {
+          "year": 2024,
+          "month": 7,
+          "valor": 82.4103
+        },
+        {
+          "year": 2024,
+          "month": 8,
+          "valor": 48.8703
+        },
+        {
+          "year": 2024,
+          "month": 9,
+          "valor": 84.5613
+        },
+        {
+          "year": 2024,
+          "month": 10,
+          "valor": 99.2911
+        },
+        {
+          "year": 2024,
+          "month": 11,
+          "valor": 51.5121
+        },
+        {
+          "year": 2024,
+          "month": 12,
+          "valor": 40.7555
+        },
+        {
+          "year": 2025,
+          "month": 1,
+          "valor": 111.405
+        },
+        {
+          "year": 2025,
+          "month": 2,
+          "valor": 80.0448
+        },
+        {
+          "year": 2025,
+          "month": 3,
+          "valor": 141.1733
+        },
+        {
+          "year": 2025,
+          "month": 4,
+          "valor": 95.0756
+        },
+        {
+          "year": 2025,
+          "month": 5,
+          "valor": 167.9638
+        },
+        {
+          "year": 2025,
+          "month": 6,
+          "valor": 99.4351
+        },
+        {
+          "year": 2025,
+          "month": 7,
+          "valor": 75.1892
+        },
+        {
+          "year": 2025,
+          "month": 8,
+          "valor": 73.7501
+        },
+        {
+          "year": 2025,
+          "month": 9,
+          "valor": 127.1559
+        },
+        {
+          "year": 2025,
+          "month": 10,
+          "valor": 168.4452
+        },
+        {
+          "year": 2025,
+          "month": 11,
+          "valor": 252.0304
+        },
+        {
+          "year": 2025,
+          "month": 12,
+          "valor": 64.4762
+        }
+      ]
+    },
+    {
+      "indicador_key": "rotacion_activos",
+      "unidad": "x",
+      "modulo": "actividad",
+      "data": [
+        {
+          "year": 2021,
+          "month": 12,
+          "valor": 0.0
+        },
+        {
+          "year": 2022,
+          "month": 1,
+          "valor": 0.0
+        },
+        {
+          "year": 2022,
+          "month": 2,
+          "valor": 0.3137
+        },
+        {
+          "year": 2022,
+          "month": 3,
+          "valor": 0.1032
+        },
+        {
+          "year": 2022,
+          "month": 4,
+          "valor": 0.3157
+        },
+        {
+          "year": 2022,
+          "month": 5,
+          "valor": 0.1305
+        },
+        {
+          "year": 2022,
+          "month": 6,
+          "valor": 0.3031
+        },
+        {
+          "year": 2022,
+          "month": 7,
+          "valor": 0.221
+        },
+        {
+          "year": 2022,
+          "month": 8,
+          "valor": 0.2037
+        },
+        {
+          "year": 2022,
+          "month": 9,
+          "valor": 0.4868
+        },
+        {
+          "year": 2022,
+          "month": 10,
+          "valor": 0.3811
+        },
+        {
+          "year": 2022,
+          "month": 11,
+          "valor": 0.1591
+        },
+        {
+          "year": 2022,
+          "month": 12,
+          "valor": -2.4623
+        },
+        {
+          "year": 2023,
+          "month": 1,
+          "valor": 0.0648
+        },
+        {
+          "year": 2023,
+          "month": 2,
+          "valor": 0.3541
+        },
+        {
+          "year": 2023,
+          "month": 3,
+          "valor": 0.2569
+        },
+        {
+          "year": 2023,
+          "month": 4,
+          "valor": 0.2517
+        },
+        {
+          "year": 2023,
+          "month": 5,
+          "valor": 0.1861
+        },
+        {
+          "year": 2023,
+          "month": 6,
+          "valor": 0.0873
+        },
+        {
+          "year": 2023,
+          "month": 7,
+          "valor": 0.3615
+        },
+        {
+          "year": 2023,
+          "month": 8,
+          "valor": 0.1128
+        },
+        {
+          "year": 2023,
+          "month": 9,
+          "valor": 0.2076
+        },
+        {
+          "year": 2023,
+          "month": 10,
+          "valor": 0.0857
+        },
+        {
+          "year": 2023,
+          "month": 11,
+          "valor": 0.114
+        },
+        {
+          "year": 2023,
+          "month": 12,
+          "valor": -2.0987
+        },
+        {
+          "year": 2024,
+          "month": 1,
+          "valor": 0.1502
+        },
+        {
+          "year": 2024,
+          "month": 2,
+          "valor": 0.2036
+        },
+        {
+          "year": 2024,
+          "month": 3,
+          "valor": 0.0614
+        },
+        {
+          "year": 2024,
+          "month": 4,
+          "valor": 0.2356
+        },
+        {
+          "year": 2024,
+          "month": 5,
+          "valor": 0.1663
+        },
+        {
+          "year": 2024,
+          "month": 6,
+          "valor": 0.236
+        },
+        {
+          "year": 2024,
+          "month": 7,
+          "valor": 0.2308
+        },
+        {
+          "year": 2024,
+          "month": 8,
+          "valor": 0.3861
+        },
+        {
+          "year": 2024,
+          "month": 9,
+          "valor": 0.1383
+        },
+        {
+          "year": 2024,
+          "month": 10,
+          "valor": 0.0742
+        },
+        {
+          "year": 2024,
+          "month": 11,
+          "valor": 0.1308
+        },
+        {
+          "year": 2024,
+          "month": 12,
+          "valor": -0.7901
+        },
+        {
+          "year": 2025,
+          "month": 1,
+          "valor": 0.0721
+        },
+        {
+          "year": 2025,
+          "month": 2,
+          "valor": 0.0836
+        },
+        {
+          "year": 2025,
+          "month": 3,
+          "valor": 0.0565
+        },
+        {
+          "year": 2025,
+          "month": 4,
+          "valor": 0.0815
+        },
+        {
+          "year": 2025,
+          "month": 5,
+          "valor": 0.0417
+        },
+        {
+          "year": 2025,
+          "month": 6,
+          "valor": 0.0659
+        },
+        {
+          "year": 2025,
+          "month": 7,
+          "valor": 0.0941
+        },
+        {
+          "year": 2025,
+          "month": 8,
+          "valor": 0.0902
+        },
+        {
+          "year": 2025,
+          "month": 9,
+          "valor": 0.0498
+        },
+        {
+          "year": 2025,
+          "month": 10,
+          "valor": 0.0363
+        },
+        {
+          "year": 2025,
+          "month": 11,
+          "valor": 0.0199
+        },
+        {
+          "year": 2025,
+          "month": 12,
+          "valor": 0.0914
+        }
+      ]
+    },
+    {
+      "indicador_key": "rotacion_cartera",
+      "unidad": "x",
+      "modulo": "actividad",
+      "data": [
+        {
+          "year": 2021,
+          "month": 12,
+          "valor": 0.0
+        },
+        {
+          "year": 2022,
+          "month": 1,
+          "valor": 0.0
+        },
+        {
+          "year": 2022,
+          "month": 2,
+          "valor": 0.5732
+        },
+        {
+          "year": 2022,
+          "month": 3,
+          "valor": 0.1743
+        },
+        {
+          "year": 2022,
+          "month": 4,
+          "valor": 0.5129
+        },
+        {
+          "year": 2022,
+          "month": 5,
+          "valor": 0.2162
+        },
+        {
+          "year": 2022,
+          "month": 6,
+          "valor": 0.7075
+        },
+        {
+          "year": 2022,
+          "month": 7,
+          "valor": 0.5831
+        },
+        {
+          "year": 2022,
+          "month": 8,
+          "valor": 0.4335
+        },
+        {
+          "year": 2022,
+          "month": 9,
+          "valor": 0.9459
+        },
+        {
+          "year": 2022,
+          "month": 10,
+          "valor": 0.6622
+        },
+        {
+          "year": 2022,
+          "month": 11,
+          "valor": 0.277
+        },
+        {
+          "year": 2022,
+          "month": 12,
+          "valor": 0.7108
+        },
+        {
+          "year": 2023,
+          "month": 1,
+          "valor": 0.1105
+        },
+        {
+          "year": 2023,
+          "month": 2,
+          "valor": 0.4882
+        },
+        {
+          "year": 2023,
+          "month": 3,
+          "valor": 0.3391
+        },
+        {
+          "year": 2023,
+          "month": 4,
+          "valor": 0.3461
+        },
+        {
+          "year": 2023,
+          "month": 5,
+          "valor": 0.3526
+        },
+        {
+          "year": 2023,
+          "month": 6,
+          "valor": 0.2431
+        },
+        {
+          "year": 2023,
+          "month": 7,
+          "valor": 0.9372
+        },
+        {
+          "year": 2023,
+          "month": 8,
+          "valor": 0.2638
+        },
+        {
+          "year": 2023,
+          "month": 9,
+          "valor": 0.5039
+        },
+        {
+          "year": 2023,
+          "month": 10,
+          "valor": 0.2059
+        },
+        {
+          "year": 2023,
+          "month": 11,
+          "valor": 0.2629
+        },
+        {
+          "year": 2023,
+          "month": 12,
+          "valor": 0.2185
+        },
+        {
+          "year": 2024,
+          "month": 1,
+          "valor": 0.3117
+        },
+        {
+          "year": 2024,
+          "month": 2,
+          "valor": 0.3915
+        },
+        {
+          "year": 2024,
+          "month": 3,
+          "valor": 0.1306
+        },
+        {
+          "year": 2024,
+          "month": 4,
+          "valor": 0.5205
+        },
+        {
+          "year": 2024,
+          "month": 5,
+          "valor": 0.3379
+        },
+        {
+          "year": 2024,
+          "month": 6,
+          "valor": 0.4064
+        },
+        {
+          "year": 2024,
+          "month": 7,
+          "valor": 0.3762
+        },
+        {
+          "year": 2024,
+          "month": 8,
+          "valor": 0.6343
+        },
+        {
+          "year": 2024,
+          "month": 9,
+          "valor": 0.3548
+        },
+        {
+          "year": 2024,
+          "month": 10,
+          "valor": 0.3122
+        },
+        {
+          "year": 2024,
+          "month": 11,
+          "valor": 0.5824
+        },
+        {
+          "year": 2024,
+          "month": 12,
+          "valor": 0.7606
+        },
+        {
+          "year": 2025,
+          "month": 1,
+          "valor": 0.2783
+        },
+        {
+          "year": 2025,
+          "month": 2,
+          "valor": 0.3498
+        },
+        {
+          "year": 2025,
+          "month": 3,
+          "valor": 0.2196
+        },
+        {
+          "year": 2025,
+          "month": 4,
+          "valor": 0.3155
+        },
+        {
+          "year": 2025,
+          "month": 5,
+          "valor": 0.1846
+        },
+        {
+          "year": 2025,
+          "month": 6,
+          "valor": 0.3017
+        },
+        {
+          "year": 2025,
+          "month": 7,
+          "valor": 0.4123
+        },
+        {
+          "year": 2025,
+          "month": 8,
+          "valor": 0.4203
+        },
+        {
+          "year": 2025,
+          "month": 9,
+          "valor": 0.2359
+        },
+        {
+          "year": 2025,
+          "month": 10,
+          "valor": 0.184
+        },
+        {
+          "year": 2025,
+          "month": 11,
+          "valor": 0.119
+        },
+        {
+          "year": 2025,
+          "month": 12,
+          "valor": 0.4808
+        }
+      ]
+    },
+    {
+      "indicador_key": "rotacion_inventarios",
+      "unidad": "x",
+      "modulo": "actividad",
+      "data": [
+        {
+          "year": 2021,
+          "month": 12,
+          "valor": 0.0
+        },
+        {
+          "year": 2022,
+          "month": 1,
+          "valor": 0.0
+        },
+        {
+          "year": 2022,
+          "month": 2,
+          "valor": 0.0
+        },
+        {
+          "year": 2022,
+          "month": 3,
+          "valor": 0.0
+        },
+        {
+          "year": 2022,
+          "month": 4,
+          "valor": 0.0
+        },
+        {
+          "year": 2022,
+          "month": 5,
+          "valor": 0.0
+        },
+        {
+          "year": 2022,
+          "month": 6,
+          "valor": 0.0
+        },
+        {
+          "year": 2022,
+          "month": 7,
+          "valor": 0.0
+        },
+        {
+          "year": 2022,
+          "month": 8,
+          "valor": 0.0
+        },
+        {
+          "year": 2022,
+          "month": 9,
+          "valor": 0.0
+        },
+        {
+          "year": 2022,
+          "month": 10,
+          "valor": 0.0
+        },
+        {
+          "year": 2022,
+          "month": 11,
+          "valor": 0.0
+        },
+        {
+          "year": 2022,
+          "month": 12,
+          "valor": 0.0
+        },
+        {
+          "year": 2023,
+          "month": 1,
+          "valor": 0.0
+        },
+        {
+          "year": 2023,
+          "month": 2,
+          "valor": 0.0
+        },
+        {
+          "year": 2023,
+          "month": 3,
+          "valor": 0.0
+        },
+        {
+          "year": 2023,
+          "month": 4,
+          "valor": 0.0
+        },
+        {
+          "year": 2023,
+          "month": 5,
+          "valor": 0.0
+        },
+        {
+          "year": 2023,
+          "month": 6,
+          "valor": 0.0
+        },
+        {
+          "year": 2023,
+          "month": 7,
+          "valor": 0.0
+        },
+        {
+          "year": 2023,
+          "month": 8,
+          "valor": 0.0
+        },
+        {
+          "year": 2023,
+          "month": 9,
+          "valor": 0.0
+        },
+        {
+          "year": 2023,
+          "month": 10,
+          "valor": 0.0
+        },
+        {
+          "year": 2023,
+          "month": 11,
+          "valor": 0.0
+        },
+        {
+          "year": 2023,
+          "month": 12,
+          "valor": 0.0
+        },
+        {
+          "year": 2024,
+          "month": 1,
+          "valor": 0.0
+        },
+        {
+          "year": 2024,
+          "month": 2,
+          "valor": 0.0
+        },
+        {
+          "year": 2024,
+          "month": 3,
+          "valor": 0.0
+        },
+        {
+          "year": 2024,
+          "month": 4,
+          "valor": 0.0
+        },
+        {
+          "year": 2024,
+          "month": 5,
+          "valor": 0.0
+        },
+        {
+          "year": 2024,
+          "month": 6,
+          "valor": 0.0
+        },
+        {
+          "year": 2024,
+          "month": 7,
+          "valor": 0.0
+        },
+        {
+          "year": 2024,
+          "month": 8,
+          "valor": 0.0
+        },
+        {
+          "year": 2024,
+          "month": 9,
+          "valor": 0.0
+        },
+        {
+          "year": 2024,
+          "month": 10,
+          "valor": 0.0
+        },
+        {
+          "year": 2024,
+          "month": 11,
+          "valor": 0.0
+        },
+        {
+          "year": 2024,
+          "month": 12,
+          "valor": 0.0
+        },
+        {
+          "year": 2025,
+          "month": 1,
+          "valor": 0.0
+        },
+        {
+          "year": 2025,
+          "month": 2,
+          "valor": 0.0
+        },
+        {
+          "year": 2025,
+          "month": 3,
+          "valor": 0.0
+        },
+        {
+          "year": 2025,
+          "month": 4,
+          "valor": 0.0
+        },
+        {
+          "year": 2025,
+          "month": 5,
+          "valor": 0.0
+        },
+        {
+          "year": 2025,
+          "month": 6,
+          "valor": 0.0
+        },
+        {
+          "year": 2025,
+          "month": 7,
+          "valor": 0.0
+        },
+        {
+          "year": 2025,
+          "month": 8,
+          "valor": 0.0
+        },
+        {
+          "year": 2025,
+          "month": 9,
+          "valor": 0.0
+        },
+        {
+          "year": 2025,
+          "month": 10,
+          "valor": 0.0
+        },
+        {
+          "year": 2025,
+          "month": 11,
+          "valor": 0.0
+        },
+        {
+          "year": 2025,
+          "month": 12,
+          "valor": 0.0
+        }
+      ]
+    },
+    {
+      "indicador_key": "rotacion_proveedores",
+      "unidad": "x",
+      "modulo": "actividad",
+      "data": [
+        {
+          "year": 2021,
+          "month": 12,
+          "valor": 0.0
+        },
+        {
+          "year": 2022,
+          "month": 1,
+          "valor": 2.9243
+        },
+        {
+          "year": 2022,
+          "month": 2,
+          "valor": 1.728
+        },
+        {
+          "year": 2022,
+          "month": 3,
+          "valor": 0.8237
+        },
+        {
+          "year": 2022,
+          "month": 4,
+          "valor": 0.8985
+        },
+        {
+          "year": 2022,
+          "month": 5,
+          "valor": 1.7684
+        },
+        {
+          "year": 2022,
+          "month": 6,
+          "valor": 3.6626
+        },
+        {
+          "year": 2022,
+          "month": 7,
+          "valor": 3.5402
+        },
+        {
+          "year": 2022,
+          "month": 8,
+          "valor": 7.2354
+        },
+        {
+          "year": 2022,
+          "month": 9,
+          "valor": 6.4734
+        },
+        {
+          "year": 2022,
+          "month": 10,
+          "valor": 7.6395
+        },
+        {
+          "year": 2022,
+          "month": 11,
+          "valor": 12.702
+        },
+        {
+          "year": 2022,
+          "month": 12,
+          "valor": 5.9034
+        },
+        {
+          "year": 2023,
+          "month": 1,
+          "valor": 1.4051
+        },
+        {
+          "year": 2023,
+          "month": 2,
+          "valor": 0.9292
+        },
+        {
+          "year": 2023,
+          "month": 3,
+          "valor": 1.3879
+        },
+        {
+          "year": 2023,
+          "month": 4,
+          "valor": 2.4112
+        },
+        {
+          "year": 2023,
+          "month": 5,
+          "valor": 1.2048
+        },
+        {
+          "year": 2023,
+          "month": 6,
+          "valor": 1.1003
+        },
+        {
+          "year": 2023,
+          "month": 7,
+          "valor": 2.2422
+        },
+        {
+          "year": 2023,
+          "month": 8,
+          "valor": 1.1365
+        },
+        {
+          "year": 2023,
+          "month": 9,
+          "valor": 7.549
+        },
+        {
+          "year": 2023,
+          "month": 10,
+          "valor": 2.0728
+        },
+        {
+          "year": 2023,
+          "month": 11,
+          "valor": 0.5407
+        },
+        {
+          "year": 2023,
+          "month": 12,
+          "valor": 4.6547
+        },
+        {
+          "year": 2024,
+          "month": 1,
+          "valor": 0.3534
+        },
+        {
+          "year": 2024,
+          "month": 2,
+          "valor": 0.9498
+        },
+        {
+          "year": 2024,
+          "month": 3,
+          "valor": 0.5196
+        },
+        {
+          "year": 2024,
+          "month": 4,
+          "valor": 3.0261
+        },
+        {
+          "year": 2024,
+          "month": 5,
+          "valor": 3.0993
+        },
+        {
+          "year": 2024,
+          "month": 6,
+          "valor": 1.608
+        },
+        {
+          "year": 2024,
+          "month": 7,
+          "valor": 0.5139
+        },
+        {
+          "year": 2024,
+          "month": 8,
+          "valor": 0.6451
+        },
+        {
+          "year": 2024,
+          "month": 9,
+          "valor": 0.2414
+        },
+        {
+          "year": 2024,
+          "month": 10,
+          "valor": 0.1906
+        },
+        {
+          "year": 2024,
+          "month": 11,
+          "valor": 0.1384
+        },
+        {
+          "year": 2024,
+          "month": 12,
+          "valor": 0.2201
+        },
+        {
+          "year": 2025,
+          "month": 1,
+          "valor": 0.6491
+        },
+        {
+          "year": 2025,
+          "month": 2,
+          "valor": 0.1564
+        },
+        {
+          "year": 2025,
+          "month": 3,
+          "valor": 0.3078
+        },
+        {
+          "year": 2025,
+          "month": 4,
+          "valor": 0.4114
+        },
+        {
+          "year": 2025,
+          "month": 5,
+          "valor": 0.598
+        },
+        {
+          "year": 2025,
+          "month": 6,
+          "valor": 0.6545
+        },
+        {
+          "year": 2025,
+          "month": 7,
+          "valor": 0.4204
+        },
+        {
+          "year": 2025,
+          "month": 8,
+          "valor": 0.5513
+        },
+        {
+          "year": 2025,
+          "month": 9,
+          "valor": -0.0471
+        },
+        {
+          "year": 2025,
+          "month": 10,
+          "valor": 0.8061
+        },
+        {
+          "year": 2025,
+          "month": 11,
+          "valor": 0.2997
+        },
+        {
+          "year": 2025,
+          "month": 12,
+          "valor": 0.0
+        }
+      ]
+    }
+  ]
+}

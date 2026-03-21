@@ -1,6 +1,6 @@
 """
 Prueba Ácida: Cálculo de 33 Indicadores Financieros desde datos crudos
-MAS CONSULTA SAS - NIT 901271750
+DATIA INTERNAL PROCESSOR - NIT 901271750
 
 Pipeline: Mov 20XX.csv + Master Account.xlsx → 33 CSVs organizados por módulo
 
@@ -88,7 +88,7 @@ CLASE_TO_TIPO = {
 }
 
 # Grupo PUC → Termino (Corto/Largo Plazo)
-# Calibrado contra la hoja List del Master Account.xlsx de MAS CONSULTA SAS
+# Calibrado contra el Master Account.xlsx de DATIA
 # Grupos 25 (obligaciones laborales), 27, 28 = Corto Termino (exigibles en <1 año)
 # Grupos 31-38 (Patrimonio) = sin termino (no son pasivos)
 GROUP_TERMINO_DEFAULT = {

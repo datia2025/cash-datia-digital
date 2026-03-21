@@ -1,0 +1,119 @@
+{
+    "name": "Financial Dashboard - MCP Server Orchestration",
+    "nodes": [
+        {
+            "parameters": {
+                "name": "cargar_balance_financiero",
+                "description": "Herramienta ETL para ingerir archivos Excel o CSV con balances contables, procesar 33 indicadores financieros e inyectarlos en la PostgreSQL del Dashboard.",
+                "requireConfirmation": false,
+                "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"record_id\": {\n      \"type\": \"string\",\n      \"description\": \"ID del registro de carga en NocoDB\"\n    },\n    \"empresa_id\": {\n      \"type\": \"number\",\n      \"description\": \"ID numérico de la empresa (Ej. 1 para MAS CONSULTA)\"\n    }\n  },\n  \"required\": [\"record_id\", \"empresa_id\"]\n}"
+            },
+            "type": "@n8n/n8n-nodes-langchain.mcpTrigger",
+            "typeVersion": 1,
+            "position": [
+                0,
+                -300
+            ],
+            "id": "mcp-trigger-1",
+            "name": "MCP Server Trigger1"
+        },
+        {
+            "parameters": {
+                "httpMethod": "POST",
+                "path": "liquidity/ingesta",
+                "options": {}
+            },
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 2,
+            "position": [
+                0,
+                0
+            ],
+            "id": "webhook-ingesta",
+            "name": "Webhook NocoDB Ingesta",
+            "webhookId": "liquidity-ingesta-webhook"
+        },
+        {
+            "parameters": {
+                "method": "GET",
+                "url": "=https://datia-nocodb.coaba7.easypanel.host/api/v2/tables/mg8vfmh9r56i7wm/records?limit=1&sort=-CreatedAt&where=(estado,eq,null)~or(estado,eq,pending)",
+                "sendHeaders": true,
+                "headerParameters": {
+                    "parameters": [
+                        {
+                            "name": "xc-token",
+                            "value": "naUy0VHFTbpBv1FXGt6WvcbLnrV5XeKFAJ7sINai"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.2,
+            "position": [
+                300,
+                0
+            ],
+            "id": "get-last-record",
+            "name": "Obtener Ultimo Registro NocoDB"
+        },
+        {
+            "parameters": {
+                "method": "POST",
+                "url": "https://datia-liquidity-worker.coaba7.easypanel.host/api/procesar/calc",
+                "sendBody": true,
+                "specifyBody": "json",
+                "jsonBody": "={{ JSON.stringify({ type: 'records.after.insert', id: String($('Obtener Ultimo Registro NocoDB').item.json.list[0].Id || $('MCP Server Trigger1').item.json.record_id || 1), data: { empresa_id: $('Obtener Ultimo Registro NocoDB').item.json.list[0].empresa_id || $('MCP Server Trigger1').item.json.empresa_id || 1 } }) }}",
+                "options": {
+                    "timeout": 300000
+                }
+            },
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.2,
+            "position": [
+                600,
+                0
+            ],
+            "id": "http-worker",
+            "name": "Enviar a Worker API"
+        }
+    ],
+    "connections": {
+        "MCP Server Trigger1": {
+            "main": [
+                [
+                    {
+                        "node": "Enviar a Worker API",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Webhook NocoDB Ingesta": {
+            "main": [
+                [
+                    {
+                        "node": "Obtener Ultimo Registro NocoDB",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Obtener Ultimo Registro NocoDB": {
+            "main": [
+                [
+                    {
+                        "node": "Enviar a Worker API",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "settings": {
+        "executionOrder": "v1"
+    }
+}

@@ -1,265 +1,432 @@
 <!DOCTYPE html>
 <html lang="es">
 
-<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Liquidez | Signum Financial</title>
     <!-- Anti-flash: oculta header/nav ANTES del primer render si está en iframe -->
     <script>if (window.self !== window.top) { document.documentElement.classList.add('in-iframe'); }</script>
+    
+    <!-- Librerías Críticas -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --bg-blur: rgba(255, 255, 255, 0.8);
+            --accent-blue: #0A1F44;
+            --accent-vibrant: #1E4E79;
+            --text-primary: #000000;
+            --text-secondary: #7A7A7A;
+            --border-soft: rgba(0, 0, 0, 0.06);
+            --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: #F5F5F5;
+            color: var(--text-primary);
+        }
+
+        /* Ocultar elementos heredados si estamos en Iframe (start.html) */
         .in-iframe #main-header,
         .in-iframe #main-nav {
             display: none !important;
         }
-    </style>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Financiero - Indicadores</title>
-    <!-- Tailwind CSS CDN para el estilizado -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <script
-        src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
-    <!-- Marked library for Markdown parsing -->
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <!-- Lucide Icons para la sección de análisis -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <style>
-        /* Normalización global para consistencia entre pestañas */
-        html {
-            scrollbar-gutter: stable;
-            overflow-y: scroll;
+
+        /* ── FILTROS PREMIUM (SIGNUM STYLE) ── */
+        .premium-filter-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            padding: 24px 32px;
+            background: white;
+            border-bottom: 1px solid var(--border-soft);
+            align-items: center;
         }
 
-        body {
-            font-family: 'Segoe UI', system-ui, sans-serif;
-            overflow-x: hidden;
-        }
-
-        #main-header {
-            min-height: 120px;
+        .filter-group {
+            position: relative;
             display: flex;
             flex-direction: column;
-            justify-content: center;
+            gap: 6px;
         }
 
-        /* ── Filtros compactos ── */
-        .filter-bar label {
-            font-family: 'Segoe UI', system-ui, sans-serif;
-            font-size: 0.75rem;
+        .filter-group label {
+            font-size: 0.65rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-secondary);
+            padding-left: 4px;
+        }
+
+        .filter-group select {
+            appearance: none;
+            background: #F8F9FA;
+            border: 1px solid var(--border-soft);
+            padding: 10px 36px 10px 16px;
+            border-radius: 12px;
+            font-size: 0.85rem;
             font-weight: 600;
-            color: #374151;
-            letter-spacing: 0.02em;
-        }
-
-        .filter-bar select {
-            font-family: 'Segoe UI', system-ui, sans-serif;
-            font-size: 0.75rem;
-            padding: 3px 8px 3px 6px;
-            border-radius: 5px;
-            border: 1px solid #d1d5db;
-            color: #111827;
-            background: #fff;
+            color: var(--text-primary);
             cursor: pointer;
+            transition: all 0.2s ease;
+            min-width: 140px;
         }
 
-        .filter-bar select:focus {
+        .filter-group::after {
+            content: '↓';
+            position: absolute;
+            right: 14px;
+            bottom: 12px;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            pointer-events: none;
+            opacity: 0.5;
+        }
+
+        .filter-group select:hover {
+            background: #FFF;
+            border-color: var(--accent-vibrant);
+        }
+
+        .filter-group select:focus {
             outline: none;
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 3px rgba(30, 78, 121, 0.1);
+        }
+
+        /* ── TARJETAS SIGNUM ── */
+        .signum-card {
+            background: white;
+            border-radius: 20px;
+            padding: 28px;
+            border: 1px solid var(--border-soft);
+            box-shadow: var(--card-shadow);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .signum-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 20px;
+        }
+
+        .card-badge {
+            font-size: 0.65rem;
+            font-weight: 800;
+            padding: 4px 10px;
+            border-radius: 8px;
+            text-transform: uppercase;
+        }
+
+        .card-title {
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: var(--accent-blue);
+            margin-bottom: 4px;
+        }
+
+        .card-subtitle {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+            line-height: 1.4;
+        }
+
+        .chart-container-inner {
+            height: 280px;
+            width: 100%;
+            margin: 16px 0;
+            position: relative;
+        }
+
+        .analysis-block {
+            margin-top: auto;
+            border-top: 1px solid var(--border-soft);
+            padding-top: 20px;
+        }
+
+        /* ── TV-STYLE OVERLAY & TABS (SIGNUM PREMIUM) ── */
+        .insight-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 4px;
+        }
+
+        .insight-tab-btn {
+            border: 1px solid var(--border-soft);
+            background: white;
+            padding: 6px 12px;
+            border-radius: 10px;
+            font-size: 0.65rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .insight-tab-btn i {
+            width: 12px;
+            height: 12px;
+        }
+
+        .insight-tab-btn:hover {
+            background: #F8F9FA;
+            border-color: var(--accent-vibrant);
+            color: var(--text-primary);
+        }
+
+        .insight-tab-btn.active {
+            background: var(--accent-blue);
+            color: white;
+            border-color: var(--accent-blue);
+            box-shadow: 0 4px 12px rgba(10, 31, 68, 0.2);
+        }
+
+        .insight-overlay {
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 100%;
+            max-height: 85%;
+            background: rgba(248, 250, 252, 0.98); /* Light Glacier - Executive Style */
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            color: #1e293b;
+            border-top: 1px solid #e2e8f0;
+            padding: 28px 24px 24px 24px;
+            transform: translateY(105%);
+            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 20;
+            overflow-y: auto;
+            box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.05);
+        }
+
+        .insight-overlay.active {
+            transform: translateY(0);
+        }
+
+        .glow-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+        }
+
+        .close-overlay {
+            position: absolute;
+            top: 14px;
+            right: 14px;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.03);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .close-overlay:hover {
+            background: rgba(0, 0, 0, 0.08);
+            transform: rotate(90deg);
         }
     </style>
 </head>
 
 <body class="bg-gray-50">
     <div id="dashboard-container">
-        <!-- Encabezado Principal -->
-        <div id="main-header" class="bg-gradient-to-r from-blue-700 to-blue-900 text-white p-8 shadow-lg">
-            <h1 class="text-4xl font-bold mb-2">Dashboard Financiero</h1>
-            <p class="text-blue-200">Análisis Integral de Indicadores Financieros</p>
-            <p class="text-sm text-blue-300 mt-2">Monitoreo y Auditoría Financiera</p>
-        </div>
-
-        <!-- Navegación de Pestañas -->
-        <div id="main-nav" class="bg-white shadow-md flex overflow-x-auto">
-            <button data-tab-id="liquidez"
-                class="tab-button px-6 py-3 font-semibold transition-all bg-blue-600 text-white border-b-4 border-orange-500">
-                <i data-lucide="droplets" class="w-4 h-4 inline-block mr-1"></i>
-                Liquidez
-            </button>
-            <a href="rentabilidad.html"
-                class="px-6 py-3 font-semibold transition-all bg-white text-blue-600 hover:bg-blue-50">
-                <i data-lucide="trending-up" class="w-4 h-4 inline-block mr-1"></i>
-                Rentabilidad
-            </a>
-            <a href="solvencia.html"
-                class="px-6 py-3 font-semibold transition-all bg-white text-blue-600 hover:bg-blue-50">
-                <i data-lucide="landmark" class="w-4 h-4 inline-block mr-1"></i>
-                Solvencia
-            </a>
-            <a href="estructura.html"
-                class="px-6 py-3 font-semibold transition-all bg-white text-blue-600 hover:bg-blue-50">
-                <i data-lucide="layers" class="w-4 h-4 inline-block mr-1"></i>
-                Estructura
-            </a>
-            <a href="actividad.html"
-                class="px-6 py-3 font-semibold transition-all bg-white text-blue-600 hover:bg-blue-50">
-                <i data-lucide="activity" class="w-4 h-4 inline-block mr-1"></i>
-                Actividad
-            </a>
-        </div>
 
         <!-- ==================== PESTAÑA: LIQUIDEZ ==================== -->
         <div id="liquidez" class="tab-content">
-            <!-- Controles de filtro -->
-            <div class="bg-white shadow-md p-4">
-                <div class="flex flex-wrap gap-4 items-center filter-bar">
-                    <div class="flex items-center gap-2">
-                        <label class="font-semibold text-gray-700">Año:</label>
-                        <select id="yearFilter"
-                            class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600">
-                            <option value="all">Todos</option>
-                            <option value="2025" selected>2025</option>
-                            <option value="2024">2024</option>
-                            <option value="2023">2023</option>
-                        </select>
-                    </div>
+            <!-- Controles de filtro PREMIUM -->
+            <div class="premium-filter-container">
+                <div class="filter-group">
+                    <label>Año de análisis</label>
+                    <select id="yearFilter">
+                        <option value="all">Todos los años</option>
+                        <option value="2025" selected>2025</option>
+                        <option value="2024">2024</option>
+                        <option value="2023">2023</option>
+                    </select>
+                </div>
 
-                    <div class="flex items-center gap-2">
-                        <label class="font-semibold text-gray-700">Trimestre:</label>
-                        <select id="quarterFilter"
-                            class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600">
-                            <option value="all" selected>Todos</option>
-                            <option value="1Q">1Q</option>
-                            <option value="2Q">2Q</option>
-                            <option value="3Q">3Q</option>
-                            <option value="4Q">4Q</option>
-                        </select>
-                    </div>
+                <div class="filter-group">
+                    <label>Trimestre</label>
+                    <select id="quarterFilter">
+                        <option value="all" selected>Año completo</option>
+                        <option value="1Q">Primer Trimestre (1Q)</option>
+                        <option value="2Q">Segundo Trimestre (2Q)</option>
+                        <option value="3Q">Tercer Trimestre (3Q)</option>
+                        <option value="4Q">Cuarto Trimestre (4Q)</option>
+                    </select>
+                </div>
 
-                    <div class="flex items-center gap-2">
-                        <label class="font-semibold text-gray-700">Mes:</label>
-                        <select id="monthFilter"
-                            class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600">
-                            <option value="all" selected>Todos</option>
-                            <option value="1">Enero</option>
-                            <option value="2">Febrero</option>
-                            <option value="3">Marzo</option>
-                            <option value="4">Abril</option>
-                            <option value="5">Mayo</option>
-                            <option value="6">Junio</option>
-                            <option value="7">Julio</option>
-                            <option value="8">Agosto</option>
-                            <option value="9">Septiembre</option>
-                            <option value="10">Octubre</option>
-                            <option value="11">Noviembre</option>
-                            <option value="12">Diciembre</option>
-                        </select>
-                    </div>
+                <div class="filter-group">
+                    <label>Mes específico</label>
+                    <select id="monthFilter">
+                        <option value="all" selected>Todos los meses</option>
+                        <option value="1">Enero</option>
+                        <option value="2">Febrero</option>
+                        <option value="3">Marzo</option>
+                        <option value="4">Abril</option>
+                        <option value="5">Mayo</option>
+                        <option value="6">Junio</option>
+                        <option value="7">Julio</option>
+                        <option value="8">Agosto</option>
+                        <option value="9">Septiembre</option>
+                        <option value="10">Octubre</option>
+                        <option value="11">Noviembre</option>
+                        <option value="12">Diciembre</option>
+                    </select>
+                </div>
 
-                    <div class="flex items-center gap-2">
-                        <label class="font-semibold text-gray-700">Lenguaje:</label>
-                        <select id="languageFilter"
-                            class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600">
-                            <option value="es" selected>Español</option>
-                            <option value="en">English</option>
-                        </select>
-                    </div>
+                <div class="filter-group">
+                    <label>Idioma Visual</label>
+                    <select id="languageFilter">
+                        <option value="es" selected>Español</option>
+                        <option value="en">English</option>
+                    </select>
+                </div>
+
+                <div class="ml-auto opacity-40 text-[10px] font-bold uppercase tracking-widest hidden md:block">
+                    Liquidity Dashboard | v2.0
                 </div>
             </div>
 
+            <!-- Sección de Realidad Financiera Anual (Cross-Indicator) - ARRIBA -->
+            <section id="annual-reality-container" class="px-8 pt-6">
+                <!-- Pestaña dinámica generada por app.js -->
+            </section>
+
             <!-- Grid de 4 Gráficos -->
             <div class="p-8">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <!-- 1. Razón Corriente -->
-                    <div class="bg-white rounded-lg shadow-md p-6 border-t-4 border-blue-800">
-                        <h3 id="chart-title-razon" class="text-xl font-semibold text-blue-900 mb-1">Razón Corriente</h3>
-                        <div class="text-sm text-gray-500 mb-4">
-                            <span>Activo Corriente / Pasivo Corriente</span>
-                            <span class="ml-3">Target: 1.50 - 2.00 x</span>
-                        </div>
-                        <div>
-                            <div id="no-data-razon" class="text-center py-8 hidden">
-                                <i data-lucide="alert-circle" class="w-12 h-12 mx-auto text-gray-400 mb-2"></i>
-                                <p class="text-gray-500">No hay datos disponibles</p>
+                    <div class="signum-card">
+                        <div class="card-header border-b border-gray-50 pb-4 mb-2">
+                            <div>
+                                <h3 id="chart-title-razon" class="card-title">Razón Corriente</h3>
+                                <p class="card-subtitle">Capacidad para cubrir deudas de corto plazo utilizando activos líquidos.</p>
                             </div>
-                            <div class="h-[300px] w-full">
-                                <canvas id="chartRazon"></canvas>
-                            </div>
+                            <span class="card-badge bg-blue-100 text-blue-800">Target: 1.5 - 2.0x</span>
                         </div>
-                        <div id="analysis-razon" class="mt-4">
-                            <!-- Se poblará dinámicamente -->
+
+                        <!-- Tabs Switcher -->
+                        <div class="insight-tabs" id="tabs-razon"></div>
+                        
+                        <div class="chart-container-inner relative overflow-hidden">
+                            <div id="no-data-razon" class="absolute inset-0 flex flex-col items-center justify-center bg-gray-50 bg-opacity-80 z-10 hidden">
+                                <i data-lucide="alert-circle" class="w-8 h-8 text-gray-400 mb-2"></i>
+                                <p class="text-xs font-bold text-gray-500">DISTRIBUCIÓN NO DISPONIBLE</p>
+                            </div>
+                            <canvas id="chartRazon"></canvas>
+                            
+                            <!-- Analysis Overlay -->
+                            <div id="analysis-razon" class="insight-overlay"></div>
                         </div>
                     </div>
 
                     <!-- 2. Capital de Trabajo -->
-                    <div class="bg-white rounded-lg shadow-md p-6 border-t-4 border-green-600">
-                        <h3 id="chart-title-capital" class="text-xl font-semibold text-blue-900 mb-1">Capital de Trabajo
-                        </h3>
-                        <div class="text-sm text-gray-500 mb-4">
-                            <span>Activo Corriente - Pasivo Corriente</span>
-                            <span class="ml-3">Target: > 0 MM COP</span>
-                        </div>
-                        <div>
-                            <div id="no-data-capital" class="text-center py-8 hidden">
-                                <i data-lucide="alert-circle" class="w-12 h-12 mx-auto text-gray-400 mb-2"></i>
-                                <p class="text-gray-500">No hay datos disponibles</p>
+                    <div class="signum-card">
+                        <div class="card-header border-b border-gray-50 pb-4 mb-2">
+                            <div>
+                                <h3 id="chart-title-capital" class="card-title">Capital de Trabajo</h3>
+                                <p class="card-subtitle">Excedente financiero disponible para la operación diaria tras pagar deudas.</p>
                             </div>
-                            <div class="h-[300px] w-full">
-                                <canvas id="chartCapital"></canvas>
-                            </div>
+                            <span class="card-badge bg-green-100 text-green-800">Target: > 0 MM</span>
                         </div>
-                        <div id="analysis-capital" class="mt-4">
-                            <!-- Se poblará dinámicamente -->
+
+                        <!-- Tabs Switcher -->
+                        <div class="insight-tabs" id="tabs-capital"></div>
+                        
+                        <div class="chart-container-inner relative overflow-hidden">
+                            <div id="no-data-capital" class="absolute inset-0 flex flex-col items-center justify-center bg-gray-50 bg-opacity-80 z-10 hidden">
+                                <i data-lucide="alert-circle" class="w-8 h-8 text-gray-400 mb-2"></i>
+                                <p class="text-xs font-bold text-gray-500">DISTRIBUCIÓN NO DISPONIBLE</p>
+                            </div>
+                            <canvas id="chartCapital"></canvas>
+
+                            <!-- Analysis Overlay -->
+                            <div id="analysis-capital" class="insight-overlay"></div>
                         </div>
                     </div>
 
                     <!-- 3. Prueba Ácida -->
-                    <div class="bg-white rounded-lg shadow-md p-6 border-t-4 border-orange-500">
-                        <h3 id="chart-title-prueba" class="text-xl font-semibold text-blue-900 mb-1">Prueba Ácida</h3>
-                        <div class="text-sm text-gray-500 mb-4">
-                            <span>(Activo Corriente - Inventarios) / Pasivo Corriente</span>
-                            <span class="ml-3">Target: 1.00 - 1.50 x</span>
-                        </div>
-                        <div>
-                            <div id="no-data-prueba" class="text-center py-8 hidden">
-                                <i data-lucide="alert-circle" class="w-12 h-12 mx-auto text-gray-400 mb-2"></i>
-                                <p class="text-gray-500">No hay datos disponibles</p>
+                    <div class="signum-card">
+                        <div class="card-header border-b border-gray-50 pb-4 mb-2">
+                            <div>
+                                <h3 id="chart-title-prueba" class="card-title">Prueba Ácida</h3>
+                                <p class="card-subtitle">Solvencia inmediata excluyendo inventarios (liquidación más lenta).</p>
                             </div>
-                            <div class="h-[300px] w-full">
-                                <canvas id="chartPrueba"></canvas>
-                            </div>
+                            <span class="card-badge bg-orange-100 text-orange-800">Target: 1.0 - 1.5x</span>
                         </div>
-                        <div id="analysis-prueba" class="mt-4">
-                            <!-- Se poblará dinámicamente -->
+
+                        <!-- Tabs Switcher -->
+                        <div class="insight-tabs" id="tabs-prueba"></div>
+                        
+                        <div class="chart-container-inner relative overflow-hidden">
+                            <div id="no-data-prueba" class="absolute inset-0 flex flex-col items-center justify-center bg-gray-50 bg-opacity-80 z-10 hidden">
+                                <i data-lucide="alert-circle" class="w-8 h-8 text-gray-400 mb-2"></i>
+                                <p class="text-xs font-bold text-gray-500">DISTRIBUCIÓN NO DISPONIBLE</p>
+                            </div>
+                            <canvas id="chartPrueba"></canvas>
+
+                            <!-- Analysis Overlay -->
+                            <div id="analysis-prueba" class="insight-overlay"></div>
                         </div>
                     </div>
 
                     <!-- 4. Ratio de Efectivo -->
-                    <div class="bg-white rounded-lg shadow-md p-6 border-t-4 border-yellow-500">
-                        <h3 id="chart-title-efectivo" class="text-xl font-semibold text-blue-900 mb-1">Ratio de Efectivo
-                        </h3>
-                        <div class="text-sm text-gray-500 mb-4">
-                            <span>Efectivo y Equivalentes / Pasivo Corriente</span>
-                            <span class="ml-3">Target: 0.50 - 1.00 x</span>
-                        </div>
-                        <div>
-                            <div id="no-data-efectivo" class="text-center py-8 hidden">
-                                <i data-lucide="alert-circle" class="w-12 h-12 mx-auto text-gray-400 mb-2"></i>
-                                <p class="text-gray-500">No hay datos disponibles</p>
+                    <div class="signum-card">
+                        <div class="card-header border-b border-gray-50 pb-4 mb-2">
+                            <div>
+                                <h3 id="chart-title-efectivo" class="card-title">Ratio de Efectivo</h3>
+                                <p class="card-subtitle">Disponibilidad de caja inmediata frente a obligaciones corrientes.</p>
                             </div>
-                            <div class="h-[300px] w-full">
-                                <canvas id="chartEfectivo"></canvas>
-                            </div>
+                            <span class="card-badge bg-yellow-100 text-yellow-800">Target: 0.5 - 1.0x</span>
                         </div>
-                        <div id="analysis-efectivo" class="mt-4">
-                            <!-- Se poblará dinámicamente -->
+
+                        <!-- Tabs Switcher -->
+                        <div class="insight-tabs" id="tabs-efectivo"></div>
+                        
+                        <div class="chart-container-inner relative overflow-hidden">
+                            <div id="no-data-efectivo" class="absolute inset-0 flex flex-col items-center justify-center bg-gray-50 bg-opacity-80 z-10 hidden">
+                                <i data-lucide="alert-circle" class="w-8 h-8 text-gray-400 mb-2"></i>
+                                <p class="text-xs font-bold text-gray-500">DISTRIBUCIÓN NO DISPONIBLE</p>
+                            </div>
+                            <canvas id="chartEfectivo"></canvas>
+
+                            <!-- Analysis Overlay -->
+                            <div id="analysis-efectivo" class="insight-overlay"></div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Sección de Realidad Financiera Anual (Cross-Indicator) -->
-                <section id="annual-reality-container" class="mt-6 hidden">
-                    <!-- Pestaña dinámica generada por app.js -->
-                </section>
             </div>
         </div>
 

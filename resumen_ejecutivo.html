@@ -2,1241 +2,917 @@
 <html lang="es">
 
 <head>
-    <!-- Anti-flash: oculta header/nav ANTES del primer render si está en iframe -->
     <script>if (window.self !== window.top) { document.documentElement.classList.add('in-iframe'); }</script>
-    <style>
-        .in-iframe #main-header,
-        .in-iframe #main-nav {
-            display: none !important;
-        }
-    </style>
+    <style>.in-iframe #re-sidebar { display: none !important; } .in-iframe .main-content { margin-left: 0 !important; }</style>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Financiero - Resumen Ejecutivo</title>
-    <!-- Google Fonts: Inter -->
+    <title>Dictamen de Gerencia | Datia</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <!-- Swiper.js CDN -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
-    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Lucide Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        /* ── Normalización global (identica a solvencia.html) ── */
-        html {
-            scrollbar-gutter: stable;
-            overflow-y: scroll;
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; overflow-y: scroll; scrollbar-gutter: stable; }
+
+        :root {
+            --bg: #F5F5F5;
+            --sidebar-bg: #FFFFFF;
+            --card-bg: #FFFFFF;
+            --text-primary: #000000;
+            --text-secondary: #7A7A7A;
+            --text-muted: #b0b5c3;
+            --accent-blue: #0A1F44;
+            --accent-blue-light: #eff4ff;
+            --accent-vibrant: #1E4E79;
+            --accent-red: #d9534f;
+            --accent-red-light: #fff0f0;
+            --accent-orange: #f0ad4e;
+            --accent-orange-light: #fff5ea;
+            --accent-green: #5cb85c;
+            --accent-green-light: #eafff3;
+            --accent-purple: #5d5bd4;
+            --accent-purple-light: #f3f1ff;
+            --border: #e0e0e0;
+            --sidebar-width: 220px;
         }
 
         body {
-            font-family: 'Inter', system-ui, sans-serif;
-            background-color: #F8FAFC;
-            overflow-x: hidden;
-        }
-
-        #main-header {
-            min-height: 120px;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text-primary);
             display: flex;
-            flex-direction: column;
-            justify-content: center;
-        }
-
-        /* ── Design Tokens (Datia) ── */
-        :root {
-            --datia-navy: #1E2A5E;
-            --datia-navy-light: #2B3F8E;
-            --datia-orange: #FF6B2B;
-            --datia-orange-hover: #E55A1F;
-            --datia-text: #1E293B;
-            --datia-text-secondary: #64748B;
-            --datia-bg: #F8FAFC;
-            --datia-card-border: #E2E8F0;
-            --color-liquidez: #3b82f6;
-            --color-rentab: #10b981;
-            --color-solvencia: #8b5cf6;
-            --color-estructura: #f59e0b;
-            --color-actividad: #ef4444;
-            --color-resumen: #FF6B2B;
-            --color-success-bg: #f0fdf4;
-            --color-success-bd: #bbf7d0;
-            --color-warning-bg: #fffbeb;
-            --color-warning-bd: #fde68a;
-            --color-danger-bg: #fff5f5;
-            --color-danger-bd: #fca5a5;
-        }
-
-        /* ── Badges & chips de score ── */
-        .score-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 6px 16px;
-            border-radius: 999px;
-            font-size: 0.8rem;
-            font-weight: 700;
-            background: var(--datia-orange);
-            color: #ffffff;
-            border: none;
-            box-shadow: 0 2px 8px rgba(255, 107, 43, 0.3);
-        }
-
-        .score-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: #ffffff;
-            animation: pulse-dot 2s infinite;
-            flex-shrink: 0;
-        }
-
-        @keyframes pulse-dot {
-
-            0%,
-            100% {
-                opacity: 1;
-                transform: scale(1);
-            }
-
-            50% {
-                opacity: 0.5;
-                transform: scale(1.4);
-            }
-        }
-
-        /* ── Card base ── */
-        .exec-card {
-            background: #ffffff;
-            border-radius: 20px;
-            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
-            border: 1px solid var(--datia-card-border);
-            padding: 22px 24px;
-        }
-
-        .exec-card-title {
-            font-size: 0.7rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.07em;
-            color: var(--datia-navy);
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            margin-bottom: 14px;
-            text-wrap: balance;
-        }
-
-        /* ── Visual Polish & Micro-interactions ── */
-        .exec-card {
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-
-        .exec-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 12px 24px -4px rgba(30, 42, 94, 0.1);
-        }
-
-        /* ── Dynamic Slider: Swiper ── */
-        .swiper {
-            width: 100%;
-            padding: 10px 0 40px 0 !important;
-        }
-
-        .swiper-slide {
-            height: auto;
-            transition: transform 0.3s ease;
-        }
-
-        .timeline-grid {
-            display: none;
-        }
-
-        /* Ocultar grid estático */
-
-        .tl-item {
-            border-radius: 16px;
-            padding: 16px;
-            border: 1.5px solid;
-        }
-
-        .tl-year {
-            font-size: 1.2rem;
-            font-weight: 800;
-            line-height: 1;
-            color: var(--datia-navy);
-            font-variant-numeric: tabular-nums;
-        }
-
-        .tl-titulo {
-            font-size: 0.83rem;
-            font-weight: 700;
-            margin: 4px 0 2px;
-        }
-
-        .tl-sub {
-            font-size: 0.7rem;
-            font-weight: 600;
-            opacity: 0.7;
-            margin-bottom: 8px;
-        }
-
-        .tl-hitos {
-            list-style: none;
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-
-        .tl-hitos li {
-            font-size: 0.72rem;
-            color: #374151;
-            display: flex;
-            align-items: flex-start;
-            gap: 5px;
-            line-height: 1.45;
-        }
-
-        .tl-hitos li::before {
-            content: '›';
-            font-weight: 700;
-            flex-shrink: 0;
-        }
-
-        .tl-conclusion {
-            margin-top: 10px;
-            font-size: 0.71rem;
-            font-style: italic;
-            color: #4b5563;
-            border-top: 1px solid #e5e7eb;
-            padding-top: 8px;
-            line-height: 1.5;
-        }
-
-        /* ── Tabs for KPIs ── */
-        .kpi-tabs-nav {
-            display: flex;
-            gap: 4px;
-            margin-bottom: 24px;
-            background: #F1F5F9;
-            padding: 5px;
-            border-radius: 16px;
-            /* Allow tooltips to show above */
-            padding-top: 10px;
-            position: relative;
-        }
-
-        .kpi-tabs-nav::-webkit-scrollbar {
-            display: none;
-        }
-
-        .kpi-tab-btn {
-            flex: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            padding: 9px 14px;
-            border-radius: 12px;
-            font-size: 0.72rem;
-            font-weight: 700;
-            color: var(--datia-text-secondary);
-            transition: all 0.2s ease;
-            white-space: nowrap;
-        }
-
-        .kpi-tab-btn:hover {
-            background: rgba(0, 0, 0, 0.05);
-            color: #374151;
-        }
-
-        .kpi-tab-btn.active {
-            background: #ffffff;
-            color: var(--datia-navy);
-            box-shadow: 0 2px 8px rgba(30, 42, 94, 0.1);
-        }
-
-        /* ── Custom Tooltip ── */
-        [data-tooltip] {
-            position: relative;
-            cursor: help;
-        }
-
-        [data-tooltip]::before {
-            content: attr(data-tooltip);
-            position: absolute;
-            bottom: 125%;
-            left: 50%;
-            transform: translateX(-50%) translateY(10px);
-            background: var(--datia-navy);
-            color: white;
-            padding: 8px 12px;
-            border-radius: 8px;
-            font-size: 10.5px;
-            font-weight: 500;
-            white-space: pre-wrap;
-            width: max-content;
-            max-width: 220px;
-            text-align: center;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
-            z-index: 1000;
-            pointer-events: none;
-            line-height: 1.4;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        [data-tooltip]::after {
-            content: '';
-            position: absolute;
-            bottom: 110%;
-            left: 50%;
-            transform: translateX(-50%) translateY(10px);
-            border: 6px solid transparent;
-            border-top-color: var(--datia-navy);
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.2s ease;
-            z-index: 100;
-            pointer-events: none;
-        }
-
-        [data-tooltip]:hover::before,
-        [data-tooltip]:hover::after {
-            opacity: 1;
-            visibility: visible;
-            transform: translateX(-50%) translateY(0);
-        }
-
-        .kpi-content-pane {
-            display: none;
-            animation: fadeIn 0.3s ease;
-        }
-
-        .kpi-content-pane.active {
-            display: block;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(4px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        /* ── Accordion ── */
-        .accordion-item {
-            border-bottom: 1px solid #f3f4f6;
-        }
-
-        .accordion-item:last-child {
-            border-bottom: none;
-        }
-
-        .accordion-header {
-            width: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 12px 0;
-            cursor: pointer;
-            transition: background 0.2s ease;
-        }
-
-        .accordion-content {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .accordion-item.active .accordion-content {
-            max-height: 1000px;
-            padding-bottom: 12px;
-        }
-
-        .accordion-chevron {
-            transition: transform 0.3s ease;
-        }
-
-        .accordion-item.active .accordion-chevron {
-            transform: rotate(180deg);
-        }
-
-        .score-chip {
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            padding: 2px 8px;
-            border-radius: 999px;
-            font-size: 0.67rem;
-            font-weight: 700;
-            margin-bottom: 8px;
-        }
-
-        /* ── Dictamen style for timeline ── */
-        .tl-item {
-            background: rgba(30, 42, 94, 0.03);
-            border-color: rgba(30, 42, 94, 0.08) !important;
-            padding: 20px;
-            transition: all 0.2s ease;
-        }
-
-        .tl-item:hover {
-            background: #ffffff;
-            box-shadow: 0 12px 24px rgba(30, 42, 94, 0.1);
-            transform: translateY(-5px);
-            border-color: var(--datia-orange) !important;
-        }
-
-        .tl-year-box {
-            background: #ffffff;
-            border-radius: 12px;
-            padding: 8px 12px;
-            box-shadow: 0 2px 8px rgba(30, 42, 94, 0.05);
-            display: inline-flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-width: 60px;
-        }
-
-        /* ── Scorecard módulos ── */
-        .module-scores-grid {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 8px;
-        }
-
-        .ms-card {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-            padding: 14px 8px;
-            border-radius: 16px;
-            border: 1.5px solid;
-        }
-
-        .ms-name {
-            font-size: 0.65rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.04em;
-            color: #6b7280;
-            margin: 6px 0 4px;
-        }
-
-        .ms-score {
-            font-size: 1.5rem;
-            font-weight: 800;
-            line-height: 1;
-            font-variant-numeric: tabular-nums;
-        }
-
-        .ms-label {
-            font-size: 0.6rem;
-            font-weight: 600;
-            opacity: 0.7;
-            margin-top: 2px;
-        }
-
-        /* ── KPI rows ── */
-        .kpi-section {
-            margin-bottom: 10px;
-        }
-
-        .kpi-mod-header {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            margin-bottom: 8px;
-        }
-
-        .kpi-mod-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            flex-shrink: 0;
-        }
-
-        .kpi-mod-name {
-            font-size: 0.75rem;
-            font-weight: 700;
-            color: #1f2937;
-        }
-
-        .kpi-list {
-            display: flex;
-            flex-direction: column;
-            gap: 7px;
-        }
-
-        .kpi-row {
-            display: grid;
-            grid-template-columns: 1fr auto auto auto;
-            align-items: center;
-            gap: 6px;
-            padding: 10px 12px;
-            border-radius: 12px;
-            background: #F8FAFC;
-            border: 1px solid var(--datia-card-border);
-            transition: background 0.15s ease;
-        }
-
-        .kpi-row:hover {
-            background: #f0f9ff;
-        }
-
-        .kpi-name {
-            font-size: 0.72rem;
-            font-weight: 600;
-            color: #374151;
-        }
-
-        .kpi-desc {
-            font-size: 0.62rem;
-            color: #9ca3af;
-            margin-top: 1px;
-        }
-
-        .kpi-val {
-            font-size: 0.85rem;
-            font-weight: 800;
-            white-space: nowrap;
-            font-variant-numeric: tabular-nums;
-        }
-
-        .kpi-status-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            flex-shrink: 0;
-        }
-
-        /* ── Alertas ── */
-        .alert-list {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .alert-item {
-            padding: 12px 14px;
-            border-radius: 14px;
-            border-left: 3px solid;
-            display: flex;
-            gap: 10px;
-            align-items: flex-start;
-            transition: transform 0.15s ease, box-shadow 0.15s ease;
-        }
-
-        .alert-item:hover {
-            transform: translateX(2px);
-        }
-
-        .alert-icon {
-            flex-shrink: 0;
-            margin-top: 1px;
-        }
-
-        .alert-title {
-            font-size: 0.73rem;
-            font-weight: 700;
-            margin-bottom: 2px;
-        }
-
-        .alert-text {
-            font-size: 0.67rem;
-            color: #4b5563;
-            line-height: 1.5;
-        }
-
-        .alert-accion {
-            font-size: 0.64rem;
-            font-weight: 600;
-            margin-top: 4px;
-            padding: 2px 6px;
-            border-radius: 4px;
-            display: inline-block;
-        }
-
-        .alert-danger {
-            background: #fff5f5;
-            border-color: #ef4444;
-        }
-
-        .alert-warning {
-            background: #fffbeb;
-            border-color: #f59e0b;
-        }
-
-        .alert-info {
-            background: #f0f9ff;
-            border-color: #0ea5e9;
-        }
-
-        .alert-danger .alert-title {
-            color: #dc2626;
-        }
-
-        .alert-warning .alert-title {
-            color: #d97706;
-        }
-
-        .alert-info .alert-title {
-            color: #0284c7;
-        }
-
-        .alert-danger .alert-accion {
-            background: #fee2e2;
-            color: #b91c1c;
-        }
-
-        .alert-warning .alert-accion {
-            background: #fef3c7;
-            color: #92400e;
-        }
-
-        .alert-info .alert-accion {
-            background: #e0f2fe;
-            color: #0369a1;
-        }
-
-        /* ── Fortalezas ── */
-        .fortalezas-list {
-            display: flex;
-            flex-direction: column;
-            gap: 7px;
-        }
-
-        .fortaleza-item {
-            display: flex;
-            gap: 10px;
-            align-items: flex-start;
-            padding: 10px 12px;
-            border-radius: 14px;
-            background: #f0fdf4;
-            border: 1px solid #bbf7d0;
-            transition: background 0.15s ease;
-        }
-
-        .fortaleza-item:hover {
-            background: #dcfce7;
-        }
-
-        .fortaleza-title {
-            font-size: 0.72rem;
-            font-weight: 700;
-            color: #15803d;
-            margin-bottom: 2px;
-        }
-
-        .fortaleza-text {
-            font-size: 0.67rem;
-            color: #374151;
-            line-height: 1.5;
-        }
-
-        /* ── Dictamen ── */
-        .dictamen-card {
-            background: linear-gradient(135deg, #F0F4FF 0%, #F8FAFC 100%);
-            border-color: var(--datia-card-border) !important;
-        }
-
-        .dictamen-body {
-            font-size: 0.73rem;
-            color: #334155;
-            line-height: 1.75;
-            white-space: pre-line;
-        }
-
-        .dictamen-recs {
-            margin-top: 12px;
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-        }
-
-        .rec-item {
-            display: flex;
-            gap: 8px;
-            align-items: flex-start;
-            font-size: 0.69rem;
-            font-weight: 600;
-            color: var(--datia-navy);
-        }
-
-        .rec-num {
-            width: 18px;
-            height: 18px;
-            border-radius: 50%;
-            background: var(--datia-navy);
-            color: white;
-            font-size: 0.6rem;
-            font-weight: 800;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-        }
-
-        /* ── Focus visible (A11y) ── */
-        :focus-visible {
-            outline: 2px solid var(--datia-orange);
-            outline-offset: 4px;
-        }
-
-        button:active,
-        .kpi-tab-btn:active {
-            transform: scale(0.98);
-        }
-
-        /* ── Sidebar Glosario ── */
-        #glossary-overlay {
-            transition: opacity 0.25s ease;
-        }
+            min-height: 100vh;
+        }
+
+        /* ════════ SIDEBAR ════════ */
+        #re-sidebar {
+            width: var(--sidebar-width); background: var(--sidebar-bg);
+            border-right: 1px solid var(--border); display: flex; flex-direction: column;
+            position: fixed; top: 0; left: 0; bottom: 0; z-index: 100;
+            padding: 28px 16px 24px; overflow-y: auto;
+        }
+        .sidebar-logo { display: flex; align-items: center; gap: 10px; margin-bottom: 36px; padding: 0 6px; }
+        .sidebar-logo-icon { width: 36px; height: 36px; border-radius: 10px; background: var(--accent-blue); display: flex; align-items: center; justify-content: center; }
+        .sidebar-logo-icon i { color: white; width: 18px; height: 18px; }
+        .sidebar-logo-text { font-size: 1.1rem; font-weight: 800; color: var(--accent-blue); }
+        .sidebar-logo-text span { color: var(--accent-vibrant); }
+        .sidebar-section-title { font-size: 0.58rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-secondary); margin: 0 6px 8px; }
+        .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 12px; cursor: pointer; transition: all 0.18s ease; margin-bottom: 2px; text-decoration: none; font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); }
+        .nav-item i { width: 16px; height: 16px; flex-shrink: 0; }
+        .nav-item.active { background: #f0f4f8; color: var(--accent-blue); }
+        .nav-group { margin-bottom: 20px; }
+        .sidebar-footer { margin-top: auto; border-radius: 16px; background: var(--accent-blue); padding: 18px 16px; color: white; text-align: center; }
+        .sidebar-footer strong { font-size: 0.85rem; display: block; margin-bottom: 6px; }
+        .sidebar-footer p { font-size: 0.72rem; line-height: 1.5; margin-bottom: 12px; opacity: 0.9; }
+        .sf-btn { display: block; background: var(--accent-vibrant); color: white; font-size: 0.7rem; font-weight: 700; padding: 8px 16px; border-radius: 20px; cursor: pointer; text-align: center; transition: opacity 0.2s; }
+
+        /* ════════ MAIN CONTENT ════════ */
+        .main-content { margin-left: var(--sidebar-width); flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
+        .topbar { display: flex; align-items: center; justify-content: space-between; padding: 24px 32px 0; }
+        .topbar-greeting h2 { font-size: 1.4rem; font-weight: 800; color: var(--accent-blue); }
+        .topbar-greeting p { font-size: 0.78rem; color: var(--text-secondary); margin-top: 2px; }
+        .icon-btn { width: 36px; height: 36px; border-radius: 10px; background: var(--card-bg); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.18s ease; color: var(--accent-blue); }
+
+        .page-grid { display: grid; grid-template-columns: 1fr 310px; gap: 20px; padding: 24px 32px 48px; }
+
+        /* ── Perfil de la Operación ── */
+        .profile-container { background: var(--card-bg); border-radius: 12px; padding: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); border: 1px solid var(--border); margin-bottom: 20px; }
+        .profile-header { display: flex; justify-content: space-between; border-bottom: 1px solid var(--border); padding-bottom: 16px; margin-bottom: 16px; }
+        .company-meta { flex: 1; }
+        .company-name { font-size: 1rem; font-weight: 800; color: var(--accent-blue); }
+        .company-sector { font-size: 0.75rem; color: var(--text-secondary); margin-top: 2px; }
+        .pc-ring { border: 2px solid var(--accent-green); border-radius: 50%; padding: 4px; display: inline-block; }
+        .profile-info-grid { display: grid; grid-template-columns: 240px 1fr; gap: 24px; }
+        .macro-box { background: #f8f9fb; border-radius: 14px; padding: 16px; }
+        .macro-box-title { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 12px; }
+        .macro-item { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+        .macro-item:last-child { margin-bottom: 0; }
+        .macro-item i { width: 14px; height: 14px; color: var(--text-secondary); }
+        .macro-item .m-label { font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); flex: 1; }
+        .macro-item .m-val { font-size: 0.85rem; font-weight: 800; color: var(--text-primary); }
+        .operation-desc { font-size: 0.82rem; color: var(--text-secondary); line-height: 1.6; }
+
+        /* ── Pillars ── */
+        .pillar { background: var(--card-bg); border-radius: 12px; padding: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); border: 1px solid var(--border); margin-bottom: 20px; }
+        .pillar-head { display: flex; align-items: flex-start; gap: 16px; margin-bottom: 20px; }
+        .pillar-icon { width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .pillar-title-block { flex: 1; }
+        .pillar-title { font-size: 1.1rem; font-weight: 800; color: var(--accent-blue); }
+        .pillar-q { font-size: 0.75rem; color: var(--text-secondary); margin-top: 2px; }
+        .status-badge { font-size: 0.65rem; font-weight: 700; padding: 4px 12px; border-radius: 20px; }
+        .sb-ok { background: var(--accent-green-light); color: #00a854; }
+        .sb-danger { background: var(--accent-red-light); color: var(--accent-red); }
+
+        .pillar-stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin-bottom: 20px; }
+        .stat-item-label { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); border-bottom: 1px solid #f1f2f6; padding-bottom: 6px; margin-bottom: 12px; }
+        .stat-val-row { display: flex; align-items: baseline; gap: 8px; }
+        .big-val { font-size: 2rem; font-weight: 900; letter-spacing: -0.03em; }
+        .sub-val { font-size: 0.7rem; color: var(--text-muted); }
+
+        .bar-comparison { margin-top: 12px; }
+        .bar-label-row { display: flex; justify-content: space-between; font-size: 0.72rem; color: var(--text-secondary); margin-bottom: 6px; }
+        .bar-track { height: 7px; border-radius: 4px; background: #edeef2; position: relative; overflow: visible; }
+        .bar-fill { height: 100%; border-radius: 4px; transition: width 0.6s ease; }
+
+        .insight-box { border-radius: 14px; padding: 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 20px; }
+        .insight-col { display: flex; flex-direction: column; gap: 6px; }
+        .it-head { font-size: 0.6rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; display: flex; align-items: center; gap: 6px; }
+        .it-body { font-size: 0.78rem; line-height: 1.6; color: var(--text-primary); }
+        .insight-box.blue-theme { background: #f8fafc; border: 1px solid #e2e8f0; color: var(--accent-blue); }
+        .insight-box.blue-theme .it-head { color: var(--accent-vibrant); }
+        .insight-box.blue-theme .it-body-warn { color: var(--accent-orange); font-weight: 700; }
+
+        .pillar-footer { border-top: 1px solid #f1f2f6; padding-top: 16px; margin-top: 16px; }
+        .action-strip { display: flex; align-items: center; gap: 8px; font-size: 0.78rem; color: white; font-weight: 600; background: var(--accent-blue); padding: 10px 14px; border-radius: 10px; }
+
+        /* ── Right Column ── */
+        .right-col { display: flex; flex-direction: column; gap: 20px; }
+        .side-card { background: var(--card-bg); border-radius: 12px; padding: 22px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); border: 1px solid var(--border); }
+        .credit-card { background: var(--accent-blue); border-radius: 16px; padding: 18px 20px; color: white; margin: 12px 0; position: relative; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); }
+        .cc-brand { display: flex; gap: 2px; } .cc-circle { width: 22px; height: 22px; border-radius: 50%; opacity: 0.9; }
+        .cc-number { font-size: 0.72rem; letter-spacing: 0.15em; margin: 16px 0 8px; }
+        .cc-details { display: flex; justify-content: space-between; opacity: 0.8; font-size: 0.65rem; }
+        .limit-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 0.78rem; }
+        .limit-val { font-weight: 700; }
+
+        .dupont-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+        .dupont-label { font-size: 0.68rem; color: var(--text-secondary); width: 80px; flex-shrink: 0; }
+        .dupont-bar { flex: 1; height: 6px; background: #f1f2f6; border-radius: 3px; position: relative; overflow: hidden; }
+        .dupont-bar .fill { height: 100%; border-radius: 3px; }
+        .dupont-val { font-size: 0.68rem; font-weight: 700; color: var(--text-primary); width: 35px; text-align: right; }
+
+        .pocket-chart-wrap { position: relative; width: 140px; height: 140px; margin: 16px auto; }
+        .pocket-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); text-align: center; }
+        .pc-big { font-size: 1.1rem; font-weight: 900; } .pc-small { font-size: 0.6rem; color: var(--text-muted); }
+
+        .stacked-bar { display: flex; height: 26px; border-radius: 6px; overflow: hidden; margin-top: 14px; }
+        .stacked-bar div { display: flex; align-items: center; justify-content: center; font-size: 0.58rem; font-weight: 800; color: white; }
+
+        @keyframes rise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+        .rise { animation: rise 0.4s ease-out forwards; opacity: 0; }
+        .d1 { animation-delay: 0.05s; } .d2 { animation-delay: 0.1s; } .d3 { animation-delay: 0.15s; }
     </style>
 </head>
 
-<body class="bg-gray-50">
-    <div id="dashboard-container">
+<body>
 
-        <!-- ══════════════════ ENCABEZADO PRINCIPAL ══════════════════ -->
-        <div id="main-header" style="background: linear-gradient(135deg, #1E2A5E 0%, #2B3F8E 100%);"
-            class="text-white p-8 shadow-lg">
-            <div class="flex items-start justify-between">
-                <div>
-                    <div class="flex items-center gap-3 mb-2">
-                        <span style="font-weight:800; font-size:1.7rem; letter-spacing:-0.02em;">datia.</span>
-                    </div>
-                    <h1 class="text-3xl font-bold mb-1" style="letter-spacing:-0.01em;">Dashboard Financiero</h1>
-                    <p style="color:#bfcfff;">Resumen Ejecutivo Integral · 2023 – 2025</p>
-                    <p class="text-sm mt-1" style="color:#94a8d8;">Monitoreo y Auditoría Financiera</p>
-                </div>
-                <div class="score-badge mt-1" id="header-score-badge">
-                    <div class="score-dot"></div>
-                    <span id="badge-score">Cargando…</span>
-                </div>
-            </div>
+<aside id="re-sidebar">
+    <div class="sidebar-logo">
+        <div class="sidebar-logo-icon"><i data-lucide="box"></i></div>
+        <div class="sidebar-logo-text">Dat<span>ia.</span></div>
+    </div>
+    <div class="nav-group">
+        <div class="sidebar-section-title">General</div>
+        <a class="nav-item active" href="#"><i data-lucide="layout-dashboard"></i> Dashboard</a>
+        <a class="nav-item" href="#" onclick="DashboardAPI.openModule('liquidez')"><i data-lucide="activity"></i> Indicadores</a>
+        <a class="nav-item" href="#"><i data-lucide="file-bar-chart"></i> Reportes</a>
+        <a class="nav-item" href="#"><i data-lucide="credit-card"></i> Cartera</a>
+    </div>
+    <div class="sidebar-footer">
+        <strong>CFO Virtual Activo</strong>
+        <p>Análisis continuo de 33 indicadores con IA</p>
+        <div class="sf-btn" onclick="DashboardAPI.openModule('liquidez')">Ver Tablero Técnico</div>
+    </div>
+</aside>
+
+<div class="main-content">
+    <div class="topbar rise">
+        <div class="topbar-greeting">
+            <h2 id="greet-h">Buenos días 👋</h2>
+            <p>Diagnóstico financiero al cierre del periodo actual</p>
         </div>
-
-        <!-- ══════════════════ NAVEGACIÓN DE PESTAÑAS ══════════════════ -->
-        <nav id="main-nav" class="bg-white flex overflow-x-auto" role="navigation" aria-label="Módulos del dashboard"
-            style="border-bottom: 1px solid #E2E8F0; position: sticky; top: 0; z-index: 30;">
-            <a href="resumen_ejecutivo.html" class="px-6 py-3 font-semibold transition-all whitespace-nowrap"
-                style="color: #1E2A5E; border-bottom: 3px solid #FF6B2B; background: rgba(255,107,43,0.06);">
-                <i data-lucide="file-text" class="w-4 h-4 inline-block mr-1"></i>
-                Resumen Ejecutivo
-            </a>
-            <a href="index.html" class="px-6 py-3 font-semibold transition-all whitespace-nowrap hover:bg-gray-50"
-                style="color: #64748B; border-bottom: 3px solid transparent;">
-                <i data-lucide="droplets" class="w-4 h-4 inline-block mr-1"></i>
-                Liquidez
-            </a>
-            <a href="rentabilidad.html"
-                class="px-6 py-3 font-semibold transition-all whitespace-nowrap hover:bg-gray-50"
-                style="color: #64748B; border-bottom: 3px solid transparent;">
-                <i data-lucide="trending-up" class="w-4 h-4 inline-block mr-1"></i>
-                Rentabilidad
-            </a>
-            <a href="solvencia.html" class="px-6 py-3 font-semibold transition-all whitespace-nowrap hover:bg-gray-50"
-                style="color: #64748B; border-bottom: 3px solid transparent;">
-                <i data-lucide="landmark" class="w-4 h-4 inline-block mr-1"></i>
-                Solvencia
-            </a>
-            <a href="estructura.html" class="px-6 py-3 font-semibold transition-all whitespace-nowrap hover:bg-gray-50"
-                style="color: #64748B; border-bottom: 3px solid transparent;">
-                <i data-lucide="layers" class="w-4 h-4 inline-block mr-1"></i>
-                Estructura
-            </a>
-            <a href="actividad.html" class="px-6 py-3 font-semibold transition-all whitespace-nowrap hover:bg-gray-50"
-                style="color: #64748B; border-bottom: 3px solid transparent;">
-                <i data-lucide="activity" class="w-4 h-4 inline-block mr-1"></i>
-                Actividad
-            </a>
-        </nav>
-
-        <!-- ══════════════════ CONTENIDO PRINCIPAL ══════════════════ -->
-        <main id="resumen-content" class="p-6 space-y-6">
-
-            <!-- ── 1. HISTORIA 2023–2025 (Slider) ── -->
-            <section class="exec-card overflow-hidden" aria-labelledby="title-historia">
-                <div class="exec-card-title" id="title-historia">
-                    <i data-lucide="git-branch" style="width:13px;height:13px;"></i>
-                    Historia de la Compañía · 2023 – 2025
-                </div>
-                <!-- Swiper container -->
-                <div class="swiper timeline-swiper">
-                    <div class="swiper-wrapper" id="timeline-container">
-                        <!-- JS renderiza los slides aquí -->
-                    </div>
-                    <!-- Add Pagination -->
-                    <div class="swiper-pagination"></div>
-                </div>
-            </section>
-
-            <!-- ── 2. FILA: KPIs + (Scores · Fortalezas) ── -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-
-                <!-- KPIs (2/3 del ancho) - TABS -->
-                <section class="exec-card md:col-span-2 flex flex-col" aria-labelledby="title-kpis">
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="exec-card-title mb-0" id="title-kpis">
-                            <i data-lucide="bar-chart-2" style="width:13px;height:13px;"></i>
-                            Indicadores Clave por Indicador Financiero · Cierre 2025
-                        </div>
-                    </div>
-
-                    <!-- Tab Navigation for KPIs -->
-                    <div class="kpi-tabs-nav" id="kpi-tabs-nav">
-                        <!-- JS renderiza los botones de pestañas aquí -->
-                    </div>
-
-                    <!-- Tab Content Panes -->
-                    <div id="kpis-container" class="flex-1 flex flex-col">
-                        <!-- JS renderiza los paneles aquí -->
-                    </div>
-                </section>
-
-                <!-- Score módulos + Fortalezas (1/3) -->
-                <div class="flex flex-col gap-6">
-                    <section class="exec-card" aria-labelledby="title-scores">
-                        <div class="exec-card-title" id="title-scores">
-                            <i data-lucide="gauge" style="width:13px;height:13px;"></i>
-                            Score por Indicador 2025
-                        </div>
-                        <div class="module-scores-grid" id="scores-container">
-                            <!-- JS renderiza -->
-                        </div>
-                    </section>
-
-                    <section class="exec-card" aria-labelledby="title-fortalezas">
-                        <div class="exec-card-title" id="title-fortalezas">
-                            <i data-lucide="shield-check" style="width:13px;height:13px;"></i>
-                            Fortalezas Detectadas
-                        </div>
-                        <div class="fortalezas-list space-y-1" id="fortalezas-container">
-                            <!-- JS renderiza -->
-                        </div>
-                    </section>
-                </div>
-            </div>
-
-            <!-- ── 3. FILA: Alertas + Dictamen ── -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-
-                <!-- Alertas (2/3) -->
-                <section class="exec-card md:col-span-2" aria-labelledby="title-alertas">
-                    <div class="exec-card-title" id="title-alertas">
-                        <i data-lucide="alert-triangle" style="width:13px;height:13px;"></i>
-                        Señales de Alerta y Riesgos
-                    </div>
-                    <div class="alert-list space-y-1" id="alertas-container">
-                        <!-- JS renderiza -->
-                    </div>
-                </section>
-
-                <!-- Dictamen Ejecutivo (1/3) -->
-                <section class="exec-card dictamen-card" aria-labelledby="title-dictamen">
-                    <div class="exec-card-title" id="title-dictamen">
-                        <i data-lucide="award" style="width:13px;height:13px;"></i>
-                        Dictamen Ejecutivo
-                    </div>
-                    <div id="dictamen-container">
-                        <!-- JS renderiza -->
-                    </div>
-                </section>
-
-            </div>
-        </main>
-
-    </div><!-- /#dashboard-container -->
-
-    <!-- ══════════════════ BOTÓN FLOTANTE / GLOSARIO ══════════════════ -->
-    <button id="glossary-btn"
-        class="fixed bottom-6 right-6 z-50 text-white rounded-full p-4 shadow-lg transition-all duration-300 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:ring-offset-2"
-        style="background: #FF6B2B; box-shadow: 0 4px 16px rgba(255,107,43,0.35);"
-        onmouseover="this.style.background='#E55A1F'" onmouseout="this.style.background='#FF6B2B'"
-        aria-label="Abrir glosario de indicadores">
-        <i data-lucide="book-open" class="w-6 h-6"></i>
-    </button>
-
-    <!-- Overlay oscuro -->
-    <div id="glossary-overlay"
-        class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden opacity-0 transition-opacity duration-300"></div>
-
-    <!-- Sidebar de Glosario -->
-    <div id="glossary-sidebar"
-        class="fixed top-0 right-0 h-full w-80 bg-white shadow-2xl z-50 transform translate-x-full transition-transform duration-300 ease-in-out overflow-hidden flex flex-col"
-        role="dialog" aria-modal="true" aria-label="Glosario Técnico">
-
-        <div style="background: linear-gradient(135deg, #1E2A5E, #2B3F8E);" class="text-white p-4">
-            <div class="flex justify-between items-center">
-                <div class="flex items-center gap-2">
-                    <i data-lucide="book-marked" class="w-5 h-5"></i>
-                    <h2 class="text-lg font-bold">Glosario Técnico</h2>
-                </div>
-                <button id="glossary-close"
-                    class="hover:bg-blue-600 rounded-full p-1 transition-colors focus:outline-none focus:ring-2 focus:ring-white"
-                    aria-label="Cerrar glosario">
-                    <i data-lucide="x" class="w-5 h-5"></i>
-                </button>
-            </div>
-            <p class="text-blue-200 text-xs mt-1">Indicadores Financieros</p>
+        <div class="topbar-actions">
+            <div class="icon-btn"><i data-lucide="search"></i></div>
+            <div class="icon-btn"><i data-lucide="bell"></i></div>
         </div>
+    </div>
 
-        <div class="p-4 border-b border-gray-200">
-            <label class="block text-sm font-semibold text-gray-700 mb-2" for="glossary-select">
-                Seleccione un indicador:
-            </label>
-            <select id="glossary-select"
-                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 text-sm">
-                <option value="">-- Elija un término --</option>
-            </select>
-        </div>
-
-        <div id="glossary-detail" class="flex-1 overflow-y-auto p-4">
-            <div id="glossary-placeholder" class="text-center text-gray-400 py-8">
-                <i data-lucide="info" class="w-12 h-12 mx-auto mb-2 opacity-50"></i>
-                <p class="text-sm">Seleccione un indicador para ver su información.</p>
+    <div class="page-grid">
+        <div class="left-col">
+            
+            <!-- PERFIL DE LA OPERACIÓN -->
+            <div class="profile-container rise d1">
+                <div class="profile-header">
+                    <div class="company-meta">
+                        <div id="company-name" class="company-name">Cargando empresa...</div>
+                        <div id="company-sector" class="company-sector">Cargando sector...</div>
+                    </div>
+                    <div class="status-badge sb-ok" style="align-self: flex-start;">Perfil Activo</div>
+                </div>
+                <div class="profile-info-grid">
+                    <div class="macro-box">
+                        <div class="macro-box-title">ENTORNO ECONÓMICO ACTUAL</div>
+                        <div class="macro-item">
+                            <i data-lucide="trending-up"></i>
+                            <span class="m-label">Inflación Anual</span>
+                            <span id="macro-inflacion" class="m-val" style="color:var(--accent-red)">--%</span>
+                        </div>
+                        <div class="macro-item">
+                            <i data-lucide="landmark"></i>
+                            <span class="m-label">Tasa BanRep</span>
+                            <span id="macro-banrep" class="m-val" style="color:#d97706">--%</span>
+                        </div>
+                        <div class="macro-item">
+                            <i data-lucide="percent"></i>
+                            <span class="m-label">Costo Crédito CP</span>
+                            <span id="macro-costo" class="m-val" style="color:var(--accent-orange)">--%</span>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="stat-item-label" style="border:none; margin-bottom:4px;">MODELO DE NEGOCIO Y DESCRIPCIÓN</div>
+                        <p id="perfil-operativo" class="operation-desc">
+                            Iniciando perfilado de inteligencia...
+                        </p>
+                    </div>
+                </div>
             </div>
-            <div id="glossary-content" class="hidden space-y-4">
-                <div class="bg-blue-50 rounded-lg p-3 border-l-4 border-blue-600">
-                    <div class="flex items-center gap-2 text-blue-800 font-semibold text-xs uppercase mb-1">
-                        <i data-lucide="lightbulb" class="w-4 h-4"></i> Definición
+
+            <!-- 1. LIQUIDEZ -->
+            <div class="pillar rise d2">
+                <div class="pillar-head">
+                    <div class="pillar-icon" style="background:var(--accent-blue-light);"><i data-lucide="droplets" style="color:var(--accent-blue);"></i></div>
+                    <div class="pillar-title-block">
+                        <div class="pillar-title">1. LIQUIDEZ (El Hoy)</div>
+                        <div class="pillar-q">¿Con cuánto dinero contamos para operar este mes?</div>
                     </div>
-                    <p id="glossary-definicion" class="text-gray-700 text-sm leading-relaxed"></p>
+                    <div class="status-badge sb-ok">Estable</div>
                 </div>
-                <div class="bg-purple-50 rounded-lg p-3 border-l-4 border-purple-600">
-                    <div class="flex items-center gap-2 text-purple-800 font-semibold text-xs uppercase mb-1">
-                        <i data-lucide="calculator" class="w-4 h-4"></i> Fórmula
+                <div class="pillar-stats-grid">
+                    <div>
+                        <div class="stat-item-label">CASH RUNWAY (Días de Supervivencia)</div>
+                        <div class="stat-val-row">
+                            <span class="big-val" style="color:var(--accent-blue);" id="kpi-cash-runway">--</span>
+                            <span class="sub-val" style="font-weight:700;">Días</span>
+                        </div>
+                        <div class="bar-comparison">
+                            <div class="bar-label-row"><span>Basado en Nómina y Arriendo</span> <span style="color:var(--accent-red); font-weight:700;" id="kpi-cash-trend">-- vs ant.</span></div>
+                            <div class="bar-track"><div class="bar-fill" id="kpi-cash-bar" style="width:0%; background:var(--accent-blue);"></div></div>
+                        </div>
                     </div>
-                    <p id="glossary-formula" class="text-gray-700 text-sm font-mono bg-white px-2 py-1 rounded"></p>
+                    <div>
+                        <div class="stat-item-label">PLATA LIBRE (Capital de Trabajo)</div>
+                        <div style="height: 60px;"><canvas id="chart-ct"></canvas></div>
+                        <div style="font-size:0.7rem; color:var(--text-muted); margin-top:4px; text-align:right;" id="kpi-ct-text">Pendiente de sincronización...</div>
+                    </div>
                 </div>
-                <div class="bg-green-50 rounded-lg p-3 border-l-4 border-green-600">
-                    <div class="flex items-center gap-2 text-green-800 font-semibold text-xs uppercase mb-1">
-                        <i data-lucide="target" class="w-4 h-4"></i> Margen Recomendado
+                <div class="insight-box blue-theme">
+                    <div class="insight-col">
+                        <div class="it-head"><i data-lucide="brain"></i> EL CFO DICE</div>
+                        <div class="it-body" id="insight-liquidez-ai">Cargando diagnóstico de liquidez...</div>
                     </div>
-                    <p id="glossary-margen" class="text-gray-700 text-lg font-bold"></p>
+                    <div class="insight-col">
+                        <div class="it-head"><i data-lucide="info"></i> CONTEXTO FINANCIERO</div>
+                        <div class="it-body" id="contexto-liquidez-ai">Diagnóstico basado en tasas actuales de mercado...</div>
+                    </div>
+                </div>
+                <div class="pillar-footer">
+                    <div class="action-strip"><i data-lucide="zap"></i> QUÉ HACER HOY: <span id="action-liquidez">Esperando datos para generar recomendaciones tácticas.</span></div>
+                </div>
+            </div>
+
+            <!-- 2. ACTIVIDAD -->
+            <div class="pillar rise d3">
+                <div class="pillar-head">
+                    <div class="pillar-icon" style="background:var(--accent-red-light);"><i data-lucide="activity" style="color:var(--accent-red);"></i></div>
+                    <div class="pillar-title-block">
+                        <div class="pillar-title">2. ACTIVIDAD (La Eficiencia)</div>
+                        <div class="pillar-q">¿A qué velocidad se mueve el dinero dentro del negocio?</div>
+                    </div>
+                    <div class="status-badge sb-danger">Alerta Roja</div>
+                </div>
+                <div class="pillar-stats-grid">
+                    <div>
+                        <div class="stat-item-label">DÍAS QUE TARDAN EN PAGARNOS (DSO)</div>
+                        <div class="stat-val-row"><span class="big-val" style="color:var(--accent-red);" id="kpi-dso">--</span> <span class="sub-val">Días</span></div>
+                        <div class="bar-comparison">
+                            <div class="bar-label-row"><span id="kpi-dso-meta">Meta sugerida: --</span> <span style="font-weight:700;" id="kpi-dso-desfase">-- de Desfase</span></div>
+                            <div class="bar-track"><div class="bar-fill" id="kpi-dso-bar" style="width:0%; background:var(--accent-red);"></div></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="stat-item-label">EN CUÁNTO PAGAMOS NOSOTROS (DPO)</div>
+                        <div class="stat-val-row"><span class="big-val" style="color:var(--accent-green);" id="kpi-dpo">--</span> <span class="sub-val">Días</span></div>
+                        <div class="bar-comparison">
+                            <div class="bar-label-row"><span id="kpi-dpo-status">Pendiente de cálculo</span></div>
+                            <div class="bar-track"><div class="bar-fill" id="kpi-dpo-bar" style="width:0%; background:var(--accent-green);"></div></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="insight-box blue-theme">
+                    <div class="insight-col">
+                        <div class="it-head"><i data-lucide="brain"></i> EL CFO DICE</div>
+                        <div class="it-body" id="insight-actividad-ai">Cargando diagnóstico de eficiencia operativa...</div>
+                    </div>
+                    <div class="insight-col">
+                        <div class="it-head"><i data-lucide="wallet"></i> IMPACTO CARTERA</div>
+                        <div class="it-body" id="impacto-cartera-ai">Sincronizando estado de cartera actual...</div>
+                    </div>
+                </div>
+                <div class="pillar-footer">
+                    <div class="action-strip"><i data-lucide="zap"></i> QUÉ HACER HOY: <span id="action-actividad">Pendiente de sincronización de datos.</span></div>
+                </div>
+            </div>
+
+            <!-- 3. RENTABILIDAD -->
+            <div class="pillar rise">
+                <div class="pillar-head">
+                    <div class="pillar-icon" style="background:var(--accent-green-light);"><i data-lucide="trending-up" style="color:var(--accent-green);"></i></div>
+                    <div class="pillar-title-block">
+                        <div class="pillar-title">3. RENTABILIDAD (El Negocio Real)</div>
+                        <div class="pillar-q">¿El trabajo duro deja dinero de verdad?</div>
+                    </div>
+                    <div class="status-badge sb-ok">Riqueza Real</div>
+                </div>
+                <div class="pillar-stats-grid">
+                    <div>
+                        <div class="stat-item-label">MARGEN OPERATIVO VS INFLACIÓN</div>
+                        <div class="stat-val-row"><span class="big-val" style="color:#059669;" id="kpi-margen-oper">--%</span> <span class="sub-val">vs IPC</span></div>
+                        <div class="bar-comparison" style="margin-top:20px;">
+                            <div class="bar-label-row"><span>Tu Margen</span> <span id="val-tu-margen">--%</span></div>
+                            <div class="bar-track"><div class="bar-fill" id="bar-tu-margen" style="width:0%; background:var(--accent-green);"></div></div>
+                            <div class="bar-label-row" style="margin-top:8px;"><span>Inflación</span> <span id="val-inflacion">--%</span></div>
+                            <div class="bar-track"><div class="bar-fill" id="bar-inflacion" style="width:0%; background:var(--accent-red);"></div></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="stat-item-label">ANÁLISIS DUPONT (ROE <span id="kpi-roe-dupont">--%</span>)</div>
+                        <div class="dupont-row"><div class="dupont-label">Margen Neto</div><div class="dupont-bar"><div class="fill" id="bar-margen-neto" style="width:0%; background:var(--accent-green);"></div></div><div class="dupont-val" id="val-margen-neto">--%</div></div>
+                        <div class="dupont-row"><div class="dupont-label">Rotación</div><div class="dupont-bar"><div class="fill" id="bar-rotacion" style="width:0%; background:#eab308;"></div></div><div class="dupont-val" id="val-rotacion">--x</div></div>
+                        <div class="dupont-row"><div class="dupont-label">Apalanca.</div><div class="dupont-bar"><div class="fill" id="bar-apalanca" style="width:0%; background:var(--accent-blue);"></div></div><div class="dupont-val" id="val-apalanca">--x</div></div>
+                    </div>
+                </div>
+                <div class="insight-box blue-theme">
+                    <div class="insight-col">
+                        <div class="it-head"><i data-lucide="brain"></i> EL CFO DICE</div>
+                        <div class="it-body" id="insight-rentabilidad-ai">Generando análisis de rentabilidad...</div>
+                    </div>
+                    <div class="insight-col">
+                        <div class="it-head"><i data-lucide="bar-chart"></i> DIAGNÓSTICO ROE</div>
+                        <div class="it-body" id="diagnostico-roe-ai">Diagnóstico de retorno sobre capital en proceso...</div>
+                    </div>
+                </div>
+                <div class="pillar-footer">
+                    <div class="action-strip"><i data-lucide="zap"></i> QUÉ HACER HOY: <span id="action-rentabilidad">Esperando datos de utilidades y márgenes.</span></div>
+                </div>
+            </div>
+
+            <!-- 4. SOLVENCIA -->
+            <div class="pillar rise">
+                <div class="pillar-head">
+                    <div class="pillar-icon" style="background:#f3f1ff;"><i data-lucide="shield-check" style="color:var(--accent-purple);"></i></div>
+                    <div class="pillar-title-block">
+                        <div class="pillar-title">4. SOLVENCIA (El Mañana)</div>
+                        <div class="pillar-q">¿La empresa es de nosotros o de los bancos?</div>
+                    </div>
+                    <div class="status-badge sb-ok">Blindado</div>
+                </div>
+                <div class="pillar-stats-grid">
+                    <div>
+                        <div class="stat-item-label">COBERTURA DE INTERESES</div>
+                        <div class="stat-val-row"><span class="big-val" style="color:var(--accent-purple);" id="kpi-cobertura">--x</span> <span class="sub-val">Veces</span></div>
+                        <div style="font-size:0.65rem; color:var(--text-muted); margin-top:6px;">Límite de peligro (quiebra): < 1.5x</div>
+                        <div class="bar-track" style="margin-top:8px;"><div class="bar-fill" id="bar-cobertura" style="width:0%; background:var(--accent-purple);"></div></div>
+                    </div>
+                    <div>
+                        <div class="stat-item-label">TIEMPO PARA PAGAR DEUDA</div>
+                        <div class="stat-val-row"><span class="big-val" style="color:var(--accent-purple);" id="kpi-deuda-ebitda">--</span> <span class="sub-val">Años</span></div>
+                        <div style="font-size:0.65rem; color:var(--text-muted); margin-top:6px;">Basado en caja generada. Meta: < 3.0 Años.</div>
+                        <div class="bar-track" style="margin-top:8px;"><div class="bar-fill" id="bar-deuda-ebitda" style="width:0%; background:var(--accent-purple);"></div></div>
+                    </div>
+                </div>
+                <div class="insight-box blue-theme">
+                    <div class="insight-col" style="grid-column: span 2;">
+                        <div class="it-head"><i data-lucide="brain"></i> EL CFO DICE</div>
+                        <div class="it-body" id="insight-solvencia-ai">Analizando estructura de deuda y solvencia...</div>
+                    </div>
+                </div>
+                <div class="pillar-footer">
+                    <div class="action-strip"><i data-lucide="zap"></i> QUÉ HACER HOY: <span id="action-solvencia">Pendiente de sincronización de pasivos.</span></div>
+                </div>
+            </div>
+
+            <!-- 5. ESTRUCTURA -->
+            <div class="pillar rise">
+                <div class="pillar-head">
+                    <div class="pillar-icon" style="background:#fff8e1;"><i data-lucide="layers" style="color:#f59e0b;"></i></div>
+                    <div class="pillar-title-block">
+                        <div class="pillar-title">5. ESTRUCTURA (La Inversión)</div>
+                        <div class="pillar-q">¿Con qué dinero estamos creciendo?</div>
+                    </div>
+                    <div class="status-badge sb-ok">Dueño Total</div>
+                </div>
+                <div class="pillar-stats-grid">
+                    <div>
+                        <div class="stat-item-label">FUENTES DE DINERO (Fondeo)</div>
+                        <div class="stacked-bar">
+                            <div id="bar-fondeo-bancos" style="width:0%; background:var(--accent-red);">--%</div>
+                            <div id="bar-fondeo-proveed" style="width:0%; background:var(--accent-orange);">--%</div>
+                            <div id="bar-fondeo-propio" style="width:0%; background:var(--accent-green);">--%</div>
+                        </div>
+                        <div style="display:flex; flex-wrap:wrap; gap:12px; font-size:0.65rem; font-weight:700; margin-top:10px;">
+                            <span style="color:var(--accent-red); display:flex; align-items:center;"><span style="width:8px; height:8px; background:var(--accent-red); border-radius:2px; margin-right:4px;"></span> Bancos (<span id="lbl-fondeo-bancos">--%</span>)</span>
+                            <span style="color:var(--accent-orange); display:flex; align-items:center;"><span style="width:8px; height:8px; background:var(--accent-orange); border-radius:2px; margin-right:4px;"></span> Proveed. (<span id="lbl-fondeo-proveed">--%</span>)</span>
+                            <span style="color:var(--accent-green); display:flex; align-items:center;"><span style="width:8px; height:8px; background:var(--accent-green); border-radius:2px; margin-right:4px;"></span> Propio (<span id="lbl-fondeo-propio">--%</span>)</span>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="stat-item-label">ESTADO DE LA MÁQUINA</div>
+                        <div style="padding-top:4px;">
+                            <div style="justify-content:space-between; font-size:0.75rem; margin-bottom:8px;">
+                                <span style="color:var(--text-muted);">Terceros</span> <span style="font-weight:700;" id="val-terceros">--%</span>
+                            </div>
+                            <div style="display:flex; justify-content:space-between; font-size:0.85rem;">
+                                <span style="font-weight:500;">Propio / Caja</span> <span style="font-weight:900; color:var(--accent-green);" id="val-propio">--%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="insight-box blue-theme" style="margin-top:10px;">
+                    <div class="insight-col" style="grid-column: span 2;">
+                        <div class="it-head"><i data-lucide="brain"></i> EL CFO DICE</div>
+                        <div class="it-body" id="insight-estructura-ai">Generando diagnóstico de estructura de capital...</div>
+                    </div>
+                </div>
+                <div class="pillar-footer">
+                    <div class="action-strip"><i data-lucide="zap"></i> QUÉ HACER HOY: <span id="action-estructura">Analizando fuentes de fondeo óptimas...</span></div>
+                </div>
+            </div>
+
+        </div> <!-- /left-col -->
+
+        <!-- ╔══════════════ RIGHT PANEL ══════════════╗ -->
+        <div class="right-col">
+            <div class="side-card rise d1">
+                <div class="company-name" style="margin-bottom:12px;">Mi Posición Financiera</div>
+                <div class="credit-card">
+                    <div class="cc-brand">
+                        <div class="cc-circle" style="background:#eb001b;"></div>
+                        <div class="cc-circle" style="background:#f79e1b; margin-left:-8px; mix-blend-mode:multiply;"></div>
+                    </div>
+                    <div class="cc-number">•••• •••• •••• 2025</div>
+                    <div class="cc-details">
+                        <span id="posicion-financiera-status">Sincronizando...</span>
+                        <span style="font-weight:800;">Datia Premium</span>
+                    </div>
+                </div>
+                <div class="limit-row"><span>Cap. Trabajo</span> <span class="limit-val" id="right-kpi-ct">--</span></div>
+                <div class="limit-row"><span>Supervivencia</span> <span class="limit-val" id="right-kpi-runway">--</span></div>
+                <div class="limit-row" style="border:none;"><span>Cobertura</span> <span class="limit-val" id="right-kpi-cobertura">--</span></div>
+            </div>
+
+            <div class="side-card rise d2">
+                <div class="company-name" style="margin-bottom:12px;">Mi Bolsillo</div>
+                <div class="pocket-chart-wrap">
+                    <canvas id="chart-dona"></canvas>
+                    <div class="pocket-center">
+                        <div class="pc-small" id="bolsillo-status">Calculando</div>
+                        <div class="pc-big" id="bolsillo-big">$0</div>
+                    </div>
+                </div>
+                <div style="display:flex; flex-direction:column; gap:8px; margin-top:12px;">
+                    <div style="display:flex; justify-content:space-between; font-size:0.75rem;">
+                        <span style="color:var(--text-secondary);">● Liquidez Libre</span> <span style="font-weight:700;" id="bolsillo-libre">--%</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; font-size:0.75rem;">
+                        <span style="color:var(--text-secondary);">● Deudas CxP</span> <span style="font-weight:700;" id="bolsillo-deuda">--%</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; font-size:0.75rem;">
+                        <span style="color:var(--text-secondary);">● CxC Pendiente</span> <span style="font-weight:700;" id="bolsillo-cxc">--%</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; font-size:0.75rem;">
+                        <span style="color:var(--text-secondary);">● Reserva Oper.</span> <span style="font-weight:700;" id="bolsillo-reserva">--%</span>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
+</div>
 
-    <!-- ══════════════════ DATOS ══════════════════ -->
-    <script src="data_resumen.js"></script>
+<script src="api.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+    if (typeof lucide !== 'undefined') lucide.createIcons();
 
-    <!-- ══════════════════ LÓGICA DE RENDERIZADO ══════════════════ -->
-    <script>
-        // ─── HELPERS ────────────────────────────────────────────────────────────
-        function icon(name, size = 14, color = 'currentColor') {
-            return `<i data-lucide="${name}" style="width:${size}px;height:${size}px;color:${color};flex-shrink:0;"></i>`;
+    const h = new Date().getHours();
+    document.getElementById('greet-h').textContent = h < 12 ? 'Buenos días 👋' : h < 18 ? 'Buenas tardes 👋' : 'Buenas noches 👋';
+
+    // Chart CT tendendcia (Pilar 1)
+    new Chart(document.getElementById('chart-ct'), {
+        type: 'line',
+        data: {
+            labels: ['Dic', 'Ene', 'Feb'],
+            datasets: [{
+                data: [120, 145, 150], borderColor: '#1E4E79', backgroundColor: 'rgba(30,78,121,0.05)',
+                borderWidth: 2, tension: 0.4, fill: true, pointRadius: 2
+            }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: { x: { display: false }, y: { display: false } }
         }
-        function statusColor(s) {
-            return s === 'success' ? '#16a34a' : s === 'warning' ? '#d97706' : '#dc2626';
-        }
-        function trendIcon(t) {
-            return t === 'up'
-                ? icon('trending-up', 14, '#16a34a')
-                : icon('trending-down', 14, '#dc2626');
-        }
+    });
 
-        // ─── 1. HEADER DINÁMICO ─────────────────────────────────────────────────
-        document.getElementById('header-score-badge').querySelector('p, span') ??
-            document.getElementById('badge-score');   // sólo por seguridad
+    // Chart Bolsillo (Right Panel)
+    new Chart(document.getElementById('chart-dona'), {
+        type: 'doughnut',
+        data: {
+            labels: ['Libre', 'Deuda', 'CxC', 'Reserva'],
+            datasets: [{
+                data: [45, 25, 15, 15], backgroundColor: ['#b0c4f9', '#ffd9a0', '#ffc0cb', '#d4b8e0'], borderWidth: 0
+            }]
+        },
+        options: { cutout: '80%', plugins: { legend: { display: false } } }
+    });
 
-        const ul = scoreHistorico[scoreHistorico.length - 1];
-        document.getElementById('badge-score').textContent =
-            `Score ${ul.year}: ${ul.score} / 10 — ${ul.label}`;
+    /* El perfil operativo ahora se carga dinámicamente desde la BD de Insights */
+    if (typeof currentCompany !== 'undefined') {
+        document.getElementById('company-name').textContent = currentCompany.name;
+        document.getElementById('company-sector').textContent = `Sector: ${currentCompany.sector || 'Consultoría / Servicios Profesionales'}`;
+        // document.getElementById('perfil-operativo').textContent = currentCompany.description;
+    }
 
-        // ─── 2. TIMELINE (Swiper) ───────────────────────────────────────────────
-        function renderTimeline() {
-            const container = document.getElementById('timeline-container');
-            container.innerHTML = historiaNarrativa.map(h => {
-                const sd = scoreHistorico.find(s => s.year === h.año);
-                const chipStyle = `background:${sd.color}15;color:${sd.color};border:1px solid ${sd.color}30;`;
-                const hitos = h.hitos.map(hi => `<li>${hi}</li>`).join('');
-
-                // Iconos sobrios según riesgo (se pueden ajustar via data_resumen.js si se desea)
-                const riskIcon = sd.score < 4 ? 'alert-triangle' : sd.score < 7 ? 'minus-circle' : 'check-circle';
-
-                return `
-                <div class="swiper-slide">
-                    <div class="tl-item rounded-2xl border">
-                        <div class="flex justify-between items-start mb-4">
-                             <div class="tl-year-box">
-                                <span class="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Año</span>
-                                <div class="tl-year">${h.año}</div>
-                             </div>
-                             <div class="score-chip shadow-none" style="${chipStyle}">
-                                ${icon(riskIcon, 12, sd.color)}
-                                <span class="ml-1">Score: ${sd.score}/10</span>
-                             </div>
-                        </div>
-                        <div class="tl-titulo text-lg text-gray-800 leading-tight">${h.titulo}</div>
-                        <div class="tl-sub text-[10px] text-gray-500 mb-4">${h.subtitulo || ''}</div>
-                        <ul class="tl-hitos flex-grow border-l-2 border-gray-100 pl-4 py-1 space-y-2 mb-4">${hitos}</ul>
-                        <div class="tl-conclusion bg-white/50 p-2 rounded-lg border border-gray-100 italic">${h.conclusion}</div>
-                    </div>
-                </div>`;
-            }).join('');
-
-            new Swiper('.timeline-swiper', {
-                slidesPerView: 1,
-                spaceBetween: 20,
-                centeredSlides: true,
-                pagination: { el: '.swiper-pagination', clickable: true },
-                breakpoints: {
-                    768: { slidesPerView: 2, centeredSlides: false },
-                    1024: { slidesPerView: 3, centeredSlides: false }
-                }
-            });
-        }
-
-        // ─── 3. KPIs CON PESTAÑAS ──────────────────────────────────────────────
-        function renderKPIs() {
-            const tabsNav = document.getElementById('kpi-tabs-nav');
-            const container = document.getElementById('kpis-container');
-
-            tabsNav.innerHTML = kpisPorModulo.map((mod, i) => `
-                <button class="kpi-tab-btn ${i === 0 ? 'active' : ''}" data-mod="${mod.modulo}" data-tooltip="${mod.definicion}">
-                    <div class="w-2 h-2 rounded-full" style="background:${mod.color}"></div>
-                    ${mod.modulo}
-                </button>
-            `).join('');
-
-            container.innerHTML = kpisPorModulo.map((mod, i) => {
-                const rows = mod.kpis.map(k => {
-                    const sc = statusColor(k.status);
-                    const tagColor = k.etiqueta === 'Motor' ? '#1E2A5E' : '#FF6B2B';
-                    const tagBg = k.etiqueta === 'Motor' ? 'rgba(30,42,94,0.06)' : 'rgba(255,107,43,0.06)';
-
-                    return `
-                    <div class="kpi-row group px-4 py-4 hover:bg-gray-50 rounded-xl border border-transparent hover:border-gray-100 transition-all cursor-help flex items-start gap-4">
-                        <div class="flex-grow">
-                            <div class="flex items-center gap-2 mb-1">
-                                <span class="text-[9px] font-black uppercase px-2 py-0.5 rounded-full" 
-                                      style="background:${tagBg}; color:${tagColor}; border:1px solid ${tagColor}20;">
-                                    ${k.etiqueta}
-                                </span>
-                                <div class="kpi-name text-sm font-bold text-gray-800">${k.nombre}</div>
-                            </div>
-                            <div class="kpi-desc text-[11px] text-gray-500 leading-tight">${k.descripcion}</div>
-                        </div>
-                        <div class="flex flex-col items-end gap-1">
-                            <div class="text-[10px] text-gray-400">2023: <span class="font-medium text-gray-600">${k.valor2023}</span></div>
-                            <div class="kpi-val text-lg font-black leading-none" style="color:${sc};">${k.valor2025}</div>
-                            <div class="text-[9px] font-bold text-gray-400 opacity-80 uppercase tracking-tighter">Meta: ${k.benchmark}</div>
-                        </div>
-                        <div class="flex flex-col items-center justify-center pt-1">
-                            ${trendIcon(k.tendencia)}
-                            <div class="w-1.5 h-1.5 rounded-full mt-1.5" style="background:${sc};"></div>
-                        </div>
-                    </div>`;
-                }).join('');
-
-                return `
-                <div class="kpi-content-pane flex-1 h-full ${i === 0 ? 'active' : ''}" data-content="${mod.modulo}">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 h-full content-start">
-                        ${rows}
-                    </div>
-                </div>`;
-            }).join('');
-
-            // Eventos de pestañas
-            document.querySelectorAll('.kpi-tab-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    document.querySelectorAll('.kpi-tab-btn').forEach(b => b.classList.remove('active'));
-                    document.querySelectorAll('.kpi-content-pane').forEach(p => p.classList.remove('active'));
-                    btn.classList.add('active');
-                    document.querySelector(`[data-content="${btn.dataset.mod}"]`).classList.add('active');
+    // API Integration with guards
+    try {
+        if (typeof DashboardAPI !== 'undefined') {
+            const data = await DashboardAPI.getIndicadoresData(empresaId);
+            
+            const clearDashboard = () => {
+                // Reset KPIs
+                const ids = ['kpi-cash-runway', 'kpi-dso', 'kpi-dpo', 'kpi-margen-oper', 'kpi-roe-dupont', 'val-margen-neto', 'val-rotacion', 'val-apalanca', 'kpi-cobertura'];
+                ids.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.textContent = '---';
                 });
-            });
-        }
+                
+                // Reset Bars
+                const barIds = ['kpi-cash-bar', 'bar-margen-neto', 'bar-rotacion', 'bar-apalanca'];
+                barIds.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.style.width = '0%';
+                });
 
-        // ─── 4. SCORES POR MÓDULO ───────────────────────────────────────────────
-        function renderScores() {
-            const moduleScoreData = [
-                { nombre: 'Liquidez', score: 9.6, icono: 'droplets', color: '#3b82f6', status: 'success' },
-                { nombre: 'Rentab.', score: 7.8, icono: 'trending-up', color: '#10b981', status: 'success' },
-                { nombre: 'Solvencia', score: 6.4, icono: 'landmark', color: '#8b5cf6', status: 'warning' },
-                { nombre: 'Estructura', score: 6.9, icono: 'layers', color: '#f59e0b', status: 'warning' },
-                { nombre: 'Actividad', score: 5.8, icono: 'activity', color: '#ef4444', status: 'warning' },
-            ];
-            document.getElementById('scores-container').innerHTML =
-                moduleScoreData.map(m => {
-                    const bg = m.status === 'success' ? '#f0fdf4' : '#fffbeb';
-                    const bc = m.status === 'success' ? '#bbf7d0' : '#fde68a';
-                    const sc = statusColor(m.status);
-                    return `
-                    <div class="ms-card p-3 rounded-xl border flex flex-col items-center justify-center transition-all hover:scale-105" 
-                         style="background:${bg};border-color:${bc};" aria-label="${m.nombre}: ${m.score}/10">
-                        ${icon(m.icono, 18, m.color)}
-                        <div class="text-[10px] font-bold text-gray-500 mt-1 uppercase tracking-tight">${m.nombre}</div>
-                        <div class="text-lg font-black leading-none mt-1" style="color:${sc};">${m.score}<span class="text-[10px] font-normal opacity-60">/10</span></div>
-                    </div>`;
-                }).join('');
-        }
+                // Reset Status Badges
+                document.querySelectorAll('.status-badge:not(.sb-ok[style*="self"])').forEach(el => {
+                    el.textContent = 'Sin Datos';
+                    el.className = 'status-badge';
+                    el.style.background = '#eee';
+                    el.style.color = '#777';
+                });
 
-        // ─── 5. ACORDEONES (Alertas y Fortalezas) ───────────────────────────────
-        function renderAccordions() {
-            // Alertas
-            document.getElementById('alertas-container').innerHTML = senalesAlerta.map((a, i) => {
-                const clrI = a.tipo === 'danger' ? '#ef4444' : a.tipo === 'warning' ? '#d97706' : '#0ea5e9';
-                const bg = a.tipo === 'danger' ? '#fef2f2' : a.tipo === 'warning' ? '#fffbeb' : '#f0f9ff';
-                return `
-                <div class="accordion-item ${i === 0 ? 'active' : ''}">
-                    <div class="accordion-header px-3 hover:bg-gray-50 rounded-lg" onclick="this.parentElement.classList.toggle('active')">
-                        <div class="flex items-center gap-3">
-                            <div class="p-1.5 rounded-lg" style="background:${bg}">${icon(a.icono, 14, clrI)}</div>
-                            <span class="text-sm font-bold text-gray-700">${a.titulo}</span>
-                        </div>
-                        <i data-lucide="chevron-down" class="accordion-chevron w-4 h-4 text-gray-400"></i>
-                    </div>
-                    <div class="accordion-content px-3 space-y-2">
-                        <div class="text-xs text-gray-600 leading-relaxed">${a.descripcion}</div>
-                        <div class="bg-white p-2 rounded border border-dashed border-gray-200 text-xs font-bold" style="color:${clrI}">
-                            Recomendación: <span class="font-normal text-gray-700">${a.accion}</span>
-                        </div>
-                    </div>
-                </div>`;
-            }).join('');
+                // Reset Insights
+                const insightIds = ['insight-liquidez-ai', 'insight-actividad-ai', 'insight-rentabilidad-ai', 'insight-solvencia-ai', 'insight-estructura-ai'];
+                insightIds.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.textContent = 'No hay diagnósticos generados para esta empresa aún.';
+                });
 
-            // Fortalezas
-            document.getElementById('fortalezas-container').innerHTML = fortalezas.map((f, i) => `
-                <div class="accordion-item">
-                    <div class="accordion-header px-3 hover:bg-gray-50 rounded-lg" onclick="this.parentElement.classList.toggle('active')">
-                        <div class="flex items-center gap-3">
-                            <div class="p-1.5 rounded-lg bg-green-50">${icon(f.icono, 14, '#16a34a')}</div>
-                            <span class="text-sm font-bold text-gray-700">${f.titulo}</span>
-                        </div>
-                        <i data-lucide="chevron-down" class="accordion-chevron w-4 h-4 text-gray-400"></i>
-                    </div>
-                    <div class="accordion-content px-3">
-                        <div class="text-xs text-gray-600 leading-relaxed">${f.descripcion}</div>
-                    </div>
-                </div>`).join('');
-        }
+                const actionIds = ['action-liquidez', 'action-actividad', 'action-rentabilidad', 'action-solvencia', 'action-estructura'];
+                actionIds.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.textContent = 'Pendiente de carga de datos.';
+                });
 
-        // ─── 6. DICTAMEN EJECUTIVO ──────────────────────────────────────────────
-        function renderDictamen() {
-            const paragraphs = dictamenEjecutivo.texto.split('\n\n');
-            const icons = ['award', 'trending-up', 'flag'];
+                // Reset Charts
+                ['chart-ct', 'chart-dona'].forEach(id => {
+                    const chart = Chart.getChart(id);
+                    if (chart) {
+                        chart.data.datasets[0].data = [];
+                        chart.update();
+                    }
+                });
+            };
 
-            const html = paragraphs.map((text, i) => `
-                <div class="flex items-start gap-3 p-3 rounded-xl border mb-3 last:mb-0 transition-all hover:bg-white" 
-                     style="background:rgba(30,42,94,0.03); border-color:rgba(30,42,94,0.08);">
-                    <div class="flex-shrink-0 p-2 rounded-lg bg-white shadow-sm border border-gray-100" style="color:var(--datia-navy);">
-                        ${icon(icons[i] || 'info', 16)}
-                    </div>
-                    <div class="text-xs text-gray-700 leading-relaxed italic">
-                        ${text.trim()}
-                    </div>
-                </div>
-            `).join('');
+            if (data && data.length > 0) {
+                // Último periodo disponible
+                const l = data[data.length - 1];
+                
+                const fm = (v, u) => {
+                   if (typeof v !== 'number') return v;
+                   if (u === '$') return '$' + (v / 1e6).toFixed(1) + 'M';
+                   if (u === '%') return v.toFixed(1) + '%';
+                   return v.toFixed(2) + (u || 'x');
+                };
 
-            document.getElementById('dictamen-container').innerHTML = `
-                <div class="space-y-1">${html}</div>`;
-        }
+                // Pilar 1: Liquidez
+                // NOTA: api.js transforma 'ratio_efectivo' → 'efectivo' y 'capital_trabajo' → 'capital'
+                const prev = data.length >= 2 ? data[data.length - 2] : null;
 
-        // ─── INITIALIZE ALL ─────────────────────────────────────────────────────
-        function initAll() {
-            renderTimeline();
-            renderKPIs();
-            renderScores();
-            renderAccordions();
-            renderDictamen();
-            if (typeof lucide !== 'undefined') lucide.createIcons();
-        }
+                if (l.efectivo) {
+                    const runwayDays = Math.round(l.efectivo * 30);
+                    document.getElementById('kpi-cash-runway').textContent = runwayDays;
+                    
+                    // Actualizar panel lateral
+                    const rightRunway = document.getElementById('right-kpi-runway');
+                    if (rightRunway) rightRunway.textContent = runwayDays + ' Días';
 
-        initAll();
-    </script>
+                    // Barra de progreso: target = 90 días de supervivencia
+                    const TARGET_RUNWAY_DAYS = 90;
+                    const barPct = Math.min((runwayDays / TARGET_RUNWAY_DAYS) * 100, 100);
+                    const barEl = document.getElementById('kpi-cash-bar');
+                    if (barEl) barEl.style.width = barPct.toFixed(1) + '%';
 
-    <!-- ══════════════════ LÓGICA DE GLOSARIO ══════════════════ -->
-    <script src="glossaryData.js"></script>
-    <script>
-        (function () {
-            const btn = document.getElementById('glossary-btn');
-            const overlay = document.getElementById('glossary-overlay');
-            const sidebar = document.getElementById('glossary-sidebar');
-            const closeBtn = document.getElementById('glossary-close');
-            const select = document.getElementById('glossary-select');
-            const placeholder = document.getElementById('glossary-placeholder');
-            const content = document.getElementById('glossary-content');
-            const defEl = document.getElementById('glossary-definicion');
-            const formEl = document.getElementById('glossary-formula');
-            const margEl = document.getElementById('glossary-margen');
+                    // Comparativa vs período anterior
+                    const trendEl = document.getElementById('kpi-cash-trend');
+                    if (trendEl) {
+                        if (prev && prev.efectivo) {
+                            const prevDays = Math.round(prev.efectivo * 30);
+                            const delta = runwayDays - prevDays;
+                            const sign = delta >= 0 ? '+' : '';
+                            trendEl.textContent = `${sign}${delta} días vs ant.`;
+                            trendEl.style.color = delta >= 0 ? 'var(--accent-green)' : 'var(--accent-red)';
+                        } else {
+                            trendEl.textContent = 'Sin período previo';
+                            trendEl.style.color = 'var(--text-muted)';
+                        }
+                    }
 
-            if (typeof glossaryData !== 'undefined') {
-                glossaryData.forEach((item, index) => {
-                    const opt = document.createElement('option');
-                    opt.value = index;
-                    opt.textContent = item.indicador;
-                    select.appendChild(opt);
+                    // Mi Bolsillo (Normalización simple para visualización)
+                    if (document.getElementById('bolsillo-libre')) document.getElementById('bolsillo-libre').textContent = Math.min(Math.round(l.efectivo * 40), 60) + '%';
+                }
+
+                if (l.capital) {
+                    const ct = l.capital;
+                    document.getElementById('kpi-ct-text').textContent = `Tendencia actual: ${fm(ct, '$')}`;
+                    
+                    // Actualizar panel lateral (Cap. Trabajo)
+                    const rightCt = document.getElementById('right-kpi-ct');
+                    if (rightCt) rightCt.textContent = fm(ct, '$');
+
+                    // Mi Bolsillo (Centro)
+                    const bolsilloBig = document.getElementById('bolsillo-big');
+                    if (bolsilloBig) bolsilloBig.textContent = fm(ct, '$');
+                }
+
+                // Pilar 2: Actividad
+                if (l.dso) {
+                    const dsoVal = Math.round(l.dso);
+                    document.getElementById('kpi-dso').textContent = dsoVal;
+                    if (document.getElementById('bolsillo-cxc')) document.getElementById('bolsillo-cxc').textContent = Math.min(Math.round(dsoVal / 2), 25) + '%';
+                    
+                    // Meta y Desfase DSO (Benchmark: 45 días)
+                    const DSO_META = 45;
+                    const dsoMetaEl = document.getElementById('kpi-dso-meta');
+                    if (dsoMetaEl) dsoMetaEl.textContent = `Meta sugerida: ${DSO_META} Días`;
+                    
+                    const dsoDesfaseEl = document.getElementById('kpi-dso-desfase');
+                    if (dsoDesfaseEl) {
+                        const desfase = dsoVal - DSO_META;
+                        if (desfase > 0) {
+                            dsoDesfaseEl.textContent = `${desfase} días de Desfase`;
+                            dsoDesfaseEl.style.color = 'var(--accent-red)';
+                        } else {
+                            dsoDesfaseEl.textContent = 'Eficiencia Óptima';
+                            dsoDesfaseEl.style.color = 'var(--accent-green)';
+                        }
+                    }
+
+                    // Barra DSO
+                    const dsoBar = document.getElementById('kpi-dso-bar');
+                    if (dsoBar) {
+                        const dsoPct = Math.min((dsoVal / 90) * 100, 100);
+                        dsoBar.style.width = dsoPct.toFixed(1) + '%';
+                        dsoBar.style.background = dsoVal > DSO_META ? 'var(--accent-red)' : 'var(--accent-green)';
+                    }
+                }
+
+                if (l.dpo) {
+                    const dpoVal = Math.round(l.dpo);
+                    document.getElementById('kpi-dpo').textContent = dpoVal;
+                    if (document.getElementById('bolsillo-deuda')) document.getElementById('bolsillo-deuda').textContent = Math.min(Math.round(dpoVal / 3), 20) + '%';
+
+                    // Estatus DPO (Benchmark: 30-60 días)
+                    const dpoStatusEl = document.getElementById('kpi-dpo-status');
+                    if (dpoStatusEl) {
+                        if (dpoVal < 30) {
+                            dpoStatusEl.textContent = 'Pago acelerado (Riesgo caja)';
+                            dpoStatusEl.style.color = 'var(--accent-orange)';
+                        } else if (dpoVal <= 60) {
+                            dpoStatusEl.textContent = 'Rango ideal de pago';
+                            dpoStatusEl.style.color = 'var(--accent-green)';
+                        } else {
+                            dpoStatusEl.textContent = 'Pago extendido (Eficiencia)';
+                            dpoStatusEl.style.color = 'var(--accent-blue)';
+                        }
+                    }
+
+                    // Barra DPO
+                    const dpoBar = document.getElementById('kpi-dpo-bar');
+                    if (dpoBar) {
+                        const dpoPct = Math.min((dpoVal / 90) * 100, 100);
+                        dpoBar.style.width = dpoPct.toFixed(1) + '%';
+                    }
+                } else {
+                    // DPO no disponible - típico en firmas de servicios sin proveedores comerciales
+                    const kpiDpo = document.getElementById('kpi-dpo');
+                    if (kpiDpo) { kpiDpo.textContent = 'N/A'; kpiDpo.style.fontSize = '1.4rem'; kpiDpo.style.color = 'var(--text-muted)'; }
+                    const dpoStatusEl = document.getElementById('kpi-dpo-status');
+                    if (dpoStatusEl) { dpoStatusEl.textContent = 'Sin deuda comercial de corto plazo'; dpoStatusEl.style.color = 'var(--accent-green)'; }
+                    const dpoBar = document.getElementById('kpi-dpo-bar');
+                    if (dpoBar) { dpoBar.style.width = '100%'; dpoBar.style.background = 'var(--accent-green)'; }
+                }
+
+                // Pilar 3: Rentabilidad
+                // Benchmark: IPC Colombia 2025 ≈ 5.8%
+                const IPC_BENCHMARK = 5.8;
+
+                if (l.operativo !== undefined && l.operativo !== null) {
+                    const margenPct = l.operativo * 100;
+                    document.getElementById('kpi-margen-oper').textContent = margenPct.toFixed(1) + '%';
+                    // Tu Margen
+                    const tuMargenEl = document.getElementById('val-tu-margen');
+                    const tuMargenBar = document.getElementById('bar-tu-margen');
+                    if (tuMargenEl) tuMargenEl.textContent = margenPct.toFixed(1) + '%';
+                    if (tuMargenBar) tuMargenBar.style.width = Math.min(Math.abs(margenPct), 100) + '%';
+                    // Inflación (IPC fijo referencia)
+                    const inflEl = document.getElementById('val-inflacion');
+                    const inflBar = document.getElementById('bar-inflacion');
+                    if (inflEl) inflEl.textContent = IPC_BENCHMARK.toFixed(1) + '%';
+                    if (inflBar) inflBar.style.width = IPC_BENCHMARK + '%';
+                } else if (l.margen_operacional !== undefined && l.margen_operacional !== null) {
+                    // Fallback a margen_operacional si operativo no está disponible
+                    const margenPct = l.margen_operacional * 100;
+                    document.getElementById('kpi-margen-oper').textContent = margenPct.toFixed(1) + '%';
+                    const tuMargenEl = document.getElementById('val-tu-margen');
+                    const tuMargenBar = document.getElementById('bar-tu-margen');
+                    if (tuMargenEl) tuMargenEl.textContent = margenPct.toFixed(1) + '%';
+                    if (tuMargenBar) tuMargenBar.style.width = Math.min(Math.abs(margenPct), 100) + '%';
+                    const inflEl = document.getElementById('val-inflacion');
+                    const inflBar = document.getElementById('bar-inflacion');
+                    if (inflEl) inflEl.textContent = IPC_BENCHMARK.toFixed(1) + '%';
+                    if (inflBar) inflBar.style.width = IPC_BENCHMARK + '%';
+                }
+
+                if (l.roe !== undefined && l.roe !== null) {
+                    document.getElementById('kpi-roe-dupont').textContent = fm(l.roe * 100, '%');
+                }
+
+                // DuPont — Margen Neto (clave 'neto' según keyMap api.js)
+                const margenNetoVal = l.neto !== undefined ? l.neto : l.margen_neto;
+                if (margenNetoVal !== undefined && margenNetoVal !== null) {
+                    const mn = margenNetoVal * 100;
+                    document.getElementById('val-margen-neto').textContent = mn.toFixed(1) + '%';
+                    document.getElementById('bar-margen-neto').style.width = Math.min(Math.abs(mn), 100) + '%';
+                }
+
+                // DuPont — Rotación de Activos (clave 'rotacion_activos' según keyMap api.js)
+                if (l.rotacion_activos !== undefined && l.rotacion_activos !== null) {
+                    document.getElementById('val-rotacion').textContent = l.rotacion_activos.toFixed(2) + 'x';
+                    document.getElementById('bar-rotacion').style.width = Math.min(l.rotacion_activos * 50, 100) + '%';
+                }
+
+                // DuPont — Apalancamiento (clave 'multiplicador_capital' según keyMap api.js)
+                if (l.multiplicador_capital !== undefined && l.multiplicador_capital !== null) {
+                    document.getElementById('val-apalanca').textContent = l.multiplicador_capital.toFixed(2) + 'x';
+                    document.getElementById('bar-apalanca').style.width = Math.min((l.multiplicador_capital / 5) * 100, 100) + '%';
+                }
+
+                // Pilar 4: Solvencia
+                // Cobertura de Intereses
+                if (l.cobertura_intereses && l.cobertura_intereses > 0) {
+                    const cob = l.cobertura_intereses;
+                    document.getElementById('kpi-cobertura').textContent = cob.toFixed(1) + 'x';
+                    if (document.getElementById('bar-cobertura')) document.getElementById('bar-cobertura').style.width = Math.min((cob / 5) * 100, 100) + '%';
+                    
+                    const rightPanelCoverage = document.getElementById('right-kpi-cobertura');
+                    if (rightPanelCoverage) rightPanelCoverage.textContent = cob.toFixed(1) + 'x';
+                } else {
+                    document.getElementById('kpi-cobertura').textContent = 'Excelente';
+                    document.getElementById('kpi-cobertura').style.fontSize = '1.4rem';
+                    if (document.getElementById('bar-cobertura')) {
+                        document.getElementById('bar-cobertura').style.width = '100%';
+                        document.getElementById('bar-cobertura').style.background = 'var(--accent-green)';
+                    }
+                    const rightPanelCoverage = document.getElementById('right-kpi-cobertura');
+                    if (rightPanelCoverage) rightPanelCoverage.textContent = 'N/A';
+                }
+
+                // Tiempo para pagar deuda (Deuda / EBITDA)
+                if (l.deuda_ebitda !== undefined && l.deuda_ebitda !== null && l.deuda_ebitda > 0) {
+                    const de = l.deuda_ebitda;
+                    document.getElementById('kpi-deuda-ebitda').textContent = de.toFixed(1);
+                    if (document.getElementById('bar-deuda-ebitda')) {
+                        // Meta es < 3.0. Si es 3.0, la barra está al 50%.
+                        const dePct = Math.min((de / 6) * 100, 100);
+                        document.getElementById('bar-deuda-ebitda').style.width = dePct + '%';
+                        document.getElementById('bar-deuda-ebitda').style.background = de > 3 ? 'var(--accent-red)' : 'var(--accent-purple)';
+                    }
+                } else {
+                    document.getElementById('kpi-deuda-ebitda').textContent = '0.0';
+                    if (document.getElementById('bar-deuda-ebitda')) {
+                        document.getElementById('bar-deuda-ebitda').style.width = '100%';
+                        document.getElementById('bar-deuda-ebitda').style.background = 'var(--accent-green)';
+                    }
+                }
+
+                // Update charts data — 'capital' es la clave corta del capital_trabajo tras transformación en api.js
+                const recentCT = data.slice(-3).map(d => (d.capital || 0) / 1e6);
+                if (recentCT.some(v => v !== 0)) {
+                    const ctChart = Chart.getChart('chart-ct');
+                    if (ctChart) {
+                        ctChart.data.datasets[0].data = recentCT;
+                        ctChart.update();
+                    }
+                }
+
+                // Pilar 5: Estructura de Capital
+                // endeudamiento_total = Pasivo Total / Activo Total (0..1)
+                // estructura_deuda    = Deuda LP / Deuda Total (proporción bancaria vs total deuda)
+                const endTotal = l.endeudamiento_total || 0; // proporción de activos financiados por terceros
+                const propioRaw = 1 - endTotal;
+
+                // Si tenemos estructura_deuda, lo usamos para separar Bancos vs Proveedores
+                // estructura_deuda representa Deuda LP (bancaria) / Deuda Total
+                let bancoPct, proveedPct;
+                if (l.estructura_deuda !== undefined && l.estructura_deuda !== null) {
+                    bancoPct  = endTotal * l.estructura_deuda;
+                    proveedPct = endTotal * (1 - l.estructura_deuda);
+                } else {
+                    bancoPct  = endTotal * 0.5;
+                    proveedPct = endTotal * 0.5;
+                }
+                const propioPct = propioRaw;
+
+                const fmPct = v => (v * 100).toFixed(1) + '%';
+
+                // Barra apilada
+                const bb = document.getElementById('bar-fondeo-bancos');
+                const bp = document.getElementById('bar-fondeo-proveed');
+                const bpr = document.getElementById('bar-fondeo-propio');
+                if (bb) { bb.style.width = fmPct(bancoPct); bb.textContent = fmPct(bancoPct); }
+                if (bp) { bp.style.width = fmPct(proveedPct); bp.textContent = fmPct(proveedPct); }
+                if (bpr) { bpr.style.width = fmPct(propioPct); bpr.textContent = fmPct(propioPct); }
+
+                // Leyenda
+                if (document.getElementById('lbl-fondeo-bancos')) document.getElementById('lbl-fondeo-bancos').textContent = fmPct(bancoPct);
+                if (document.getElementById('lbl-fondeo-proveed')) document.getElementById('lbl-fondeo-proveed').textContent = fmPct(proveedPct);
+                if (document.getElementById('lbl-fondeo-propio'))  document.getElementById('lbl-fondeo-propio').textContent  = fmPct(propioPct);
+
+                // Estado de la Máquina
+                if (document.getElementById('val-terceros')) document.getElementById('val-terceros').textContent = fmPct(endTotal);
+                if (document.getElementById('val-propio'))   document.getElementById('val-propio').textContent   = fmPct(propioPct);
+            } else {
+                clearDashboard();
+            }
+
+            // Fetch AI Insights — mapeo completo por indicador_key
+            const insightsData = await DashboardAPI.getInsights(empresaId);
+            if (insightsData && insightsData.insights) {
+                // IDs de paneles compactos: solo texto corto
+                const compactIds = ['posicion-financiera-status', 'bolsillo-status'];
+
+                insightsData.insights.forEach(ins => {
+                    const key = ins.indicador_key;
+
+                    // --- Mapeo directo por indicador_key ---
+                    const directEl = document.getElementById(key);
+                    if (directEl) {
+                        if (compactIds.includes(key)) {
+                            // Panel compacto: etiqueta corta (ej: "SALUDABLE")
+                            directEl.textContent = ins.metodologia || 'Activo';
+                        } else if (key.startsWith('macro-')) {
+                            // Entorno económico: valor numérico
+                            directEl.textContent = ins.analisis_positivo;
+                        } else if (key === 'perfil-operativo') {
+                            // Descripción modelo de negocio
+                            directEl.textContent = ins.analisis_positivo;
+                        } else if (key.startsWith('action-')) {
+                            // Qué hacer hoy: recomendación
+                            directEl.textContent = ins.recomendacion;
+                        } else if (key.startsWith('insight-')) {
+                            // El CFO Dice: análisis positivo
+                            directEl.textContent = ins.analisis_positivo;
+                        }
+                    }
+
+                    // --- Indicador técnico: secEl por key + '-ai' ---
+                    const secEl = document.getElementById(`${key}-ai`);
+                    if (secEl) {
+                        secEl.textContent = ins.analisis_negativo || ins.analisis_positivo;
+                    }
+
+                    // --- Contexto financiero y diagnóstico ROE (IDs exactos) ---
+                    if (key === 'contexto-liquidez-ai') {
+                        const el = document.getElementById('contexto-liquidez-ai');
+                        if (el) el.textContent = ins.analisis_positivo;
+                    }
+                    if (key === 'impacto-cartera-ai') {
+                        const el = document.getElementById('impacto-cartera-ai');
+                        if (el) el.textContent = ins.analisis_positivo;
+                    }
+                    if (key === 'diagnostico-roe-ai') {
+                        const el = document.getElementById('diagnostico-roe-ai');
+                        if (el) el.textContent = ins.analisis_positivo;
+                    }
                 });
             }
-
-            function openSidebar() {
-                overlay.classList.remove('hidden');
-                setTimeout(() => overlay.classList.remove('opacity-0'), 10);
-                sidebar.classList.remove('translate-x-full');
-                closeBtn.focus();
-            }
-            function closeSidebar() {
-                overlay.classList.add('opacity-0');
-                sidebar.classList.add('translate-x-full');
-                setTimeout(() => overlay.classList.add('hidden'), 300);
-                btn.focus();
-            }
-
-            btn.addEventListener('click', openSidebar);
-            closeBtn.addEventListener('click', closeSidebar);
-            overlay.addEventListener('click', closeSidebar);
-
-            // Cerrar con Escape
-            document.addEventListener('keydown', e => {
-                if (e.key === 'Escape' && !sidebar.classList.contains('translate-x-full')) closeSidebar();
-            });
-
-            select.addEventListener('change', function () {
-                const idx = this.value;
-                if (idx === '' || typeof glossaryData === 'undefined') {
-                    placeholder.classList.remove('hidden');
-                    content.classList.add('hidden');
-                    return;
-                }
-                const item = glossaryData[parseInt(idx)];
-                if (item) {
-                    defEl.textContent = item.definicion;
-                    formEl.textContent = item.formula;
-                    margEl.textContent = item.margen;
-                    placeholder.classList.add('hidden');
-                    content.classList.remove('hidden');
-                }
-            });
-
-            document.addEventListener('DOMContentLoaded', () => {
-                if (typeof lucide !== 'undefined') lucide.createIcons();
-
-                // Ocultar header y nav si está en iframe
-                if (window.self !== window.top) {
-                    const header = document.getElementById('main-header');
-                    const nav = document.getElementById('main-nav');
-                    if (header) header.style.display = 'none';
-                    if (nav) nav.style.display = 'none';
-                }
-            });
-        })();
-    </script>
-
+        }
+    } catch (e) { 
+        console.warn('API connection error', e);
+    }
+});
+</script>
 </body>
-
 </html>

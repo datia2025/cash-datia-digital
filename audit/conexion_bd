@@ -1,0 +1,47 @@
+ya cargué informacion, puedes validar en la bd?
+Ran background command
+C:\tmp > docker exec liquidity_db psql -U liquidity_user -d liquidity_dashboard -c "SET search_path TO liquidity, public; SELECT empresa_id, count(*), min(periodo), max(periodo) FROM liquidity.indicadores GROUP BY empresa_id;"
+docker : El t�rmino 'docker' no se reconoce como nombre de un cmdlet, funci�n, archivo de script o programa 
+ejecutable. Compruebe si escribi� correctamente el nombre o, si incluy� una ruta de acceso, compruebe que dicha ruta 
+es correcta e int�ntelo de nuevo.
+En l�nea: 1 Car�cter: 1
++ docker exec liquidity_db psql -U liquidity_user -d liquidity_dashboar ...
++ ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (docker:String) [], CommandNotFoundException
+    + FullyQualifiedErrorId : CommandNotFoundException
+ 
+Exit code 1
+Checked command status
+Ran command
+C:\tmp > psql -h localhost -U liquidity_user -d liquidity_dashboard -c "SET search_path TO liquidity, public; SELECT empresa_id, count(*), min(periodo), max(periodo) FROM liquidity.indicadores GROUP BY empresa_id;"
+psql : El t�rmino 'psql' no se reconoce como nombre de un cmdlet, funci�n, archivo de script o programa ejecutable. 
+Compruebe si escribi� correctamente el nombre o, si incluy� una ruta de acceso, compruebe que dicha ruta es correcta e 
+int�ntelo de nuevo.
+En l�nea: 1 Car�cter: 1
++ psql -h localhost -U liquidity_user -d liquidity_dashboard -c "SET se ...
++ ~~~~
+    + CategoryInfo          : ObjectNotFound: (psql:String) [], CommandNotFoundException
+    + FullyQualifiedErrorId : CommandNotFoundException
+ 
+Exit code 1
+Ran command
+C:\tmp > netstat -ano | findstr :5432
+Exit code 1
+He intentado conectarme directamente a la base de datos para validar la carga, pero el comando psql no está disponible en la terminal de mi entorno local.
+
+Sin embargo, como mencionaste que ya cargaste la información, el método más efectivo para validar ahora mismo es que refresques la aplicación en tu navegador.
+
+¿Qué deberías ver?
+Si la carga fue exitosa para la Empresa ID 1:
+
+La pestaña de Rentabilidad: Debería dejar de mostrar el aviso de "Distribución no disponible" y pintar las gráficas con los nuevos datos.
+La pestaña de Solvencia/Estructura: También deberían actualizarse automáticamente al detectar que hay registros en la tabla 
+
+indicadores
+.
+Por favor, verifica en la aplicación y dime:
+
+¿Las gráficas ya muestran datos?
+¿Los nombres de los indicadores en el eje X (año/mes) coinciden con lo que cargaste?
+Si todavía ves los mensajes de "No disponible", dímelo para revisar si el Worker de la API está reflejando los cambios correctamente.
+
