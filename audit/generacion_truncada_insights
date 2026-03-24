@@ -1,0 +1,775 @@
+Las imágenes son muy claras:
+
+En Local (127.0.0.1): Ya tienes la versión "Lean Premium" con las cajas de colores (Verde, Naranja, Azul) y el texto largo de 2025 cargando perfectamente. Esto confirma que el código que escribimos funciona.
+En el Servidor (Producción): Sigue apareciendo el diseño antiguo y el mensaje "Diagnóstico No Disponible".
+¿Por qué sucede esto si ya hicimos el push y el build fue exitoso?
+El mensaje "Diagnóstico No Disponible" es el síntoma exacto que corregimos cambiando ins.year por ins.periodo_ano. Si el servidor sigue mostrándolo, hay tres posibilidades:
+
+Caché del Navegador (Lo más probable): Tu navegador tiene guardada la versión anterior de 
+
+app_rentabilidad.js
+.
+Prueba esto: Presiona Ctrl + F5 (o Cmd + Shift + R en Mac) mientras estás en la pestaña de producción para forzar la recarga de los archivos Javascript.
+Caché de Easypanel / Proxy: A veces el servidor tarda un par de minutos en "propagar" los nuevos archivos después del build.
+Reinicio de Contenedor: Aunque el build fue un éxito, asegúrate de que el servicio de Dashboard en Easypanel se haya reiniciado con la nueva imagen (sha256:224c...).
+Mi recomendación: Intenta primero la recarga forzada (Ctrl + F5). Si el problema persiste, revisaremos si el build de Easypanel realmente terminó de desplegarse.
+
+¿Cambia algo al forzar la recarga de caché en el navegador?
+
+
+Commit: feat(ui): sincronizar avances de insights y despliegue a produccion 
+##########################################
+### Download Github Archive Started...
+### Sat, 21 Mar 2026 21:23:35 GMT
+##########################################
+
+#0 building with "default" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 615B 0.0s done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/library/python:3.11-slim
+#2 DONE 0.8s
+
+#3 [internal] load .dockerignore
+#3 transferring context: 2B done
+#3 DONE 0.0s
+
+#4 [internal] load build context
+#4 transferring context: 112.35kB 0.0s done
+#4 DONE 0.0s
+
+#5 [1/7] FROM docker.io/library/python:3.11-slim@sha256:9358444059ed78e2975ada2c189f1c1a3144a5dab6f35bff8c981afb38946634
+#5 resolve docker.io/library/python:3.11-slim@sha256:9358444059ed78e2975ada2c189f1c1a3144a5dab6f35bff8c981afb38946634 0.0s done
+#5 sha256:9358444059ed78e2975ada2c189f1c1a3144a5dab6f35bff8c981afb38946634 10.37kB / 10.37kB done
+#5 sha256:16cb75beff0e104520a4bc4e98b08987b6978b82e37b81b87d786504e17579e7 1.75kB / 1.75kB done
+#5 sha256:e67db9b14d098500c534b3acb73f5503fad7eed29720b8870d12dadb98ae245b 5.48kB / 5.48kB done
+#5 DONE 0.2s
+
+#6 [2/7] WORKDIR /app
+#6 DONE 0.1s
+
+#7 [3/7] COPY worker/requirements.txt .
+#7 DONE 0.0s
+
+#8 [4/7] RUN pip install --no-cache-dir -r requirements.txt
+#8 4.216 Collecting fastapi==0.109.0 (from -r requirements.txt (line 1))
+#8 4.271   Downloading fastapi-0.109.0-py3-none-any.whl.metadata (24 kB)
+#8 4.366 Collecting uvicorn==0.27.0 (from uvicorn[standard]==0.27.0->-r requirements.txt (line 2))
+#8 4.376   Downloading uvicorn-0.27.0-py3-none-any.whl.metadata (6.4 kB)
+#8 4.442 Collecting httpx==0.27.0 (from -r requirements.txt (line 3))
+#8 4.453   Downloading httpx-0.27.0-py3-none-any.whl.metadata (7.2 kB)
+#8 4.502 Collecting openpyxl==3.1.2 (from -r requirements.txt (line 4))
+#8 4.513   Downloading openpyxl-3.1.2-py2.py3-none-any.whl.metadata (2.5 kB)
+#8 4.919 Collecting pydantic==2.5.0 (from -r requirements.txt (line 5))
+#8 4.929   Downloading pydantic-2.5.0-py3-none-any.whl.metadata (174 kB)
+#8 4.949      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 174.6/174.6 kB 12.1 MB/s eta 0:00:00
+#8 5.024 Collecting python-multipart==0.0.6 (from -r requirements.txt (line 6))
+#8 5.034   Downloading python_multipart-0.0.6-py3-none-any.whl.metadata (2.5 kB)
+#8 5.136 Collecting asyncpg==0.29.0 (from -r requirements.txt (line 7))
+#8 5.147   Downloading asyncpg-0.29.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (4.4 kB)
+#8 5.536 Collecting pandas==2.2.0 (from -r requirements.txt (line 8))
+#8 5.546   Downloading pandas-2.2.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (19 kB)
+#8 5.704 Collecting starlette<0.36.0,>=0.35.0 (from fastapi==0.109.0->-r requirements.txt (line 1))
+#8 5.715   Downloading starlette-0.35.1-py3-none-any.whl.metadata (5.8 kB)
+#8 5.762 Collecting typing-extensions>=4.8.0 (from fastapi==0.109.0->-r requirements.txt (line 1))
+#8 5.772   Downloading typing_extensions-4.15.0-py3-none-any.whl.metadata (3.3 kB)
+#8 5.831 Collecting click>=7.0 (from uvicorn==0.27.0->uvicorn[standard]==0.27.0->-r requirements.txt (line 2))
+#8 5.849   Downloading click-8.3.1-py3-none-any.whl.metadata (2.6 kB)
+#8 5.877 Collecting h11>=0.8 (from uvicorn==0.27.0->uvicorn[standard]==0.27.0->-r requirements.txt (line 2))
+#8 5.888   Downloading h11-0.16.0-py3-none-any.whl.metadata (8.3 kB)
+#8 5.967 Collecting anyio (from httpx==0.27.0->-r requirements.txt (line 3))
+#8 5.976   Downloading anyio-4.12.1-py3-none-any.whl.metadata (4.3 kB)
+#8 6.019 Collecting certifi (from httpx==0.27.0->-r requirements.txt (line 3))
+#8 6.029   Downloading certifi-2026.2.25-py3-none-any.whl.metadata (2.5 kB)
+#8 6.079 Collecting httpcore==1.* (from httpx==0.27.0->-r requirements.txt (line 3))
+#8 6.088   Downloading httpcore-1.0.9-py3-none-any.whl.metadata (21 kB)
+#8 6.124 Collecting idna (from httpx==0.27.0->-r requirements.txt (line 3))
+#8 6.136   Downloading idna-3.11-py3-none-any.whl.metadata (8.4 kB)
+#8 6.166 Collecting sniffio (from httpx==0.27.0->-r requirements.txt (line 3))
+#8 6.175   Downloading sniffio-1.3.1-py3-none-any.whl.metadata (3.9 kB)
+#8 6.202 Collecting et-xmlfile (from openpyxl==3.1.2->-r requirements.txt (line 4))
+#8 6.214   Downloading et_xmlfile-2.0.0-py3-none-any.whl.metadata (2.7 kB)
+#8 6.259 Collecting annotated-types>=0.4.0 (from pydantic==2.5.0->-r requirements.txt (line 5))
+#8 6.270   Downloading annotated_types-0.7.0-py3-none-any.whl.metadata (15 kB)
+#8 8.992 Collecting pydantic-core==2.14.1 (from pydantic==2.5.0->-r requirements.txt (line 5))
+#8 9.002   Downloading pydantic_core-2.14.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (6.5 kB)
+#8 9.065 Collecting async-timeout>=4.0.3 (from asyncpg==0.29.0->-r requirements.txt (line 7))
+#8 9.077   Downloading async_timeout-5.0.1-py3-none-any.whl.metadata (5.1 kB)
+#8 9.566 Collecting numpy<2,>=1.23.2 (from pandas==2.2.0->-r requirements.txt (line 8))
+#8 9.578   Downloading numpy-1.26.4-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (61 kB)
+#8 9.581      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 61.0/61.0 kB 149.3 MB/s eta 0:00:00
+#8 9.635 Collecting python-dateutil>=2.8.2 (from pandas==2.2.0->-r requirements.txt (line 8))
+#8 9.645   Downloading python_dateutil-2.9.0.post0-py2.py3-none-any.whl.metadata (8.4 kB)
+#8 9.746 Collecting pytz>=2020.1 (from pandas==2.2.0->-r requirements.txt (line 8))
+#8 9.755   Downloading pytz-2026.1.post1-py2.py3-none-any.whl.metadata (22 kB)
+#8 9.796 Collecting tzdata>=2022.7 (from pandas==2.2.0->-r requirements.txt (line 8))
+#8 9.806   Downloading tzdata-2025.3-py2.py3-none-any.whl.metadata (1.4 kB)
+#8 9.906 Collecting httptools>=0.5.0 (from uvicorn[standard]==0.27.0->-r requirements.txt (line 2))
+#8 9.917   Downloading httptools-0.7.1-cp311-cp311-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl.metadata (3.5 kB)
+#8 9.962 Collecting python-dotenv>=0.13 (from uvicorn[standard]==0.27.0->-r requirements.txt (line 2))
+#8 9.971   Downloading python_dotenv-1.2.2-py3-none-any.whl.metadata (27 kB)
+#8 10.06 Collecting pyyaml>=5.1 (from uvicorn[standard]==0.27.0->-r requirements.txt (line 2))
+#8 10.07   Downloading pyyaml-6.0.3-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (2.4 kB)
+#8 10.39 Collecting uvloop!=0.15.0,!=0.15.1,>=0.14.0 (from uvicorn[standard]==0.27.0->-r requirements.txt (line 2))
+#8 10.40   Downloading uvloop-0.22.1-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (4.9 kB)
+#8 10.60 Collecting watchfiles>=0.13 (from uvicorn[standard]==0.27.0->-r requirements.txt (line 2))
+#8 10.62   Downloading watchfiles-1.1.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (4.9 kB)
+#8 10.85 Collecting websockets>=10.4 (from uvicorn[standard]==0.27.0->-r requirements.txt (line 2))
+#8 10.86   Downloading websockets-16.0-cp311-cp311-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl.metadata (6.8 kB)
+#8 10.96 Collecting six>=1.5 (from python-dateutil>=2.8.2->pandas==2.2.0->-r requirements.txt (line 8))
+#8 10.97   Downloading six-1.17.0-py2.py3-none-any.whl.metadata (1.7 kB)
+#8 11.15 Downloading fastapi-0.109.0-py3-none-any.whl (92 kB)
+#8 11.17    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 92.0/92.0 kB 55.0 MB/s eta 0:00:00
+#8 11.18 Downloading uvicorn-0.27.0-py3-none-any.whl (60 kB)
+#8 11.18    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 60.6/60.6 kB 175.9 MB/s eta 0:00:00
+#8 11.19 Downloading httpx-0.27.0-py3-none-any.whl (75 kB)
+#8 11.20    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 75.6/75.6 kB 175.6 MB/s eta 0:00:00
+#8 11.21 Downloading openpyxl-3.1.2-py2.py3-none-any.whl (249 kB)
+#8 11.22    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 250.0/250.0 kB 25.8 MB/s eta 0:00:00
+#8 11.23 Downloading pydantic-2.5.0-py3-none-any.whl (407 kB)
+#8 11.25    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 407.5/407.5 kB 50.3 MB/s eta 0:00:00
+#8 11.26 Downloading python_multipart-0.0.6-py3-none-any.whl (45 kB)
+#8 11.27    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 45.7/45.7 kB 22.8 MB/s eta 0:00:00
+#8 11.28 Downloading asyncpg-0.29.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (2.8 MB)
+#8 11.36    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.8/2.8 MB 34.8 MB/s eta 0:00:00
+#8 11.37 Downloading pandas-2.2.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (13.0 MB)
+#8 11.72    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 13.0/13.0 MB 38.1 MB/s eta 0:00:00
+#8 11.73 Downloading httpcore-1.0.9-py3-none-any.whl (78 kB)
+#8 11.75    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 78.8/78.8 kB 25.5 MB/s eta 0:00:00
+#8 11.76 Downloading pydantic_core-2.14.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (2.1 MB)
+#8 11.82    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.1/2.1 MB 37.8 MB/s eta 0:00:00
+#8 11.83 Downloading annotated_types-0.7.0-py3-none-any.whl (13 kB)
+#8 11.84 Downloading async_timeout-5.0.1-py3-none-any.whl (6.2 kB)
+#8 11.85 Downloading click-8.3.1-py3-none-any.whl (108 kB)
+#8 11.86    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 108.3/108.3 kB 34.6 MB/s eta 0:00:00
+#8 11.87 Downloading h11-0.16.0-py3-none-any.whl (37 kB)
+#8 11.88 Downloading httptools-0.7.1-cp311-cp311-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (456 kB)
+#8 11.90    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 456.6/456.6 kB 47.5 MB/s eta 0:00:00
+#8 11.92 Downloading numpy-1.26.4-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (18.3 MB)
+#8 12.44    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 18.3/18.3 MB 39.3 MB/s eta 0:00:00
+#8 12.45 Downloading python_dateutil-2.9.0.post0-py2.py3-none-any.whl (229 kB)
+#8 12.46    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 229.9/229.9 kB 52.3 MB/s eta 0:00:00
+#8 12.47 Downloading python_dotenv-1.2.2-py3-none-any.whl (22 kB)
+#8 12.48 Downloading pytz-2026.1.post1-py2.py3-none-any.whl (510 kB)
+#8 12.50    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 510.5/510.5 kB 30.4 MB/s eta 0:00:00
+#8 12.52 Downloading pyyaml-6.0.3-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (806 kB)
+#8 12.54    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 806.6/806.6 kB 38.3 MB/s eta 0:00:00
+#8 12.55 Downloading starlette-0.35.1-py3-none-any.whl (71 kB)
+#8 12.56    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 71.1/71.1 kB 42.9 MB/s eta 0:00:00
+#8 12.57 Downloading anyio-4.12.1-py3-none-any.whl (113 kB)
+#8 12.58    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 113.6/113.6 kB 19.8 MB/s eta 0:00:00
+#8 12.59 Downloading idna-3.11-py3-none-any.whl (71 kB)
+#8 12.60    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 71.0/71.0 kB 41.2 MB/s eta 0:00:00
+#8 12.61 Downloading typing_extensions-4.15.0-py3-none-any.whl (44 kB)
+#8 12.62    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 44.6/44.6 kB 36.8 MB/s eta 0:00:00
+#8 12.63 Downloading tzdata-2025.3-py2.py3-none-any.whl (348 kB)
+#8 12.64    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 348.5/348.5 kB 38.8 MB/s eta 0:00:00
+#8 12.65 Downloading uvloop-0.22.1-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (3.8 MB)
+#8 12.76    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3.8/3.8 MB 36.7 MB/s eta 0:00:00
+#8 12.77 Downloading watchfiles-1.1.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (456 kB)
+#8 12.78    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 456.1/456.1 kB 41.0 MB/s eta 0:00:00
+#8 12.79 Downloading websockets-16.0-cp311-cp311-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (184 kB)
+#8 12.80    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 184.6/184.6 kB 29.6 MB/s eta 0:00:00
+#8 12.82 Downloading certifi-2026.2.25-py3-none-any.whl (153 kB)
+#8 12.83    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 153.7/153.7 kB 27.9 MB/s eta 0:00:00
+#8 12.86 Downloading et_xmlfile-2.0.0-py3-none-any.whl (18 kB)
+#8 12.87 Downloading sniffio-1.3.1-py3-none-any.whl (10 kB)
+#8 12.88 Downloading six-1.17.0-py2.py3-none-any.whl (11 kB)
+#8 13.43 Installing collected packages: pytz, websockets, uvloop, tzdata, typing-extensions, sniffio, six, pyyaml, python-multipart, python-dotenv, numpy, idna, httptools, h11, et-xmlfile, click, certifi, async-timeout, annotated-types, uvicorn, python-dateutil, pydantic-core, openpyxl, httpcore, asyncpg, anyio, watchfiles, starlette, pydantic, pandas, httpx, fastapi
+#8 32.69 Successfully installed annotated-types-0.7.0 anyio-4.12.1 async-timeout-5.0.1 asyncpg-0.29.0 certifi-2026.2.25 click-8.3.1 et-xmlfile-2.0.0 fastapi-0.109.0 h11-0.16.0 httpcore-1.0.9 httptools-0.7.1 httpx-0.27.0 idna-3.11 numpy-1.26.4 openpyxl-3.1.2 pandas-2.2.0 pydantic-2.5.0 pydantic-core-2.14.1 python-dateutil-2.9.0.post0 python-dotenv-1.2.2 python-multipart-0.0.6 pytz-2026.1.post1 pyyaml-6.0.3 six-1.17.0 sniffio-1.3.1 starlette-0.35.1 typing-extensions-4.15.0 tzdata-2025.3 uvicorn-0.27.0 uvloop-0.22.1 watchfiles-1.1.1 websockets-16.0
+#8 32.69 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv
+#8 32.83 
+#8 32.83 [notice] A new release of pip is available: 24.0 -> 26.0.1
+#8 32.83 [notice] To update, run: pip install --upgrade pip
+#8 DONE 34.4s
+
+#9 [5/7] COPY worker/main.py .
+#9 DONE 0.0s
+
+#10 [6/7] COPY worker/calculate_indicators.py .
+#10 DONE 0.0s
+
+#11 [7/7] RUN mkdir -p /app/workdir
+#11 DONE 0.1s
+
+#12 exporting to image
+#12 exporting layers
+#12 exporting layers 2.1s done
+#12 writing image sha256:b6196679f4814accf20f0e85c6b9da6cd10e11517b6862d75bedfa5d6857584d done
+#12 naming to docker.io/easypanel/datia/liquidity-worker done
+#12 DONE 2.1s
+##########################################
+### Success
+### Sat, 21 Mar 2026 21:24:16 GMT
+##########################################
+
+\LiquidityDashboardWorking directory: c:\Users\gutie\OneDrive\FERFILES\DATIA\PROPUESTAS\COLOMBIA\MASCONSULTA\LiquidityDashboard > python /tmp/gen_table.py
+C:\tmp\gen_table.py:35: SyntaxWarning: invalid escape sequence '\|'
+  pos = ins['analisis_positivo'].replace('|', '\|').replace('\n', ' ').replace('\r', ' ')
+C:\tmp\gen_table.py:36: SyntaxWarning: invalid escape sequence '\|'
+  neg = ins['analisis_negativo'].replace('|', '\|').replace('\n', ' ').replace('\r', ' ')
+C:\tmp\gen_table.py:37: SyntaxWarning: invalid escape sequence '\|'
+  rec = ins['recomendacion'].replace('|', '\|').replace('\n', ' ').replace('\r', ' ')
+| A�o | Periodo | Diagn�stico Positivo | Diagn�stico Negativo | Recomendaci�n Estrat�gica |
+| :--- | :--- | :--- | :--- | :--- |
+| 2025 | **Annual** | A pesar de la fuerte recesion de margenes que viviste en 2025, rescatas una base operativa probada en las peores condiciones posibles. Lograste mantener una operacion minima viable que te permitio conservar tus relaciones mas valiosas con el mercado, demostrando que tu empresa tiene una resiliencia emocional y tecnica que muchos competidores envidiarian hoy. | El cierre anual de 2025 es un crudo recordatorio de la fragilidad de los margenes. La caida libre de la utilidad en el segundo semestre borro las ganancias del inicio de ano, terminando con un saldo negativo que exige cambios estructurales inmediatos. Tu margen neto promedio anual esta muy por debajo de los estandares de salud financiera del sector. | Para el proximo ciclo fiscal, MAS CONSULTA debe renacer bajo una estructura de costos 100% variables. Elimina cualquier gasto fijo que no puedas justificar con ingresos recurrentes este mismo trimestre. Debes enfocarte en proyectos de alta rentabilidad y baja complejidad operativa para sanear tus cuentas de resultados en el corto plazo. |
+| 2024 | **Annual** | El ano 2024 pasara a la historia de tu empresa como el epicentro del exito y la rentabilidad absoluta. Lograste revertir el desastre del periodo anterior, multiplicando tu utilidad neta en tiempo record y alcanzando niveles de EBITDA superiores a cualquier proyeccion optimista. Has demostrado una maestria en el escalamiento de servicios de valor agregado. | La mayor amenaza de este exitoso 2024 es la complacencia financiera. Observamos que al final del ano, los costos operativos comenzaron a subir ligeramente debido a la abundancia de recursos, lo que podria generar ineficiencias ocultas que solo se notaran cuando el volumen de ventas baje de su pico actual, afectando tu margen neto futuro. | Aprovecha la enorme utilidad generada en 2024 para blindar tecnicamente tu operacion. Invierte en capacitacion de tu equipo para elevar el ticket promedio de consultoria y asegura que el 30% de las ganancias se mantengan como reserva de liquidez inmediata. Has ganado el juego este ano, ahora la meta es la sostenibilidad de este margen. |
+| 2023 | **Annual** | Al evaluar el accidentado ciclo de 2023, destaca tu capacidad de sostener la estructura de consultoria a pesar de que el mercado no respondio como esperabas. Lograste evitar el cierre total de operaciones gracias a una gestion de crisis que mantuvo el nombre de MAS CONSULTA activo, dejando una semilla de experiencia que sera la base de tu proxima transformacion administrativa. | El balance anual de 2023 es una senal de alerta maxima con perdidas acumuladas que drenaron tu caja mes tras mes. Tu margen neto promedio fue negativo, indicando que el modelo de negocio estaba totalmente fuera de equilibrio operativo durante este periodo fiscal, viviendo principalmente de inyecciones de capital externas o ahorros previos. | Utiliza las lecciones dolorosas de 2023 para no repetir los mismos errores de sobre-estructura en el futuro. Debes ser implacable en la eliminacion de cualquier gasto que no este directamente vinculado a la generacion de facturacion neta. Tu primera prioridad para el nuevo ano es alcanzar el punto de equilibrio operativo antes del primer semestre. |
+Exit code 0
+
+
+Ran background command
+…\LiquidityDashboard > python -c "import urllib.request, json; resp = urllib.request.urlopen('https://datia-liquidity-worker.coaba7.easypanel.host/api/insights/3104?modulo=rentabilidad'); data = json.loads(resp.read().decode('utf-8')); print(len(data['insights'])); [print(i['indicador_key'], i.get('metodologia')) for i in data['insights']]"
+<truncated 385 lines>
+roa_2Q Protocolo Trimestral Certificado - 2Q
+roa_3Q Protocolo Trimestral Certificado - 3Q
+roa_3Q Protocolo Trimestral Certificado - 3Q
+roa_3Q Protocolo Trimestral Certificado - 3Q
+roa_4Q Protocolo Trimestral Certificado - 4Q
+roa_4Q Protocolo Trimestral Certificado - 4Q
+roa_4Q Protocolo Trimestral Certificado - 4Q
+roe Protocolo 50 Palabras - Lenguaje Gerencial (Simplified)
+roe_1Q Protocolo Trimestral Certificado - 1Q
+roe_1Q Protocolo Trimestral Certificado - 1Q
+roe_1Q Protocolo Trimestral Certificado - 1Q
+roe_2Q Protocolo Trimestral Certificado - 2Q
+roe_2Q Protocolo Trimestral Certificado - 2Q
+roe_2Q Protocolo Trimestral Certificado - 2Q
+roe_3Q Protocolo Trimestral Certificado - 3Q
+roe_3Q Protocolo Trimestral Certificado - 3Q
+roe_3Q Protocolo Trimestral Certificado - 3Q
+roe_4Q Protocolo Trimestral Certificado - 4Q
+roe_4Q Protocolo Trimestral Certificado - 4Q
+roe_4Q Protocolo Trimestral Certificado - 4Q
+rotacion_activos Bloque B - Auditor�a Anual 2023
+rotacion_activos Bloque B - Auditor�a Anual 2024
+rotacion_activos Bloque B - Auditor�a Anual 2025
+rotacion_activos_1Q Bloque C - Ciclo Trimestral 2023 - 1Q
+rotacion_activos_1Q Bloque C - Ciclo Trimestral 2024 - 1Q
+rotacion_activos_1Q Bloque C - Ciclo Trimestral 2025 - 1Q
+rotacion_activos_2Q Bloque C - Ciclo Trimestral 2023 - 2Q
+rotacion_activos_2Q Bloque C - Ciclo Trimestral 2024 - 2Q
+rotacion_activos_2Q Bloque C - Ciclo Trimestral 2025 - 2Q
+rotacion_activos_3Q Bloque C - Ciclo Trimestral 2023 - 3Q
+rotacion_activos_3Q Bloque C - Ciclo Trimestral 2024 - 3Q
+rotacion_activos_3Q Bloque C - Ciclo Trimestral 2025 - 3Q
+rotacion_activos_4Q Bloque C - Ciclo Trimestral 2023 - 4Q
+rotacion_activos_4Q Bloque C - Ciclo Trimestral 2024 - 4Q
+rotacion_activos_4Q Bloque C - Ciclo Trimestral 2025 - 4Q
+rotacion_activos_M1 Bloque D - Comparativo Mensual Interanual - Enero
+rotacion_activos_M10 Bloque D - Comparativo Mensual Interanual - Octubre
+rotacion_activos_M11 Bloque D - Comparativo Mensual Interanual - Noviembre
+rotacion_activos_M12 Bloque D - Comparativo Mensual Interanual - Diciembre
+rotacion_activos_M2 Bloque D - Comparativo Mensual Interanual - Febrero
+rotacion_activos_M3 Bloque D - Comparativo Mensual Interanual - Marzo
+rotacion_activos_M4 Bloque D - Comparativo Mensual Interanual - Abril
+rotacion_activos_M5 Bloque D - Comparativo Mensual Interanual - Mayo
+rotacion_activos_M6 Bloque D - Comparativo Mensual Interanual - Junio
+rotacion_activos_M7 Bloque D - Comparativo Mensual Interanual - Julio
+rotacion_activos_M8 Bloque D - Comparativo Mensual Interanual - Agosto
+rotacion_activos_M9 Bloque D - Comparativo Mensual Interanual - Septiembre
+rotacion_cartera Bloque B - Auditor�a Anual 2023
+rotacion_cartera Bloque B - Auditor�a Anual 2024
+rotacion_cartera Bloque B - Auditor�a Anual 2025
+rotacion_cartera_1Q Bloque C - Ciclo Trimestral 2023 - 1Q
+rotacion_cartera_1Q Bloque C - Ciclo Trimestral 2024 - 1Q
+rotacion_cartera_1Q Bloque C - Ciclo Trimestral 2025 - 1Q
+rotacion_cartera_2Q Bloque C - Ciclo Trimestral 2023 - 2Q
+rotacion_cartera_2Q Bloque C - Ciclo Trimestral 2024 - 2Q
+rotacion_cartera_2Q Bloque C - Ciclo Trimestral 2025 - 2Q
+rotacion_cartera_3Q Bloque C - Ciclo Trimestral 2023 - 3Q
+rotacion_cartera_3Q Bloque C - Ciclo Trimestral 2024 - 3Q
+rotacion_cartera_3Q Bloque C - Ciclo Trimestral 2025 - 3Q
+rotacion_cartera_4Q Bloque C - Ciclo Trimestral 2023 - 4Q
+rotacion_cartera_4Q Bloque C - Ciclo Trimestral 2024 - 4Q
+rotacion_cartera_4Q Bloque C - Ciclo Trimestral 2025 - 4Q
+rotacion_cartera_M1 Bloque D - Comparativo Mensual Interanual - Enero
+rotacion_cartera_M10 Bloque D - Comparativo Mensual Interanual - Octubre
+rotacion_cartera_M11 Bloque D - Comparativo Mensual Interanual - Noviembre
+rotacion_cartera_M12 Bloque D - Comparativo Mensual Interanual - Diciembre
+rotacion_cartera_M2 Bloque D - Comparativo Mensual Interanual - Febrero
+rotacion_cartera_M3 Bloque D - Comparativo Mensual Interanual - Marzo
+rotacion_cartera_M4 Bloque D - Comparativo Mensual Interanual - Abril
+rotacion_cartera_M5 Bloque D - Comparativo Mensual Interanual - Mayo
+rotacion_cartera_M6 Bloque D - Comparativo Mensual Interanual - Junio
+rotacion_cartera_M7 Bloque D - Comparativo Mensual Interanual - Julio
+rotacion_cartera_M8 Bloque D - Comparativo Mensual Interanual - Agosto
+rotacion_cartera_M9 Bloque D - Comparativo Mensual Interanual - Septiembre
+rotacion_inventarios Bloque B - Auditor�a Anual 2023
+rotacion_inventarios Bloque B - Auditor�a Anual 2024
+rotacion_inventarios Bloque B - Auditor�a Anual 2025
+rotacion_inventarios_1Q Bloque C - Ciclo Trimestral 2023 - 1Q
+rotacion_inventarios_1Q Bloque C - Ciclo Trimestral 2024 - 1Q
+rotacion_inventarios_1Q Bloque C - Ciclo Trimestral 2025 - 1Q
+rotacion_inventarios_2Q Bloque C - Ciclo Trimestral 2023 - 2Q
+rotacion_inventarios_2Q Bloque C - Ciclo Trimestral 2024 - 2Q
+rotacion_inventarios_2Q Bloque C - Ciclo Trimestral 2025 - 2Q
+rotacion_inventarios_3Q Bloque C - Ciclo Trimestral 2023 - 3Q
+rotacion_inventarios_3Q Bloque C - Ciclo Trimestral 2024 - 3Q
+rotacion_inventarios_3Q Bloque C - Ciclo Trimestral 2025 - 3Q
+rotacion_inventarios_4Q Bloque C - Ciclo Trimestral 2023 - 4Q
+rotacion_inventarios_4Q Bloque C - Ciclo Trimestral 2024 - 4Q
+rotacion_inventarios_4Q Bloque C - Ciclo Trimestral 2025 - 4Q
+rotacion_inventarios_M1 Bloque D - Comparativo Mensual Interanual - Enero
+rotacion_inventarios_M10 Bloque D - Comparativo Mensual Interanual - Octubre
+rotacion_inventarios_M11 Bloque D - Comparativo Mensual Interanual - Noviembre
+rotacion_inventarios_M12 Bloque D - Comparativo Mensual Interanual - Diciembre
+rotacion_inventarios_M2 Bloque D - Comparativo Mensual Interanual - Febrero
+rotacion_inventarios_M3 Bloque D - Comparativo Mensual Interanual - Marzo
+rotacion_inventarios_M4 Bloque D - Comparativo Mensual Interanual - Abril
+rotacion_inventarios_M5 Bloque D - Comparativo Mensual Interanual - Mayo
+rotacion_inventarios_M6 Bloque D - Comparativo Mensual Interanual - Junio
+rotacion_inventarios_M7 Bloque D - Comparativo Mensual Interanual - Julio
+rotacion_inventarios_M8 Bloque D - Comparativo Mensual Interanual - Agosto
+rotacion_inventarios_M9 Bloque D - Comparativo Mensual Interanual - Septiembre
+rotacion_proveedores Bloque B - Auditor�a Anual 2023
+rotacion_proveedores Bloque B - Auditor�a Anual 2024
+rotacion_proveedores Bloque B - Auditor�a Anual 2025
+rotacion_proveedores_1Q Bloque C - Ciclo Trimestral 2023 - 1Q
+rotacion_proveedores_1Q Bloque C - Ciclo Trimestral 2024 - 1Q
+rotacion_proveedores_1Q Bloque C - Ciclo Trimestral 2025 - 1Q
+rotacion_proveedores_2Q Bloque C - Ciclo Trimestral 2023 - 2Q
+rotacion_proveedores_2Q Bloque C - Ciclo Trimestral 2024 - 2Q
+rotacion_proveedores_2Q Bloque C - Ciclo Trimestral 2025 - 2Q
+rotacion_proveedores_3Q Bloque C - Ciclo Trimestral 2023 - 3Q
+rotacion_proveedores_3Q Bloque C - Ciclo Trimestral 2024 - 3Q
+rotacion_proveedores_3Q Bloque C - Ciclo Trimestral 2025 - 3Q
+rotacion_proveedores_4Q Bloque C - Ciclo Trimestral 2023 - 4Q
+rotacion_proveedores_4Q Bloque C - Ciclo Trimestral 2024 - 4Q
+rotacion_proveedores_4Q Bloque C - Ciclo Trimestral 2025 - 4Q
+rotacion_proveedores_M1 Bloque D - Comparativo Mensual Interanual - Enero
+rotacion_proveedores_M10 Bloque D - Comparativo Mensual Interanual - Octubre
+rotacion_proveedores_M11 Bloque D - Comparativo Mensual Interanual - Noviembre
+rotacion_proveedores_M12 Bloque D - Comparativo Mensual Interanual - Diciembre
+rotacion_proveedores_M2 Bloque D - Comparativo Mensual Interanual - Febrero
+rotacion_proveedores_M3 Bloque D - Comparativo Mensual Interanual - Marzo
+rotacion_proveedores_M4 Bloque D - Comparativo Mensual Interanual - Abril
+rotacion_proveedores_M5 Bloque D - Comparativo Mensual Interanual - Mayo
+rotacion_proveedores_M6 Bloque D - Comparativo Mensual Interanual - Junio
+rotacion_proveedores_M7 Bloque D - Comparativo Mensual Interanual - Julio
+rotacion_proveedores_M8 Bloque D - Comparativo Mensual Interanual - Agosto
+rotacion_proveedores_M9 Bloque D - Comparativo Mensual Interanual - Septiembre
+solvencia Protocolo 50 Palabras - Lenguaje Gerencial (Simplified)
+Exit code 0
+Checked command status
+
+
+Ran background command
+…\LiquidityDashboard > python -c "import urllib.request, json; resp = urllib.request.urlopen('https://datia-liquidity-worker.coaba7.easypanel.host/api/insights/3104?modulo=rentabilidad'); data = json.loads(resp.read().decode('utf-8')); keys = set([i['indicador_key'] for i in data['insights'] if 'rentabilidad' in i['indicador_key'].lower()]); print(keys)"
+{'insight-rentabilidad-ai', 'rentabilidad', 'action-rentabilidad'}
+Exit code 0
+Checked command status
+
+
+Ran background command
+…\LiquidityDashboard > python -c "import urllib.request, json; resp = urllib.request.urlopen('https://datia-liquidity-worker.coaba7.easypanel.host/api/insights/3104?modulo=rentabilidad'); data = json.loads(resp.read().decode('utf-8')); r = [(i['periodo_ano'], i.get('metodologia')) for i in data['insights'] if i['indicador_key'] == 'insight-rentabilidad-ai']; [print(x) for x in r]"
+(2023, 'Bloque A - Rentabilidad - Annual')
+(2024, 'Bloque A - Rentabilidad - Annual')
+(2025, 'Bloque A - Rentabilidad - Annual')
+Exit code 0
+Checked command status
+
+
+Ran background command
+…\LiquidityDashboard > python -c "import urllib.request, json; resp = urllib.request.urlopen('https://datia-liquidity-worker.coaba7.easypanel.host/api/insights/3104?modulo=rentabilidad'); data = json.loads(resp.read().decode('utf-8')); r = [(i['periodo_ano'], i.get('metodologia')) for i in data['insights'] if i['indicador_key'] == 'rentabilidad']; [print(x) for x in r]"
+(2025, 'Protocolo 50 Palabras - Lenguaje Gerencial (Simplified)')
+Exit code 0
+Checked command status
+Analyzed
+
+
+Analyzed
+Analyzing API Endpoint
+
+I've been meticulously analyzing the /api/insights POST endpoint, specifically lines 901-950. My deep dive uncovered a critical finding: the code appears to delete and then insert data. Line 929 highlights this, specifically handling when periodo_mes is not in the production table. I plan to dig into the consequences of this delete/insert approach.
+
+Clarifying Data Dependencies
+
+I've zeroed in on the implications of the delete/insert pattern. My analysis reveals that the insights_ai table uses empresa_id, indicador_key, and periodo_ano as unique keys. This means any new period essentially overwrites the prior data for that year. I now see how submitting quarterly data for 2025 wipes out any previously submitted annual data. I'm focusing on either the database schema or injection fixes.
+
+Investigating Data Retrieval Logic
+
+I'm now diving into the data retrieval process, questioning how the dashboard displays various period granularities when the database stores only annual insights. My investigation of app_rentabilidad.js and the get_insights API call (lines 1076-1107) reveals they both rely solely on periodo_ano. This limitation clashes with the user's expectation of retrieving multiple insights per year. I'm scrutinizing the database schema, especially the indicadores vs. insights_ai tables, to understand the relationship between periodo_mes and the DELETE query's WHERE clause. This also makes me look into the indicador_key.
+
+Ran background command
+…\LiquidityDashboard > python -c "import urllib.request, json; resp = urllib.request.urlopen('https://datia-liquidity-worker.coaba7.easypanel.host/api/insights/3104?modulo=rentabilidad'); data = json.loads(resp.read().decode('utf-8')); print(data['insights'][0].keys())"
+dict_keys(['id', 'empresa_id', 'indicador_key', 'periodo_ano', 'tipo', 'analisis_positivo', 'analisis_negativo', 'recomendacion', 'metodologia', 'generado_por', 'created_at', 'updated_at'])
+Exit code 0
+Checked command status
+Clarifying Key Relationships
+
+I've confirmed the insights_ai table lacks a periodo_mes column. This absence is pivotal. It implies that for a given (empresa_id, indicador_key, periodo_ano) combination, only a single insight can be recorded. This simplifies the data structure significantly.
+
+Analyzing Data Integrity
+
+I'm now focusing on how app_rentabilidad.js attempts to handle quarterly data. It seems to use the metodologia field for filtering. However, the database design in worker/main.py is problematic. The DELETE and INSERT logic, due to the missing periodo_mes column, overwrites any existing insights for the same (empresa_id, indicador_key, periodo_ano). This is clearly inconsistent with the need for 15 records as dictated by the protocol, specifically for quarterly reporting. The current implementation is destructive, and fundamentally incompatible.
+
+Investigating Potential Data Conflicts
+
+I'm now grappling with the implications of the database design. Specifically, the fact that only three insight keys are being used: 'insight-rentabilidad-ai', 'rentabilidad', and 'action-rentabilidad', in combination with only the year and company. It means that, for a given company and year, I'm limited to three records. This limitation directly conflicts with the user's desire for 15 records per protocol. There's also no existing periodo_mes column, as confirmed by my recent tests. This seems like a potential bug that I could address. But, I need explicit permission before altering the schema.
+
+Analyzed
+Analyzing Code Line
+
+I'm currently focused on app_rentabilidad.js, specifically line 161. I'm trying to understand the conditional logic used to filter data based on year. It looks like it's checking for targetYear against both ins.year and ins.periodo_ano. I need to figure out why this dual-check is necessary.
+
+Identifying the Root Cause
+
+I've made a breakthrough. I realized the frontend code, specifically app_rentabilidad.js, is expecting a period_key that isn't present in the production database's insights_ai table. My initial hunch was that the getInsights endpoint or a worker function was returning this key, but the evidence is pointing to a frontend bug. It appears the code is making an assumption that doesn't hold true in the production environment.
+
+Unraveling Data Consistency
+
+I've hit another snag. While the database does have the expected column, the API's retrieval is selective, which adds a layer of complexity. However, it seems I may be looking at the wrong endpoint. I've been studying the inject_insight POST endpoint in worker/main.py and the unique constraint on the insights_ai table (empresa_id, indicador_key, periodo_ano) could be a constraint on 15 rows sharing same key for the same year, since each subsequent row would delete the previous one. The plot thickens!
+
+Ran background command
+…\LiquidityDashboard > python -c "import urllib.request, json; resp = urllib.request.urlopen('https://datia-liquidity-worker.coaba7.easypanel.host/api/insights/3104?modulo=rentabilidad'); data = json.loads(resp.read().decode('utf-8')); keys = set([i['indicador_key'] for i in data['insights']]); print(list(keys))"
+['dpo_2Q', 'DPO_M10', 'dio', 'rotacion_cartera_M7', 'DIO_M4', 'dio_4Q', 'dso_M9', 'insight-liquidez-ai', 'rotacion_proveedores_M3', 'RATIO_EFECTIVO_M10', 'rotacion_inventarios_3Q', 'ratio_efectivo_3Q', 'roe_3Q', 'ciclo_conversion_efectivo_M4', 'posicion-financiera-status', 'capital_trabajo_3Q', 'prueba_acida_1Q', 'rotacion_proveedores_M8', 'insight-liquidez-ai_4Q', 'dio_2Q', 'RATIO_EFECTIVO_M2', 'dso_M10', 'rotacion_inventarios_4Q', 'roe_4Q', 'rotacion_inventarios_M7', 'dpo_M5', 'rotacion_cartera_1Q', 'roa_3Q', 'DPO_M11', 'rotacion_cartera_M5', 'ciclo_conversion_efectivo_M11', 'margen_ebitda', 'DIO_M11', 'DPO_M3', 'dpo_M12', 'report_1Q', 'neto', 'DSO_M8', 'endeudamiento_total_2Q', 'rotacion_inventarios_M11', 'ciclo_conversion_efectivo_M8', 'insight-solvencia-ai', 'rotacion_inventarios_M2', 'intereses', 'ciclo_conversion_efectivo_M7', 'DSO_M4', 'razon_corriente_3Q', 'rotacion_proveedores_M1', 'endeudamiento_total', 'rotacion_proveedores_M7', 'razon_corriente_2Q', 'PRUEBA_ACIDA_M4', 'rotacion_cartera_M10', 'operativo', 'CAPITAL_TRABAJO_M4', 'DIO_M2', 'PRUEBA_ACIDA_M5', 'dpo_M8', 'dio_M11', 'rotacion_proveedores_2Q', 'RAZON_CORRIENTE_M12', 'CAPITAL_TRABAJO_M7', 'PRUEBA_ACIDA_M3', 'capital_trabajo_2Q', 'action-estructura', 'dso', 'ciclo_conversion_efectivo_M12', 'DPO_M8', 'rotacion_cartera_M12', 'roe_1Q', 'report_3Q', 'diagnostico-roe-ai', 'dpo_M9', 'RAZON_CORRIENTE_M8', 'DIO_M1', 'action-actividad', 'PRUEBA_ACIDA_M2', 'ciclo_conversion_efectivo_1Q', 'contexto-liquidez-ai', 'RAZON_CORRIENTE_M1', 'neto_2Q', 'DPO_M4', 'margen_neto', 'DPO_M7', 'action-solvencia', 'razon_corriente_1Q', 'rotacion_cartera_M11', 'ciclo_efectivo_1Q', 'ciclo_conversion_efectivo_M1', 'dpo_M6', 'insight-rentabilidad-ai', 'CAPITAL_TRABAJO_M6', 'rotacion_inventarios_M6', 'rotacion_cartera_M3', 'DIO_M9', 'ratio_efectivo_4Q', 'rotacion_activos_M1', 'rotacion_inventarios_M8', 'dio_M7', 'prueba_acida_3Q', 'RATIO_EFECTIVO_M9', 'rotacion_proveedores_M11', 'DSO_M2', 'dso_3Q', 'perfil-forense', 'multiplicador_capital', 'dio_M6', 'RATIO_EFECTIVO_M7', 'ciclo_efectivo', 'ebitda_1Q', 'ciclo_efectivo_4Q', 'DIO_M5', 'dpo_M1', 'rotacion_inventarios_M10', 'roe_2Q', 'dso_M1', 'rotacion_cartera_3Q', 'DIO_M12', 'dpo', 'ciclo_conversion_efectivo_M5', 'rotacion_activos_M3', 'rotacion_inventarios', 'razon_corriente', 'rotacion_cartera_M2', 'roa_4Q', 'RAZON_CORRIENTE_M11', 'dio_M3', 'deuda_patrimonio', 'rotacion_activos_2Q', 'bolsillo-status', 'ratio_efectivo_1Q', 'DSO_M10', 'DIO_M8', 'dso_M4', 'rotacion_proveedores_M6', 'roa', 'ciclo_conversion_efectivo_M9', 'dpo_M2', 'dso_2Q', 'rotacion_inventarios_1Q', 'rotacion_cartera_4Q', 'insight-actividad-ai', 'DPO_M1', 'rotacion_inventarios_M9', 'DPO_M2', 'rotacion_proveedores_M9', 'dio_M2', 'action-liquidez', 'dio_M9', 'rotacion_activos_1Q', 'rotacion_proveedores_M4', 'rotacion_activos_M11', 'dpo_M3', 'CAPITAL_TRABAJO_M12', 'action-rentabilidad', 'neto_4Q', 'solvencia', 'dso_M7', 'rotacion_activos_M5', 'actividad', 'CAPITAL_TRABAJO_M11', 'dio_3Q', 'RAZON_CORRIENTE_M7', 'RATIO_EFECTIVO_M1', 'rotacion_activos_M2', 'report_2Q', 'ciclo_conversion_efectivo_4Q', 'rotacion_cartera_M4', 'insight-liquidez-ai_3Q', 'dso_4Q', 'rotacion_cartera_M9', 'dso_M12', 'PRUEBA_ACIDA_M12', 'dpo_1Q', 'dso_M8', 'rotacion_proveedores_M2', 'deuda_ebitda', 'report_4Q', 'RATIO_EFECTIVO_M4', 'ebitda_4Q', 'CAPITAL_TRABAJO_M1', 'prueba_acida_2Q', 'DPO_M12', 'rotacion_activos', 'RATIO_EFECTIVO_M5', 'PRUEBA_ACIDA_M1', 'rotacion_proveedores_1Q', 'neto_1Q', 'dso_M6', 'rotacion_cartera_2Q', 'rotacion_cartera_M8', 'impacto-cartera-ai', 'DIO_M3', 'rotacion_proveedores_M10', 'rotacion_activos_4Q', 'dso_M3', 'dio_M5', 'dio_M10', 'macro-inflacion', 'RAZON_CORRIENTE_M10', 'rotacion_activos_M7', 'CAPITAL_TRABAJO_M3', 'CAPITAL_TRABAJO_M2', 'RAZON_CORRIENTE_M3', 'CAPITAL_TRABAJO_M9', 'ebitda', 'rotacion_inventarios_M1', 'endeudamiento_total_1Q', 'dio_1Q', 'ciclo_conversion_efectivo_M6', 'rotacion_inventarios_M5', 'macro-banrep', 'DSO_M1', 'PRUEBA_ACIDA_M7', 'capital_trabajo_1Q', 'dio_M8', 'endeudamiento_total_4Q', 'ciclo_efectivo_3Q', 'prueba_acida', 'ciclo_efectivo_2Q', 'CAPITAL_TRABAJO_M8', 'DSO_M7', 'rentabilidad', 'estructura_deuda', 'RAZON_CORRIENTE_M2', 'RAZON_CORRIENTE_M5', 'rotacion_cartera_M6', 'dpo_M7', 'PRUEBA_ACIDA_M10', 'DPO_M9', 'ciclo_conversion_efectivo_M10', 'ratio_efectivo_2Q', 'DSO_M12', 'insight-liquidez-ai_1Q', 'macro-costo', 'rotacion_activos_M4', 'RATIO_EFECTIVO_M12', 'cobertura_fijos', 'rotacion_proveedores_4Q', 'dso_M11', 'insight-estructura-ai', 'PRUEBA_ACIDA_M6', 'ratio_efectivo', 'roa_1Q', 'DIO_M6', 'neto_3Q', 'rotacion_activos_M9', 'DSO_M11', 'RAZON_CORRIENTE_M6', 'DIO_M7', 'DIO_M10', 'ciclo_conversion_efectivo_3Q', 'DPO_M6', 'RATIO_EFECTIVO_M8', 'rotacion_cartera_M1', 'RAZON_CORRIENTE_M4', 'roa_2Q', 'rotacion_inventarios_M4', 'rotacion_proveedores_M12', 'margen_bruto', 'propiedad_autonomia', 'PRUEBA_ACIDA_M8', 'RATIO_EFECTIVO_M11', 'rotacion_activos_3Q', 'DSO_M9', 'dso_M5', 'ciclo_conversion_efectivo_M3', 'insight-liquidez-ai_2Q', 'dio_M1', 'rotacion_activos_M12', 'dpo_M11', 'rotacion_proveedores_3Q', 'dpo_4Q', 'capital_trabajo', 'ebitda_2Q', 'ciclo_conversion_efectivo', 'DPO_M5', 'dpo_M10', 'ciclo_conversion_efectivo_M2', 'report', 'dio_M4', 'rotacion_activos_M6', 'RAZON_CORRIENTE_M9', 'rotacion_cartera', 'DSO_M3', 'capital_trabajo_4Q', 'DSO_M5', 'rotacion_proveedores_M5', 'perfil-operativo', 'CAPITAL_TRABAJO_M5', 'liquidez', 'margen_operacional', 'rotacion_inventarios_M12', 'roe', 'rotacion_proveedores', 'cobertura_intereses', 'RATIO_EFECTIVO_M6', 'dso_1Q', 'ebitda_3Q', 'dso_M2', 'DSO_M6', 'rotacion_activos_M8', 'rotacion_inventarios_2Q', 'dpo_3Q', 'PRUEBA_ACIDA_M9', 'PRUEBA_ACIDA_M11', 'ciclo_conversion_efectivo_2Q', 'rotacion_inventarios_M3', 'razon_corriente_4Q', 'prueba_acida_4Q', 'RATIO_EFECTIVO_M3', 'endeudamiento_total_3Q', 'dio_M12', 'estructura', 'dpo_M4', 'rotacion_activos_M10', 'CAPITAL_TRABAJO_M10']
+Exit code 0
+Checked command status
+Ran background command
+…\LiquidityDashboard > python -c "import urllib.request, json; resp = urllib.request.urlopen('https://datia-liquidity-worker.coaba7.easypanel.host/api/insights/3104?modulo=rentabilidad'); data = json.loads(resp.read().decode('utf-8')); keys = set([i['indicador_key'] for i in data['insights']]); print('\n'.join(sorted(keys)))" > /tmp/all_keys.txt
+Exit code 0
+Ran background command
+…\LiquidityDashboard > type /tmp/all_keys.txt
+CAPITAL_TRABAJO_M1
+CAPITAL_TRABAJO_M10
+CAPITAL_TRABAJO_M11
+CAPITAL_TRABAJO_M12
+CAPITAL_TRABAJO_M2
+CAPITAL_TRABAJO_M3
+CAPITAL_TRABAJO_M4
+CAPITAL_TRABAJO_M5
+CAPITAL_TRABAJO_M6
+CAPITAL_TRABAJO_M7
+CAPITAL_TRABAJO_M8
+CAPITAL_TRABAJO_M9
+DIO_M1
+DIO_M10
+DIO_M11
+DIO_M12
+DIO_M2
+DIO_M3
+DIO_M4
+DIO_M5
+DIO_M6
+DIO_M7
+DIO_M8
+DIO_M9
+DPO_M1
+DPO_M10
+DPO_M11
+DPO_M12
+DPO_M2
+DPO_M3
+DPO_M4
+DPO_M5
+DPO_M6
+DPO_M7
+DPO_M8
+DPO_M9
+DSO_M1
+DSO_M10
+DSO_M11
+DSO_M12
+DSO_M2
+DSO_M3
+DSO_M4
+DSO_M5
+DSO_M6
+DSO_M7
+DSO_M8
+DSO_M9
+PRUEBA_ACIDA_M1
+PRUEBA_ACIDA_M10
+PRUEBA_ACIDA_M11
+PRUEBA_ACIDA_M12
+PRUEBA_ACIDA_M2
+PRUEBA_ACIDA_M3
+PRUEBA_ACIDA_M4
+PRUEBA_ACIDA_M5
+PRUEBA_ACIDA_M6
+PRUEBA_ACIDA_M7
+PRUEBA_ACIDA_M8
+PRUEBA_ACIDA_M9
+RATIO_EFECTIVO_M1
+RATIO_EFECTIVO_M10
+RATIO_EFECTIVO_M11
+RATIO_EFECTIVO_M12
+RATIO_EFECTIVO_M2
+RATIO_EFECTIVO_M3
+RATIO_EFECTIVO_M4
+RATIO_EFECTIVO_M5
+RATIO_EFECTIVO_M6
+RATIO_EFECTIVO_M7
+RATIO_EFECTIVO_M8
+RATIO_EFECTIVO_M9
+RAZON_CORRIENTE_M1
+RAZON_CORRIENTE_M10
+RAZON_CORRIENTE_M11
+RAZON_CORRIENTE_M12
+RAZON_CORRIENTE_M2
+RAZON_CORRIENTE_M3
+RAZON_CORRIENTE_M4
+RAZON_CORRIENTE_M5
+RAZON_CORRIENTE_M6
+RAZON_CORRIENTE_M7
+RAZON_CORRIENTE_M8
+RAZON_CORRIENTE_M9
+action-actividad
+action-estructura
+action-liquidez
+action-rentabilidad
+action-solvencia
+actividad
+bolsillo-status
+capital_trabajo
+capital_trabajo_1Q
+capital_trabajo_2Q
+capital_trabajo_3Q
+capital_trabajo_4Q
+ciclo_conversion_efectivo
+ciclo_conversion_efectivo_1Q
+ciclo_conversion_efectivo_2Q
+ciclo_conversion_efectivo_3Q
+ciclo_conversion_efectivo_4Q
+ciclo_conversion_efectivo_M1
+ciclo_conversion_efectivo_M10
+ciclo_conversion_efectivo_M11
+ciclo_conversion_efectivo_M12
+ciclo_conversion_efectivo_M2
+ciclo_conversion_efectivo_M3
+ciclo_conversion_efectivo_M4
+ciclo_conversion_efectivo_M5
+ciclo_conversion_efectivo_M6
+ciclo_conversion_efectivo_M7
+ciclo_conversion_efectivo_M8
+ciclo_conversion_efectivo_M9
+ciclo_efectivo
+ciclo_efectivo_1Q
+ciclo_efectivo_2Q
+ciclo_efectivo_3Q
+ciclo_efectivo_4Q
+cobertura_fijos
+cobertura_intereses
+contexto-liquidez-ai
+deuda_ebitda
+deuda_patrimonio
+diagnostico-roe-ai
+dio
+dio_1Q
+dio_2Q
+dio_3Q
+dio_4Q
+dio_M1
+dio_M10
+dio_M11
+dio_M12
+dio_M2
+dio_M3
+dio_M4
+dio_M5
+dio_M6
+dio_M7
+dio_M8
+dio_M9
+dpo
+dpo_1Q
+dpo_2Q
+dpo_3Q
+dpo_4Q
+dpo_M1
+dpo_M10
+dpo_M11
+dpo_M12
+dpo_M2
+dpo_M3
+dpo_M4
+dpo_M5
+dpo_M6
+dpo_M7
+dpo_M8
+dpo_M9
+dso
+dso_1Q
+dso_2Q
+dso_3Q
+dso_4Q
+dso_M1
+dso_M10
+dso_M11
+dso_M12
+dso_M2
+dso_M3
+dso_M4
+dso_M5
+dso_M6
+dso_M7
+dso_M8
+dso_M9
+ebitda
+ebitda_1Q
+ebitda_2Q
+ebitda_3Q
+ebitda_4Q
+endeudamiento_total
+endeudamiento_total_1Q
+endeudamiento_total_2Q
+endeudamiento_total_3Q
+endeudamiento_total_4Q
+estructura
+estructura_deuda
+impacto-cartera-ai
+insight-actividad-ai
+insight-estructura-ai
+insight-liquidez-ai
+insight-liquidez-ai_1Q
+insight-liquidez-ai_2Q
+insight-liquidez-ai_3Q
+insight-liquidez-ai_4Q
+insight-rentabilidad-ai
+insight-solvencia-ai
+intereses
+liquidez
+macro-banrep
+macro-costo
+macro-inflacion
+margen_bruto
+margen_ebitda
+margen_neto
+margen_operacional
+multiplicador_capital
+neto
+neto_1Q
+neto_2Q
+neto_3Q
+neto_4Q
+operativo
+perfil-forense
+perfil-operativo
+posicion-financiera-status
+propiedad_autonomia
+prueba_acida
+prueba_acida_1Q
+prueba_acida_2Q
+prueba_acida_3Q
+prueba_acida_4Q
+ratio_efectivo
+ratio_efectivo_1Q
+ratio_efectivo_2Q
+ratio_efectivo_3Q
+ratio_efectivo_4Q
+razon_corriente
+razon_corriente_1Q
+razon_corriente_2Q
+razon_corriente_3Q
+razon_corriente_4Q
+rentabilidad
+report
+report_1Q
+report_2Q
+report_3Q
+report_4Q
+roa
+roa_1Q
+roa_2Q
+roa_3Q
+roa_4Q
+roe
+roe_1Q
+roe_2Q
+roe_3Q
+roe_4Q
+rotacion_activos
+rotacion_activos_1Q
+rotacion_activos_2Q
+rotacion_activos_3Q
+rotacion_activos_4Q
+rotacion_activos_M1
+rotacion_activos_M10
+rotacion_activos_M11
+rotacion_activos_M12
+rotacion_activos_M2
+rotacion_activos_M3
+rotacion_activos_M4
+rotacion_activos_M5
+rotacion_activos_M6
+rotacion_activos_M7
+rotacion_activos_M8
+rotacion_activos_M9
+rotacion_cartera
+rotacion_cartera_1Q
+rotacion_cartera_2Q
+rotacion_cartera_3Q
+rotacion_cartera_4Q
+rotacion_cartera_M1
+rotacion_cartera_M10
+rotacion_cartera_M11
+rotacion_cartera_M12
+rotacion_cartera_M2
+rotacion_cartera_M3
+rotacion_cartera_M4
+rotacion_cartera_M5
+rotacion_cartera_M6
+rotacion_cartera_M7
+rotacion_cartera_M8
+rotacion_cartera_M9
+rotacion_inventarios
+rotacion_inventarios_1Q
+rotacion_inventarios_2Q
+rotacion_inventarios_3Q
+rotacion_inventarios_4Q
+rotacion_inventarios_M1
+rotacion_inventarios_M10
+rotacion_inventarios_M11
+rotacion_inventarios_M12
+rotacion_inventarios_M2
+rotacion_inventarios_M3
+rotacion_inventarios_M4
+rotacion_inventarios_M5
+rotacion_inventarios_M6
+rotacion_inventarios_M7
+rotacion_inventarios_M8
+rotacion_inventarios_M9
+rotacion_proveedores
+rotacion_proveedores_1Q
+rotacion_proveedores_2Q
+rotacion_proveedores_3Q
+rotacion_proveedores_4Q
+rotacion_proveedores_M1
+rotacion_proveedores_M10
+rotacion_proveedores_M11
+rotacion_proveedores_M12
+rotacion_proveedores_M2
+rotacion_proveedores_M3
+rotacion_proveedores_M4
+rotacion_proveedores_M5
+rotacion_proveedores_M6
+rotacion_proveedores_M7
+rotacion_proveedores_M8
+rotacion_proveedores_M9
+solvencia
+Exit code 0
+
+
+
+
+
+
+Analyzed
+
+
+Analyzed
+
+
+
+
+He identificado la causa técnica por la cual los 15 insights del Bloque A no aparecen simultáneamente:
+
+El Hallazgo (Bug en el Worker)
+La base de datos de producción tiene una limitación técnica: solo permite guardar un único hallazgo por cada combinación de 
+
+empresa
+, indicador_key y año. Al inyectar los 15 registros usando siempre la misma llave (insight-rentabilidad-ai), el sistema borraba el anterior antes de insertar el nuevo.
+

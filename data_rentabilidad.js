@@ -44,5 +44,19 @@ const profitabilityIndicators = {
       unit: "%",
       scaleMin: 0,
       scaleMax: 50
+    },
+    patrimonio: {
+      field: "patrimonio",
+      name: "Patrimonio",
+      unit: "MM",
+      scaleMin: 0,
+      scaleMax: null
+    },
+    utilidad: {
+      field: "utilidad",
+      name: "Utilidad Acumulada",
+      unit: "MM",
+      scaleMin: null,
+      scaleMax: null
     }
 };

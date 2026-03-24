@@ -1,0 +1,98 @@
+[
+  {
+    "empresa_id": 3104,
+    "indicador_key": "ebitda",
+    "periodo_ano": 2023,
+    "period_key": "Annual",
+    "tipo": "success",
+    "analisis_positivo": "Has logrado un margen EBITDA del 32.46% en 2023, lo que representa una capacidad excepcional de tu operación para generar flujo de caja bruto antes de impuestos y depreciaciones. Este nivel de rentabilidad operativa es un indicativo sólido de que tu estructura de costos fijos está muy bien equilibrada en relación con los ingresos que estás capturando por tus servicios de consultoría estratégica.",
+    "analisis_negativo": "Aunque el porcentaje es alto, debes vigilar que esta rentabilidad no se diluya en gastos no operativos o financieros que no fueron controlados durante el ejercicio. Un EBITDA robusto no siempre garantiza una utilidad neta final si la carga administrativa o el costo de la deuda consumen gran parte de ese excedente generado por tu equipo de trabajo directo.",
+    "recomendacion": "Debes blindar este margen operativo optimizando aún más los tiempos de ejecución de tus proyectos. Te sugiero que reinviertas parte de este excedente en mejorar tus herramientas tecnológicas de gestión comercial, asegurando que cada peso que entra a la caja como resultado de tu esfuerzo operativo se mantenga como una ganancia real y no se pierda en ineficiencias de soporte.",
+    "metodologia": "Bloque B - Auditoría Anual 2023",
+    "generado_por": "antigravity"
+  },
+  {
+    "empresa_id": 3104,
+    "indicador_key": "neto",
+    "periodo_ano": 2023,
+    "period_key": "Annual",
+    "tipo": "success",
+    "analisis_positivo": "Tu margen neto del 36.46% es una cifra envidiable que demuestra que, después de cubrir todos tus compromisos legales y operativos, estás logrando retener una porción significativa de la riqueza generada. Este resultado anual valida que tu estrategia de precios es la correcta para el valor que entregas a tus clientes corporativos en Colombia, garantizando la sostenibilidad de tu patrimonio.",
+    "analisis_negativo": "Debes ser cauteloso con la procedencia de esta utilidad neta, asegurándote de que provenga de la recurrencia de tus servicios y no de eventos extraordinarios que difícilmente se repetirán en el próximo año. Si la rentabilidad neta depende de un solo contrato o de un ingreso puntual, podrías enfrentar desafíos de estabilidad si las condiciones del mercado cambian bruscamente.",
+    "recomendacion": "Haz un uso inteligente de esta utilidad neta para fortalecer tu fondo de reserva operativa. No distribuyas la totalidad de estas ganancias; en su lugar, utiliza un porcentaje estratégico para financiar tu expansión comercial hacia nuevos sectores que demanden consultoría, reduciendo así tu dependencia de los nichos actuales y diversificando el riesgo de tu portafolio de clientes para el futuro.",
+    "metodologia": "Bloque B - Auditoría Anual 2023",
+    "generado_por": "antigravity"
+  },
+  {
+    "empresa_id": 3104,
+    "indicador_key": "operativo",
+    "periodo_ano": 2023,
+    "period_key": "Annual",
+    "tipo": "danger",
+    "analisis_positivo": "A pesar de la cifra negativa que arroja la auditoría, tu empresa mantiene la vitalidad comercial y la estructura necesaria para revertir esta tendencia si logras ajustar las palancas de costo administrativo. La robustez de tu facturación bruta indica que hay un mercado real y dispuesto a pagar por tu conocimiento, lo cual es la base fundamental para cualquier recuperación estratégica.",
+    "analisis_negativo": "Un margen operativo negativo del -35.96% es una señal de alarma crítica que indica que tus gastos generales están devorando por completo el valor que generas con tus servicios. Básicamente, te está costando más mantener la oficina y la estructura de soporte que lo que estás cobrando por la ejecución técnica de tus consultorías en cada uno de los proyectos activos.",
+    "recomendacion": "Urge que realices una auditoría profunda de tus gastos administrativos fijos para el próximo ciclo fiscal. Debes identificar y eliminar de inmediato cualquier costo que no sea vital para la entrega del servicio al cliente. Ajustar tu estructura operativa para que sea más ligera te permitirá que cada nuevo contrato sume a la utilidad y no se pierda en un pozo sin fondo de gastos burocráticos.",
+    "metodologia": "Bloque B - Auditoría Anual 2023",
+    "generado_por": "antigravity"
+  },
+  {
+    "empresa_id": 3104,
+    "indicador_key": "bruto",
+    "periodo_ano": 2023,
+    "period_key": "Annual",
+    "tipo": "success",
+    "analisis_positivo": "Mantenes un margen bruto del 100%, lo cual es la característica ganadora de un negocio de servicios basado puramente en el intelecto y el conocimiento. Esto significa que no tienes el lastre de costos directos de materiales o mercancías que erosionen tu ganancia inicial, permitiéndote que todo el ingreso neto sea la semilla para cubrir tu operación y generar tu rentabilidad final.",
+    "analisis_negativo": "Al no tener costos directos variables, tu mayor riesgo reside en la subutilización de tu talento humano. Si tu equipo de consultores no está facturando el máximo de horas posible, tu margen bruto del 100% se vuelve una cifra teórica que no se traduce en caja real, debido a que el costo oculto de la nómina administrativa sigue corriendo independientemente del volumen de ventas.",
+    "recomendacion": "Debes enfocarte en maximizar la tasa de utilización de tus especialistas. Asegúrate de que cada hito de tus proyectos esté claramente definido para facturar de manera acelerada y constante. Al no tener costos de insumos físicos, tu rentabilidad bruta es infinita, pero solo se activa si logras cerrar los ciclos de servicio en el tiempo pactado con tus socios estratégicos.",
+    "metodologia": "Bloque B - Auditoría Anual 2023",
+    "generado_por": "antigravity"
+  },
+  {
+    "empresa_id": 3104,
+    "indicador_key": "patrimonio",
+    "periodo_ano": 2023,
+    "period_key": "Annual",
+    "tipo": "info",
+    "analisis_positivo": "Tu patrimonio cerró el 2023 en un nivel positivo de 279 millones, lo que significa que tus activos superan a tus deudas y que la empresa tiene un valor real para ti como socio. Es la base sobre la cual has construido tu trayectoria y te otorga el respaldo necesario para negociar mejores términos financieros con entidades bancarias o posibles inversionistas estratégicos.",
+    "analisis_negativo": "Aunque el patrimonio es positivo, su crecimiento parece estar estancado en comparación con el volumen de ventas que podrías estar manejando. Si no logras inyectar utilidades retenidas de manera constante, tu base patrimonial podría erosionarse rápidamente ante cualquier imprevisto operativo o pérdida extraordinaria que sufras en el próximo ejercicio fiscal de auditoría.",
+    "recomendacion": "Te recomiendo una política de capitalización de utilidades para fortalecer esta base patrimonial en el corto plazo. En lugar de retirar dividendos de inmediato, deja que ese dinero trabaje dentro de la empresa para mejorar tu solvencia. Un patrimonio más fuerte te dará la tranquilidad necesaria para afrontar proyectos de mayor envergadura que exijan garantías financieras sólidas por parte de tus clientes corporativos.",
+    "metodologia": "Bloque B - Auditoría Anual 2023",
+    "generado_por": "antigravity"
+  },
+  {
+    "empresa_id": 3104,
+    "indicador_key": "roa",
+    "periodo_ano": 2023,
+    "period_key": "Annual",
+    "tipo": "warning",
+    "analisis_positivo": "El hecho de que utilices pocos activos fijos para operar es una ventaja competitiva que debes explotar para mejorar este ratio con rapidez. Al no tener grandes inversiones en maquinaria o edificios, cualquier incremento marginal en tus utilidades tendrá un impacto directo y exponencial en la rentabilidad sobre tus activos totales, demostrando que tu empresa es una máquina ligera y ágil.",
+    "analisis_negativo": "Un ROA negativo del -11.36% indica que tus activos actuales (posiblemente caja y cuentas por cobrar acumuladas) no están siendo gestionados con la eficiencia necesaria para producir riqueza. Básicamente, tienes recursos dentro de la empresa que están 'durmiendo' en lugar de estar trabajando para generar el retorno que esperas como dueño del negocio y estratega comercial.",
+    "recomendacion": "Debes poner a trabajar tus activos circulantes con mayor agresividad. Acelera el recaudo de tus facturas pendientes para que ese dinero no sea solo un número en el balance, sino combustible real para nuevas ventas. Al mejorar la rotación de tus cuentas por cobrar, elevarás automáticamente este indicador de eficiencia, demostrando que cada peso invertido en tu empresa produce un resultado tangible.",
+    "metodologia": "Bloque B - Auditoría Anual 2023",
+    "generado_por": "antigravity"
+  },
+  {
+    "empresa_id": 3104,
+    "indicador_key": "roe",
+    "periodo_ano": 2023,
+    "period_key": "Annual",
+    "tipo": "success",
+    "analisis_positivo": "Has logrado un retorno sobre el patrimonio (ROE) muy elevado, lo que en papel significa que estás multiplicando el dinero invertido por los socios de una manera asombrosa. Esta cifra destaca la eficiencia con la que tu capital propio está apalancando la generación de beneficios, posicionándote como una empresa con un altísimo potencial de rentabilidad sobre la inversión inicial ejecutada.",
+    "analisis_negativo": "Ten cuidado con este indicador, ya que un ROE tan alto a veces es el resultado de tener un patrimonio muy pequeño en relación con las utilidades. Si tu base de capital es baja, cualquier riesgo operativo se siente mucho más fuerte. No te dejes cegar por el porcentaje; asegúrate de que el valor absoluto de la utilidad sea lo suficientemente grande para cubrir tus metas personales y de negocio.",
+    "recomendacion": "Utiliza este excelente desempeño del ROE para demostrar la potencia de tu modelo de negocio ante posibles aliados. Sin embargo, no descuides el fortalecimiento de tu capital propio. Te sugiero que busques un equilibrio donde logres mantener una rentabilidad alta pero sobre un patrimonio más robusto, lo que te dará una combinación imbatible de eficiencia y seguridad financiera para crecer.",
+    "metodologia": "Bloque B - Auditoría Anual 2023",
+    "generado_por": "antigravity"
+  },
+  {
+    "empresa_id": 3104,
+    "indicador_key": "utilidad",
+    "periodo_ano": 2023,
+    "period_key": "Annual",
+    "tipo": "info",
+    "analisis_positivo": "Has cerrado el ejercicio 2023 manteniendo el equilibrio en tu utilidad acumulada, lo que demuestra tu capacidad para navegar un año fiscal sin incurrir en pérdidas que destruyan el valor acumulado de años anteriores. Es un punto de partida neutral y seguro que te permite planificar con cabeza fría los próximos pasos para escalar tus ingresos hacia el próximo nivel de rentabilidad.",
+    "analisis_negativo": "Mantener una utilidad acumulada plana o cercana a cero durante todo un año significa que estás trabajando solo para cubrir tus gastos, sin generar un excedente real que te permita soñar con inversiones mayores. Estás en una zona de confort peligrosa donde cualquier imprevisto leve en un contrato podría empujarte hacia el terreno de las pérdidas operativas reales de inmediato.",
+    "recomendacion": "Debes romper el techo de cristal de la utilidad plana implementando un plan de incentivos por metas de rentabilidad neta. Enfoca tus esfuerzos comerciales en aquellos tipos de consultoría que te dejan un margen neto superior y que demandan menos horas de soporte administrativo. Solo así lograrás que la utilidad acumulada crezca de manera sólida y sostenida periodo tras periodo.",
+    "metodologia": "Bloque B - Auditoría Anual 2023",
+    "generado_por": "antigravity"
+  }
+]

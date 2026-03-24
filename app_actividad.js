@@ -229,6 +229,9 @@ function updateAnalysis(indicatorKey, hasData = true) {
             );
         } else if (monthFilter !== 'all' && monthFilter !== 'Todos') {
             // MODO INTERANUAL: Buscar llave comparativa del mes (ej: DSO_M2)
+            // EN-04 NOTE: La búsqueda usa .toUpperCase() en ambos lados para garantizar
+            // coincidencia independiente del case con que se almacenó en BD.
+            // gen_bloque_d.py genera las llaves en MAYÚSCULAS (ej: "DSO_M1").
             const monthKey = `${dbKey}_M${monthFilter}`.toUpperCase();
             dynamicInsight = dbInsights.find(ins => 
                 ins.indicador_key.toUpperCase() === monthKey
@@ -558,12 +561,19 @@ function updateDictamen() {
     let periodKey = (quarterFilter === 'all' || quarterFilter === 'Todos') ? "Annual" : quarterFilter;
 
     // 1. PRIORIDAD: Buscar en Insights dinámicos (Base de Datos)
+    // IC-03 / IC-03b FIX: La búsqueda ahora exige coincidencia estricta por módulo.
+    // Se eliminó 'report' como llave aceptada para el dictamen de Actividad porque
+    // 'report' es también usada por el módulo de Rentabilidad (ver README Sección 2D-3).
+    // Aceptar 'report' sin filtro de módulo causa que el dictamen de Rentabilidad
+    // aparezca en la pestaña de Actividad cuando no hay insight-actividad-ai disponible.
+    // La única llave válida para el dictamen maestro de Actividad es 'insight-actividad-ai'
+    // según el PROTOCOLO_MASTER_ACTIVIDAD.md (Sección 1, fila Dictamen General).
     let dynamicReport = null;
     if (dbInsights && dbInsights.length > 0) {
         dynamicReport = dbInsights.find(ins => 
             ins.year === targetYear && 
             ins.period_key === periodKey &&
-            (ins.indicador_key === 'report' || ins.indicador_key === 'insight-actividad-ai')
+            ins.indicador_key === 'insight-actividad-ai'
         );
     }
 

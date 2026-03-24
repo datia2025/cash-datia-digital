@@ -54,6 +54,12 @@ Para acelerar el despliegue a producción preservando la calidad:
 2. **Fricción:** 8-10 segundos de cooldown transaccional.
 3. **Pausa Inter-Registro:** 3.5 a 4 segundos por request API.
 
+### F. Persistencia vía AI-to-SQL Dump
+1. **Generación**: La IA generará localmente un archivo `.sql` con sentencias `INSERT ... ON CONFLICT (UPSERT)`.
+2. **Escapado**: Todas las comillas simples se escaparán (`' -> ''`).
+3. **Validación**: El usuario podrá auditar el script antes de ejecutarlo en el entorno deEasypanel.
+4. **Objetivo**: Garantizar que el 100% de los tokens de IA se utilicen en la calidad analítica y no en la gestión de errores de red.
+
 ## 3. Matriz de Progreso (231 Registros)
 
 | Fase | Descripción | Registros | Estado |
