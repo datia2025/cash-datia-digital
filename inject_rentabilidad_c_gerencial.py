@@ -114,7 +114,7 @@ def build_payloads():
                 pos, neg, rec = make_insight(key, year, q, val)
                 payloads.append({
                     "empresa_id": 3104,
-                    "indicador_key": key,
+                    "indicador_key": f"{key}_{period_name}",
                     "periodo_ano": year,
                     "period_key": period_name,
                     "tipo": "warning" if val < 0 else "success",
