@@ -6,7 +6,22 @@
 --           interanual por mes en el Dashboard.
 -- =============================================================
 
--- 1. Añadir columna si no existe (safe migration)
+-- ⚠️  PASO 0: BACKUP PREVIO (ejecutar SIEMPRE antes del ALTER)
+-- Crea una copia exacta de la tabla en la misma base de datos.
+-- Para restaurar: INSERT INTO insights_ai SELECT * FROM insights_ai_backup_20260326;
+CREATE TABLE IF NOT EXISTS insights_ai_backup_20260326 AS
+SELECT * FROM insights_ai;
+
+-- Verificar que el backup se hizo correctamente
+SELECT 
+    'insights_ai'               AS tabla,  COUNT(*) AS registros FROM insights_ai
+UNION ALL
+SELECT 
+    'insights_ai_backup_20260326', COUNT(*)           FROM insights_ai_backup_20260326;
+
+-- ✅ Solo continúa si los conteos coinciden.
+
+-- PASO 1: Añadir columna si no existe (safe migration)
 ALTER TABLE insights_ai 
 ADD COLUMN IF NOT EXISTS periodo_mes INTEGER NOT NULL DEFAULT 12;
 
