@@ -1210,41 +1210,6 @@ async def clear_empresa_data(empresa_id: int):
     return {"status": "success", "message": f"All data forced purged for ID {empresa_id}"}
 
 
-@app.post("/api/admin/run_migration")
-async def run_migration():
-    """
-    TEMPORARY: Runs the insights_ai migration (backup + add periodo_mes column).
-    DELETE THIS ENDPOINT after successful execution.
-    """
-    if not db_pool:
-        raise HTTPException(status_code=503, detail="Database not available")
-
-    results = {}
-    async with db_pool.acquire() as conn:
-        # Step 0: Backup
-        await conn.execute("""
-            CREATE TABLE IF NOT EXISTS insights_ai_backup_20260326 AS
-            SELECT * FROM insights_ai
-        """)
-        count_orig = await conn.fetchval("SELECT COUNT(*) FROM insights_ai")
-        count_bak  = await conn.fetchval("SELECT COUNT(*) FROM insights_ai_backup_20260326")
-        results["backup"] = {"insights_ai": count_orig, "backup": count_bak, "ok": count_orig == count_bak}
-
-        # Step 1: Add column if not exists
-        await conn.execute("""
-            ALTER TABLE insights_ai
-            ADD COLUMN IF NOT EXISTS periodo_mes INTEGER NOT NULL DEFAULT 12
-        """)
-
-        # Verify column exists
-        col = await conn.fetchval("""
-            SELECT column_name FROM information_schema.columns
-            WHERE table_name='insights_ai' AND column_name='periodo_mes'
-        """)
-        results["alter"] = {"periodo_mes_column": col, "ok": col == "periodo_mes"}
-
-    return {"status": "success", "migration": results}
-
 @app.get("/health")
 async def health():
     """Health check endpoint."""
