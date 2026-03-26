@@ -170,7 +170,7 @@ class InsightPayload(BaseModel):
     empresa_id: int
     indicador_key: str
     periodo_ano: int
-    periodo_mes: Optional[int] = None
+    periodo_mes: int = 12  # Default: Diciembre (cierre anual). Usar mes real para insights mensuales.
     tipo: str  # 'success' | 'warning' | 'danger' | 'info' (info maps to success)
     analisis_positivo: str
     analisis_negativo: str
@@ -926,19 +926,19 @@ async def inject_insight(payload: InsightPayload):
                 )
             )
 
-        # DELETE existing then INSERT (periodo_mes NOT in production table)
+        # DELETE existing by empresa+key+año+mes, then INSERT with mes
         await conn.execute("""
             DELETE FROM insights_ai
-            WHERE empresa_id=$1 AND indicador_key=$2 AND periodo_ano=$3
-        """, payload.empresa_id, payload.indicador_key, payload.periodo_ano)
+            WHERE empresa_id=$1 AND indicador_key=$2 AND periodo_ano=$3 AND periodo_mes=$4
+        """, payload.empresa_id, payload.indicador_key, payload.periodo_ano, payload.periodo_mes)
 
         await conn.execute("""
             INSERT INTO insights_ai (
-                empresa_id, indicador_key, periodo_ano,
+                empresa_id, indicador_key, periodo_ano, periodo_mes,
                 tipo, analisis_positivo, analisis_negativo, recomendacion, metodologia
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
         """,
-            payload.empresa_id, payload.indicador_key, payload.periodo_ano,
+            payload.empresa_id, payload.indicador_key, payload.periodo_ano, payload.periodo_mes,
             tipo_db, payload.analisis_positivo,
             payload.analisis_negativo, payload.recomendacion, payload.metodologia
         )
@@ -1077,9 +1077,10 @@ async def get_indicadores(
 async def get_insights(
     empresa_id: int,
     periodo_ano: Optional[int] = Query(None),
+    periodo_mes: Optional[int] = Query(None),
     indicador_key: Optional[str] = Query(None)
 ):
-    """Fetch AI-generated insights for a company."""
+    """Fetch AI-generated insights for a company. Supports month filtering for interannual comparison."""
     if not db_pool:
         raise HTTPException(status_code=503, detail="Database not available")
 
@@ -1092,12 +1093,16 @@ async def get_insights(
             query += f" AND periodo_ano = ${idx}"
             params.append(periodo_ano)
             idx += 1
+        if periodo_mes:
+            query += f" AND periodo_mes = ${idx}"
+            params.append(periodo_mes)
+            idx += 1
         if indicador_key:
             query += f" AND indicador_key = ${idx}"
             params.append(indicador_key)
             idx += 1
 
-        query += " ORDER BY indicador_key, periodo_ano"
+        query += " ORDER BY indicador_key, periodo_ano, periodo_mes"
         rows = await conn.fetch(query, *params)
 
     return {
