@@ -61,25 +61,37 @@ async def lifespan(app: FastAPI):
 
             UPDATE insights_ai 
             SET modulo = 'liquidez' 
-            WHERE indicador_key IN ('insight-liquidez-ai', 'report', 'liquidez') AND (modulo IS NULL OR modulo = '');
+            WHERE (indicador_key ILIKE '%liquidez%' OR indicador_key IN ('report', 'insight-liquidez-ai')) 
+            AND (modulo IS NULL OR modulo = '');
 
             UPDATE insights_ai 
             SET modulo = 'rentabilidad' 
-            WHERE indicador_key ILIKE '%rentabilidad%' AND (modulo IS NULL OR modulo = '');
+            WHERE (indicador_key ILIKE '%rentabilidad%' OR indicador_key ILIKE '%bruto%' OR indicador_key ILIKE '%neto%' OR indicador_key ILIKE '%roe%' OR indicador_key ILIKE '%roa%') 
+            AND (modulo IS NULL OR modulo = '');
 
             UPDATE insights_ai 
             SET modulo = 'actividad' 
-            WHERE indicador_key ILIKE '%actividad%' AND (modulo IS NULL OR modulo = '');
+            WHERE (indicador_key ILIKE '%actividad%' OR indicador_key ILIKE '%dso%' OR indicador_key ILIKE '%dpo%' OR indicador_key ILIKE '%rotacion%' OR indicador_key ILIKE '%cartera%') 
+            AND (modulo IS NULL OR modulo = '');
 
             UPDATE insights_ai 
             SET modulo = 'solvencia' 
-            WHERE indicador_key ILIKE '%solvencia%' AND (modulo IS NULL OR modulo = '');
+            WHERE (indicador_key ILIKE '%solvencia%' OR indicador_key ILIKE '%cobertura%' OR indicador_key ILIKE '%deuda%') 
+            AND (modulo IS NULL OR modulo = '');
+
+            UPDATE insights_ai 
+            SET modulo = 'estructura' 
+            WHERE (indicador_key ILIKE '%estructura%' OR indicador_key ILIKE '%fondeo%' OR indicador_key ILIKE '%capital%') 
+            AND (modulo IS NULL OR modulo = '');
+
+            -- Default to 'general' if still null after mapping
+            UPDATE insights_ai SET modulo = 'general' WHERE modulo IS NULL OR modulo = '';
 
             CREATE INDEX IF NOT EXISTS idx_insights_modulo 
             ON insights_ai(empresa_id, modulo, periodo_ano, periodo_mes);
             """
             
-            print(f"🚀 Ejecutando migración integrada v1...")
+            print(f"🚀 Ejecutando migración integrada v1 (Keyword mapping)...")
             try:
                 async with db_pool.acquire() as conn:
                     await conn.execute(migration_sql)
