@@ -104,6 +104,11 @@ app = FastAPI(
 )
 
 # ── CORS ───────────────────────────────────────────────────────
+# ── Performance: Compresión (GZip) ──────────────────────────
+# DEBE ir antes de CORSMiddleware en la cadena de respuesta (se añade después en FastAPI)
+# para que comprima el resultado final incluyendo headers de CORS.
+app.add_middleware(GZipMiddleware, minimum_size=500)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*", "null"],
@@ -111,10 +116,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# ── Performance: Compresión (GZip) ──────────────────────────
-# Reduce payload size up to 80% for large indicator/insight JSONs.
-app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 # ── Configuration ──────────────────────────────────────────────
 NOCODB_URL = os.getenv("NOCODB_URL", "http://nocodb:8080")
@@ -1138,7 +1139,7 @@ async def get_insights(
         idx = 2
 
         if modulo:
-            query += f" AND modulo = ${idx}"
+            query += f" AND (modulo = ${idx} OR modulo IS NULL OR modulo = '')" # Temporarily broad during migration
             params.append(modulo)
             idx += 1
         if periodo_ano:
