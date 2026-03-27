@@ -1,7 +1,12 @@
 # 📈 Protocolo Maestro: Inyección de Insights - Pestaña RENTABILIDAD
-**Estatus:** PLANIFICACIÓN (v1.0) | **Protocolo:** Calidad Gerencial Extensa (+40 Palabras)
+**Estatus:** CERTIFICADO (v4.6) | **Protocolo:** Cero Reprocesos (Signum +40 Palabras)
 
 Este documento define las reglas de negocio y técnicas para la construcción de los **231 registros** requeridos para certificar la pestaña de Rentabilidad bajo un enfoque Multi-Tenant.
+
+## 0. Skills y Metodologías Requeridas
+La generación de estos insights exige la aplicación rigurosa de las siguientes capacidades:
+1.  **[Forensic Analytics](file:///.agent/skills/forensic-analytics/SKILL.md)**: Para la reconstrucción de la lógica de negocio y mapeo de llaves técnicas (A, B, C vs D) a partir de los artefactos de código frontend (`app_rentabilidad.js`).
+2.  **[Financial Analysis](file:///.agent/skills/financial-analysis/SKILL.md)**: Para la elaboración de la narrativa "Gerencia-a-Gerencia", asegurando el cumplimiento de los benchmarks de rentabilidad y ratios de márgenes.
 
 ## 1. Matriz de Identificadores y Contexto Lógico
 A partir de la inspección del front-end (`app_rentabilidad.js`), se identificaron 8 indicadores operativos fijos y el dictamen global. La IA debe recibir como contexto el *Target* o criterio de éxito establecido:
@@ -30,8 +35,7 @@ Para acelerar el despliegue a producción preservando la calidad:
 
 ### B. Umbral Narrativo "Gerencia-a-Gerencia"
 - **Extensión:** Las facciones **Positivo / Alerta / Acción** no pueden contener menos de **40 palabras** cada una.
-- **Tono:** Impacto al flujo de caja, sin lenguaje técnico convencional. Tuteo directo al dueño o gerente.
-- **Prohibición:** Evitar expresiones corporativas como "equipo directivo", "accionistas". Usar *"tu ganancia"*, *"tu caja"*, *"tu bolsillo"*.
+- **Tono:** Tuteo directo ("Tu ganancia", "Tu bolsillo"). Sin lenguaje técnico, ni siglas, lenguaje gerencial, claro, conciso y directo. Enfocado a la rentabilidad operativa y neta.
 
 ### C. Regla Crítica del Bloque A: Diferenciación de Contexto por Periodo
 > [!IMPORTANT]
@@ -49,26 +53,45 @@ Para acelerar el despliegue a producción preservando la calidad:
 2. **Cada registro es único e irrepetible.** Prohibido usar loops o strings con `{variable}`.
 3. **Validación humana obligatoria** antes de inyectar.
 
-### E. Estrategia Anti-DDoS (Micro-Batches de Inyección)
-1. **Lotes:** 5 a 8 iteraciones.
-2. **Fricción:** 8-10 segundos de cooldown transaccional.
-3. **Pausa Inter-Registro:** 3.5 a 4 segundos por request API.
+### E. Estrategia de Loteado y Enfriamiento API
+Para garantizar la integridad de la persistencia y evitar la fatiga del motor de IA o bloqueos por rate-limit:
+1.  **Loteado Simétrico**: La generación se realiza en bloques de **8 registros** por ráfaga.
+2.  **Cooling Period**: Tiempo de enfriamiento obligatorio de **10 segundos** entre lotes.
+3.  **Time Dilation**: Retardo técnico de **4 segundos** entre cada petición individual de insight.
 
-### F. Persistencia vía AI-to-SQL Dump
-1. **Generación**: La IA generará localmente un archivo `.sql` con sentencias `INSERT ... ON CONFLICT (UPSERT)`.
-2. **Escapado**: Todas las comillas simples se escaparán (`' -> ''`).
-3. **Validación**: El usuario podrá auditar el script antes de ejecutarlo en el entorno deEasypanel.
-4. **Objetivo**: Garantizar que el 100% de los tokens de IA se utilicen en la calidad analítica y no en la gestión de errores de red.
+### F. Persistencia vía AI-to-SQL Dump (Entrega Certificada)
+1.  **Generación**: La IA genera archivos `.sql` locales (**Un solo archivo por bloque**).
+2.  **Ruta de Salida**: `.../LiquidityDashboard/database/{ID_EMPRESA}/Rentabilidad`.
+3.  **Lógica**: Sentencias UPSERT obligatorias (`INSERT ... ON CONFLICT`).
+4.  **Auditoría**: Auditoría visual de los SQL antes de ejecución para validar el conteo exacto de registros.
+
+### G. Protocolo "Cero Reprocesos" (Rentabilidad Matrix 231)
+Para este módulo de 8 indicadores, todo proceso de generación debe seguir estos filtros de salida innegociables:
+
+1.  **Validación de Conteo (Target-Match):**
+    - **Bloque C**: Debe contener exactamente **96 registros** (8 indicadores x 12 trimestres).
+    - **Bloque D**: Debe contener exactamente **96 registros** (8 indicadores x 12 meses).
+2.  **Higiene del Tono Gerencia-Gerencia:**
+    - **Prohibido:** Fórmulas matemáticas o nombres de ratios crudos ("Margen EBITDA"). Hablar de "La riqueza que queda después de operar tu negocio".
+    - **Obligatorio:** Narrativa fluida en segunda persona ("tú"), enfocada en la eficiencia operativa y utilidad neta.
+    - **Umbral de Riqueza:** Mínimo **40 palabras** por sección.
+3.  **Integridad de Llaves Técnicas (Standard Case):**
+    - **A, B, C (Trimestral/Anual):** Llave en minúsculas (ej. `ebitda_1Q`).
+    - **D (Mensual Comparativo):** Llave en **MAYÚSCULAS** (ej. `EBITDA_M1`).
+4.  **Mandato de UPSERT:** Todo comando SQL generado debe usar `ON CONFLICT (empresa_id, indicador_key, periodo_ano, period_key) DO UPDATE SET...`.
+
+> **⚠️ REGLA DE UNICIDAD TRIMESTRAL (PREVENCIÓN DE SOBRESCRITURA):**
+> Para los reportes trimestrales (Bloques A, B y C) es **OBLIGATORIO** anexar el sufijo del trimestre al `indicador_key` durante la inyección (ej: `insight-rentabilidad-ai_1Q`, `ebitda_1Q`). El backend ignora la columna `period_key` en su lógica de unicidad (`ON CONFLICT`), por lo que inyectar múltiples periodos bajo la misma llave base sobrescribirá los datos, dejando solo el último registro insertado (usualmente el 4Q). El frontend (`api.js`) asume este comportamiento y extrae el `period_key` cortando explícitamente el sufijo `_1Q`. Para informes anuales, el sufijo se omite.
 
 ## 3. Matriz de Progreso (231 Registros)
 
 | Fase | Descripción | Registros | Estado |
 | :--- | :--- | :---: | :--- |
-| **Bloque A** | 15 Insights Maestros (Anual + Quarterly) | 15 | ⚠️ EN REVISIÓN |
-| **Bloque B** | Auditoría Anual (8 indicadores x 3 años) | 24 | 🔄 PENDIENTE |
-| **Bloque C** | Detalle Trimestral (8 indicadores x 12 trimestres)| 96 | 🔄 PENDIENTE |
-| **Bloque D** | Comparativo Mensual (8 indicadores x 12 meses) | 96 | 🔄 PENDIENTE |
-| **TOTAL** | --- | **231** | **6%** |
+| **Bloque A** | 15 Insights Maestros (Anual + Quarterly) | 15 | ✅ COMPLETADO |
+| **Bloque B** | Auditoría Anual (8 indicadores x 3 años) | 24 | ✅ COMPLETADO |
+| **Bloque C** | Detalle Trimestral (8 indicadores x 12 trimestres)| 96 | ✅ COMPLETADO |
+| **Bloque D** | Comparativo Mensual (8 indicadores x 12 meses) | 96 | ✅ COMPLETADO |
+| **TOTAL** | --- | **231** | **100%** || **TOTAL** | --- | **231** | **6%** |
 
 > [!WARNING]
 > **Bloque A - Observación de Calidad**: Los 3 registros Anuales (2023, 2024, 2025) superaron la auditoría. Los 12 trimestrales están en producción; pendiente validación visual en UI antes de marcar el bloque COMPLETADO.

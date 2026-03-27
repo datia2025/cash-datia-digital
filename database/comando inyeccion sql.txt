@@ -1,0 +1,1 @@
+python "c:\Users\gutie\OneDrive\FERFILES\DATIA\PROPUESTAS\COLOMBIA\MASCONSULTA\LiquidityDashboard\v46_sql_injector.py" --file "c:\Users\gutie\OneDrive\FERFILES\DATIA\PROPUESTAS\COLOMBIA\MASCONSULTA\LiquidityDashboard\database\3099\Rentabilidad\rentabilidad_bloque_d_3099.sql"

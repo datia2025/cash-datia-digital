@@ -25,6 +25,6 @@ def serve_static(path):
     return send_from_directory('.', path)
 
 if __name__ == "__main__":
-    # Corremos en el puerto 8080 (asegúrate de que esté abierto en tu router/vps si es necesario)
+    # Corremos en el puerto 8888
     # n8n deberá poder alcanzar esta IP/Puerto
-    app.run(host='0.0.0.0', port=8080)
+    app.run(host='0.0.0.0', port=8888)

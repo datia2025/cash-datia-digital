@@ -217,26 +217,16 @@ function updateAnalysis(indicatorKey, hasData = true) {
 
     // 1. PRIORIDAD: Búsqueda dinámica en BD
     if (dbInsights && dbInsights.length > 0) {
-        let dynamicInsight = null;
         let dbKey = indicatorKey === 'ciclo_efectivo' ? 'ciclo_conversion_efectivo' : indicatorKey;
+        const targetYear = (yearFilter === 'all' || yearFilter === 'Todos') ? 2025 : parseInt(yearFilter);
+        const isMonthSpecific = monthFilter !== 'all' && monthFilter !== 'Todos';
+        const expectedPeriodKey = isMonthSpecific ? ('M' + monthFilter) : (quarterFilter === 'all' || quarterFilter === 'Todos' ? 'Annual' : quarterFilter);
 
-        if (!isComparative) {
-            // AÑO ESPECÍFICO: Buscar por año + periodo (Q o Annual)
-            dynamicInsight = dbInsights.find(ins => 
-                ins.year === parseInt(yearFilter) && 
-                (ins.period_key === quarterFilter || (quarterFilter === 'all' && ins.period_key === 'Annual')) &&
-                ins.indicador_key === dbKey
-            );
-        } else if (monthFilter !== 'all' && monthFilter !== 'Todos') {
-            // MODO INTERANUAL: Buscar llave comparativa del mes (ej: DSO_M2)
-            // EN-04 NOTE: La búsqueda usa .toUpperCase() en ambos lados para garantizar
-            // coincidencia independiente del case con que se almacenó en BD.
-            // gen_bloque_d.py genera las llaves en MAYÚSCULAS (ej: "DSO_M1").
-            const monthKey = `${dbKey}_M${monthFilter}`.toUpperCase();
-            dynamicInsight = dbInsights.find(ins => 
-                ins.indicador_key.toUpperCase() === monthKey
-            );
-        }
+        let dynamicInsight = dbInsights.find(ins => 
+            (ins.year == targetYear || ins.periodo_ano == targetYear) && 
+            ins.period_key === expectedPeriodKey &&
+            (ins.indicador_key.toLowerCase() === indicatorKey.toLowerCase() || ins.indicador_key.toLowerCase() === dbKey.toLowerCase())
+        );
 
         if (dynamicInsight) {
             itemToRender = {
@@ -557,24 +547,22 @@ function updateDictamen() {
 
     if (!container) return;
 
+    const monthFilter = document.getElementById('monthFilter')?.value || 'all';
+    const isMonthSpecific = monthFilter !== 'all' && monthFilter !== 'Todos';
+
     let targetYear = (yearFilter === 'all' || yearFilter === 'Todos') ? 2025 : parseInt(yearFilter);
-    let periodKey = (quarterFilter === 'all' || quarterFilter === 'Todos') ? "Annual" : quarterFilter;
+    let periodKey = isMonthSpecific ? ('M' + monthFilter) : (quarterFilter === 'all' || quarterFilter === 'Todos' ? 'Annual' : quarterFilter);
 
     // 1. PRIORIDAD: Buscar en Insights dinámicos (Base de Datos)
-    // IC-03 / IC-03b FIX: La búsqueda ahora exige coincidencia estricta por módulo.
-    // Se eliminó 'report' como llave aceptada para el dictamen de Actividad porque
-    // 'report' es también usada por el módulo de Rentabilidad (ver README Sección 2D-3).
-    // Aceptar 'report' sin filtro de módulo causa que el dictamen de Rentabilidad
-    // aparezca en la pestaña de Actividad cuando no hay insight-actividad-ai disponible.
-    // La única llave válida para el dictamen maestro de Actividad es 'insight-actividad-ai'
-    // según el PROTOCOLO_MASTER_ACTIVIDAD.md (Sección 1, fila Dictamen General).
     let dynamicReport = null;
     if (dbInsights && dbInsights.length > 0) {
-        dynamicReport = dbInsights.find(ins => 
-            ins.year === targetYear && 
-            ins.period_key === periodKey &&
-            ins.indicador_key === 'insight-actividad-ai'
-        );
+        dynamicReport = dbInsights.find(ins => {
+            const insYear = ins.year || ins.periodo_ano;
+            const insKey = (ins.indicador_key || '').toLowerCase();
+            return (insYear == targetYear) && 
+                   (ins.period_key === periodKey) &&
+                   (insKey === 'report' || insKey === 'insight-actividad-ai' || insKey === 'actividad');
+        });
     }
 
     const pos = dynamicReport?.analisis_positivo || (currentLanguage === 'es' ? "No se registran hallazgos positivos." : "No positive findings.");
@@ -770,7 +758,7 @@ async function initializeDashboard() {
         }
 
         console.log(`[Dashboard] Fetching insights from API for Empresa ${empresaId}...`);
-        const insightsRes = await DashboardAPI.getInsights(empresaId);
+        const insightsRes = await DashboardAPI.getInsights(empresaId, 'actividad');
         if (insightsRes && insightsRes.insights && insightsRes.insights.length > 0) {
             dbInsights = insightsRes.insights;
             console.log(`[Dashboard] Loaded ${dbInsights.length} AI insights for Actividad from DB`);

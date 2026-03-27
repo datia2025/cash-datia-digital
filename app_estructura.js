@@ -150,17 +150,22 @@ function updateDictamen() {
 
     if (!container) return;
 
+    const monthFilter = document.getElementById('monthFilter')?.value || 'all';
+    const isMonthSpecific = monthFilter !== 'all' && monthFilter !== 'Todos';
+
     let targetYear = (yearFilter === 'all' || yearFilter === 'Todos') ? 2025 : parseInt(yearFilter);
-    let periodKey = (quarterFilter === 'all' || quarterFilter === 'Todos') ? "Annual" : quarterFilter;
+    let periodKey = isMonthSpecific ? ('M' + monthFilter) : (quarterFilter === 'all' || quarterFilter === 'Todos' ? 'Annual' : quarterFilter);
 
     // 1. PRIORIDAD: Buscar en Insights dinámicos (Base de Datos)
     let dynamicReport = null;
     if (dbInsights && dbInsights.length > 0) {
-        dynamicReport = dbInsights.find(ins => 
-            (ins.year === targetYear || ins.periodo_ano === targetYear) && 
-            ins.period_key === periodKey &&
-            (ins.indicador_key === 'report' || ins.indicador_key === 'insight-estructura-ai' || ins.indicador_key === 'estructura')
-        );
+        dynamicReport = dbInsights.find(ins => {
+            const insYear = ins.year || ins.periodo_ano;
+            const insKey = (ins.indicador_key || '').toLowerCase();
+            return (insYear == targetYear) && 
+                   (ins.period_key === periodKey) &&
+                   (insKey === 'report' || insKey === 'insight-estructura-ai' || insKey === 'estructura');
+        });
     }
 
     const pos = dynamicReport?.analisis_positivo || (currentLanguage === 'es' ? "No se registran hallazgos positivos en estructura para este periodo." : "No positive structure findings recorded.");
@@ -344,48 +349,48 @@ function hideInsightOverlay(indicatorKey) {
     const overlay = document.getElementById(`insight-overlay-${indicatorKey}`);
     if (overlay) overlay.classList.remove('active');
     
-    const btns = document.querySelectorAll(`#analysis-${indicatorKey} .insight-tab-btn`);
+    const btns = document.querySelectorAll(`#tabs-${indicatorKey} .insight-tab-btn`);
     btns.forEach(b => {
         b.classList.remove('active');
     });
 }
 
-// Función para actualizar hallazgos por indicador
+// Función para actualizar el análisis
 function updateAnalysis(indicatorKey) {
     const yearFilter = document.getElementById('yearFilter').value;
     const quarterFilter = document.getElementById('quarterFilter').value;
     const monthFilter = document.getElementById('monthFilter')?.value || 'all';
-    const analysisContainer = document.getElementById(`analysis-${indicatorKey}`);
-
-    // Check if the overlay mechanism is present for this indicator
-    const hasOverlay = document.getElementById(`insight-overlay-${indicatorKey}`) !== null;
-
-    if (!analysisContainer) return;
-    hideInsightOverlay(indicatorKey); // reset any open overlay state
-
-    if (typeof auditRepositoryEstructura === 'undefined') {
-        analysisContainer.innerHTML = '';
-        return;
-    }
+    
+    const tabsContainer = document.getElementById(`tabs-${indicatorKey}`);
+    if (!tabsContainer) return;
+    tabsContainer.innerHTML = '';
 
     let itemToRender = null;
     let isComparative = (yearFilter === 'all' || yearFilter === 'Todos');
 
     // 1. PRIORIDAD: Buscar en insights dinámicos de la BD
-    if (!isComparative && dbInsights && dbInsights.length > 0) {
-        const dynamicInsight = dbInsights.find(ins => 
-            ins.year === parseInt(yearFilter) && 
-            (ins.period_key === quarterFilter || (quarterFilter === 'all' && ins.period_key === 'Annual')) &&
-            ins.indicador_key === indicatorKey
-        );
+    if (dbInsights && dbInsights.length > 0) {
+        const targetYear = (yearFilter === 'all' || yearFilter === 'Todos') ? 2025 : parseInt(yearFilter);
+        const isMonthSpecific = monthFilter !== 'all' && monthFilter !== 'Todos';
+        const expectedPeriodKey = isMonthSpecific ? ('M' + monthFilter) : (quarterFilter === 'all' || quarterFilter === 'Todos' ? 'Annual' : quarterFilter);
+
+        const dynamicInsight = dbInsights.find(ins => {
+            const insYear = ins.year || ins.periodo_ano;
+            const insKey = (ins.indicador_key || '').toLowerCase();
+            return (insYear == targetYear) && 
+                   (ins.period_key === expectedPeriodKey) &&
+                   (insKey === indicatorKey.toLowerCase());
+        });
+
         if (dynamicInsight) {
             itemToRender = {
-                text: (
+                title: dynamicInsight.titulo || "Análisis AI",
+                text: dynamicInsight.contenido || (
                     (dynamicInsight.analisis_positivo ? `**Aspecto Positivo:** ${dynamicInsight.analisis_positivo}\n\n` : '') +
                     (dynamicInsight.analisis_negativo ? `**Aspecto Negativo:** ${dynamicInsight.analisis_negativo}\n\n` : '') +
                     (dynamicInsight.recomendacion ? `**Recomendación:** ${dynamicInsight.recomendacion}` : '')
                 ),
-                status: dynamicInsight.status || 'info'
+                type: dynamicInsight.status || 'info'
             };
         }
     }
@@ -394,72 +399,62 @@ function updateAnalysis(indicatorKey) {
     if (!itemToRender && empresaId === 1) {
         if (isComparative) {
             const compData = getComparativeInsights(monthFilter !== 'all' ? monthFilter : quarterFilter);
-            if (compData && compData.indicators) itemToRender = compData.indicators[indicatorKey];
+            if (compData) {
+                if (compData.indicators && compData.indicators[indicatorKey]) {
+                    itemToRender = compData.indicators[indicatorKey];
+                } else if (compData.findings) {
+                    itemToRender = compData.findings[0];
+                }
+            }
         } else {
             const yearData = getAuditInsights(yearFilter, quarterFilter);
-            if (yearData && yearData.indicators) itemToRender = yearData.indicators[indicatorKey];
+            if (yearData && yearData.indicators) {
+                itemToRender = yearData.indicators[indicatorKey];
+            }
         }
     }
 
-    // FALLBACK - Solo para MAS CONSULTA (empresaId 1)
-    if (!itemToRender && empresaId === 1) {
-        analysisContainer.innerHTML = `<span class="text-xs text-slate-400 italic font-mono bg-slate-100 px-2 py-1 rounded">No hay hallazgos disponibles para este periodo.</span>`;
+    if (!itemToRender) {
+        if (empresaId === 1) {
+            tabsContainer.innerHTML = `
+                <div class="text-xs text-gray-500 italic p-1">
+                    ${currentLanguage === 'es' ? 'Sin hallazgos específicos para este periodo.' : 'No specific findings for this period.'}
+                </div>
+            `;
+        }
         return;
     }
 
-    if (!itemToRender || (!itemToRender.text && !itemToRender.es && !itemToRender.en)) return;
+    const rawText = itemToRender.text || '';
+    const sections = [
+        { id: 'positivo', label: 'POSITIVO', icon: 'check-circle', color: '#059669', title: 'FORTALEZA DETECTADA', regex: /\*\*Aspecto Positivo:\*\*\s*([\s\S]*?)(?=\*\*Aspecto Negativo:|\*\*Recomendación:|$)/ },
+        { id: 'negativo', label: 'ALERTA', icon: 'alert-triangle', color: '#dc2626', title: 'ALERTA DE SEGURIDAD', regex: /\*\*Aspecto Negativo:\*\*\s*([\s\S]*?)(?=\*\*Recomendación:|$)/ },
+        { id: 'recomendacion', label: 'ACCIÓN', icon: 'zap', color: '#2563eb', title: 'RECOMENDACIÓN DE AUDITORÍA', regex: /\*\*Recomendación:\*\*\s*([\s\S]*?)$/ }
+    ];
 
-    // Extract text from object
-    let rawText = '';
-    if (typeof itemToRender === 'string') {
-        rawText = itemToRender;
-    } else if (itemToRender.text) {
-        rawText = typeof itemToRender.text === 'string' ? itemToRender.text : (itemToRender.text[currentLanguage] || itemToRender.text.es);
-    }
+    let buttonsAdded = 0;
+    sections.forEach(section => {
+        const match = rawText.match(section.regex);
+        const text = match ? match[1].trim() : '';
+        
+        if (text) {
+            const btn = document.createElement('button');
+            btn.className = 'insight-tab-btn';
+            btn.innerHTML = `<i data-lucide="${section.icon}" style="color: ${section.color}"></i> ${section.label}`;
+            btn.onclick = () => toggleInsightOverlay(indicatorKey, { ...section, text }, btn);
+            tabsContainer.appendChild(btn);
+            buttonsAdded++;
+        }
+    });
 
-    // Parse Markdown to extract Positivo/Negativo/Recomendación matching Actividad's format
-    const positivoMatch = rawText.match(/\*\*Aspecto Positivo:\*\*\s*([\s\S]*?)(?=\*\*Aspecto Negativo:|$)/i);
-    const negativoMatch = rawText.match(/\*\*Aspecto Negativo:\*\*\s*([\s\S]*?)(?=\*\*Recomendación:|$)/i);
-    const recomendacionMatch = rawText.match(/\*\*Recomendación:\*\*\s*([\s\S]*?)$/i);
-
-    const positivo = positivoMatch ? positivoMatch[1].trim() : '';
-    const negativo = negativoMatch ? negativoMatch[1].trim() : '';
-    const recomendacion = recomendacionMatch ? recomendacionMatch[1].trim() : '';
-
-    let sections = [];
-    if (!positivo && !negativo && !recomendacion && rawText.trim()) {
-        sections.push({ label: 'ANÁLISIS', icon: 'bar-chart-2', color: '#1e3a8a', title: 'ANÁLISIS DE AUDITORÍA', text: rawText.replace(/^\*\*Tendencia.*:\*\*\s*/i, '').trim() });
-    } else {
-        if (positivo) sections.push({ label: 'POSITIVO', icon: 'check-circle', color: '#059669', title: 'FORTALEZA DETECTADA', text: positivo });
-        if (negativo) sections.push({ label: 'ALERTA', icon: 'alert-triangle', color: '#dc2626', title: 'ALERTA DE SEGURIDAD', text: negativo });
-        if (recomendacion) sections.push({ label: 'ACCIÓN', icon: 'zap', color: '#2563eb', title: 'RECOMENDACIÓN DE AUDITORÍA', text: recomendacion });
-    }
-
-    // If overlay structure is not present (fallback)
-    if (!hasOverlay) {
-        let html = `<div class="mt-4 p-4 bg-slate-50 rounded-xl border border-slate-100 flex flex-col gap-3">`;
-        sections.forEach(s => {
-            html += `<div class="text-sm"><strong class="text-slate-800">${s.label}:</strong> <span class="text-slate-600">${s.text}</span></div>`;
-        });
-        html += `</div>`;
-        analysisContainer.innerHTML = html;
-        if (typeof lucide !== 'undefined') lucide.createIcons();
-        return;
-    }
-
-    // Generate Tabs for Overlay (Lean Premium)
-    analysisContainer.innerHTML = '';
-    sections.forEach(s => {
+    // Fallback si no hay secciones pero sí texto
+    if (buttonsAdded === 0 && rawText.trim()) {
         const btn = document.createElement('button');
         btn.className = 'insight-tab-btn';
-        // HTML escape text for onclick passing
-        const escText = s.text.replace(/'/g, "\\'").replace(/"/g, '&quot;').replace(/\n/g, '<br>');
-        btn.setAttribute('onclick', `toggleInsightOverlay('${indicatorKey}', '${s.label}', '${escText}', '${s.icon}', '${s.color}', '${s.title || s.label}')`);
-        btn.dataset.color = s.color; // store for hover effects
-        
-        btn.innerHTML = `<i data-lucide="${s.icon}" style="color: ${s.color}"></i> ${s.label}`;
-        analysisContainer.appendChild(btn);
-    });
+        btn.innerHTML = `<i data-lucide="info" style="color: #1e3a8a"></i> ANÁLISIS`;
+        btn.onclick = () => toggleInsightOverlay(indicatorKey, { id: 'general', label: 'ANÁLISIS', icon: 'info', color: '#1e3a8a', title: 'Análisis de Auditoría', text: rawText }, btn);
+        tabsContainer.appendChild(btn);
+    }
 
     if (typeof lucide !== 'undefined') lucide.createIcons();
 }

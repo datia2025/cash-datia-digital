@@ -143,17 +143,22 @@ function updateDictamen() {
 
     if (!container) return;
 
+    const monthFilter = document.getElementById('monthFilter')?.value || 'all';
+    const isMonthSpecific = monthFilter !== 'all' && monthFilter !== 'Todos';
+
     let targetYear = (yearFilter === 'all' || yearFilter === 'Todos') ? 2025 : parseInt(yearFilter);
-    let periodKey = (quarterFilter === 'all' || quarterFilter === 'Todos') ? "Annual" : quarterFilter;
+    let periodKey = isMonthSpecific ? ('M' + monthFilter) : (quarterFilter === 'all' || quarterFilter === 'Todos' ? 'Annual' : quarterFilter);
 
     // 1. PRIORIDAD: Buscar en Insights dinámicos (Base de Datos)
     let dynamicReport = null;
     if (dbInsights && dbInsights.length > 0) {
-        dynamicReport = dbInsights.find(ins => 
-            (ins.year === targetYear || ins.periodo_ano === targetYear) && 
-            ins.period_key === periodKey &&
-            (ins.indicador_key === 'report' || ins.indicador_key === 'insight-solvencia-ai' || ins.indicador_key === 'solvencia')
-        );
+        dynamicReport = dbInsights.find(ins => {
+            const insYear = ins.year || ins.periodo_ano;
+            const insKey = (ins.indicador_key || '').toLowerCase();
+            return (insYear == targetYear) && 
+                   (ins.period_key === periodKey) &&
+                   (insKey === 'report' || insKey === 'insight-solvencia-ai' || insKey === 'solvencia');
+        });
     }
 
     const pos = dynamicReport?.analisis_positivo || (currentLanguage === 'es' ? "No se registran hallazgos positivos en solvencia para este periodo." : "No positive solvency findings recorded.");
@@ -280,12 +285,12 @@ function updateDictamen() {
     if (typeof lucide !== 'undefined') lucide.createIcons();
 }
 
-// Función para actualizar el análisis (Audit Insights) con pestañas estilo Actividad
+// Función para actualizar el análisis (Audit Insights) con pestañas estilo
 function updateAnalysis(indicatorKey) {
     const yearFilter = document.getElementById('yearFilter').value;
     const quarterFilter = document.getElementById('quarterFilter').value;
     const monthFilter = document.getElementById('monthFilter')?.value || 'all';
-
+    
     const tabsContainer = document.getElementById(`tabs-${indicatorKey}`);
     if (!tabsContainer) return;
     tabsContainer.innerHTML = '';
@@ -294,16 +299,23 @@ function updateAnalysis(indicatorKey) {
     let isComparative = (yearFilter === 'all' || yearFilter === 'Todos');
 
     // 1. PRIORIDAD: Buscar en insights dinámicos de la BD
-    if (!isComparative && dbInsights && dbInsights.length > 0) {
-        const dynamicInsight = dbInsights.find(ins => 
-            ins.year === parseInt(yearFilter) && 
-            (ins.period_key === quarterFilter || (quarterFilter === 'all' && ins.period_key === 'Annual')) &&
-            ins.indicador_key === indicatorKey
-        );
+    if (dbInsights && dbInsights.length > 0) {
+        const targetYear = (yearFilter === 'all' || yearFilter === 'Todos') ? 2025 : parseInt(yearFilter);
+        const isMonthSpecific = monthFilter !== 'all' && monthFilter !== 'Todos';
+        const expectedPeriodKey = isMonthSpecific ? ('M' + monthFilter) : (quarterFilter === 'all' || quarterFilter === 'Todos' ? 'Annual' : quarterFilter);
+
+        const dynamicInsight = dbInsights.find(ins => {
+            const insYear = ins.year || ins.periodo_ano;
+            const insKey = (ins.indicador_key || '').toLowerCase();
+            return (insYear == targetYear) && 
+                   (ins.period_key === expectedPeriodKey) &&
+                   (insKey === indicatorKey.toLowerCase());
+        });
+
         if (dynamicInsight) {
             itemToRender = {
                 title: dynamicInsight.titulo || "Análisis AI",
-                text: (
+                text: dynamicInsight.contenido || (
                     (dynamicInsight.analisis_positivo ? `**Aspecto Positivo:** ${dynamicInsight.analisis_positivo}\n\n` : '') +
                     (dynamicInsight.analisis_negativo ? `**Aspecto Negativo:** ${dynamicInsight.analisis_negativo}\n\n` : '') +
                     (dynamicInsight.recomendacion ? `**Recomendación:** ${dynamicInsight.recomendacion}` : '')
@@ -316,7 +328,6 @@ function updateAnalysis(indicatorKey) {
     // 2. FALLBACK: Repositorio estático (solo empresaId 1)
     if (!itemToRender && empresaId === 1) {
         if (isComparative) {
-            // Modo comparativo: buscar en Comparative
             const compData = getComparativeInsights(monthFilter !== 'all' ? monthFilter : quarterFilter);
             if (compData) {
                 if (compData.indicators && compData.indicators[indicatorKey]) {
@@ -326,7 +337,6 @@ function updateAnalysis(indicatorKey) {
                 }
             }
         } else {
-            // Modo año específico: buscar en el año
             const yearData = getAuditInsights(yearFilter, quarterFilter);
             if (yearData && yearData.indicators) {
                 itemToRender = yearData.indicators[indicatorKey];
@@ -334,53 +344,46 @@ function updateAnalysis(indicatorKey) {
         }
     }
 
-    // FALLBACK - Solo para MAS CONSULTA (empresaId 1)
-    if (!itemToRender && empresaId === 1) {
-        tabsContainer.innerHTML = `
-            <div class="text-xs text-gray-500 italic p-1">
-                ${currentLanguage === 'es' ? 'Sin hallazgos específicos para este periodo.' : 'No specific findings for this period.'}
-            </div>
-        `;
+    if (!itemToRender) {
+        if (empresaId === 1) {
+            tabsContainer.innerHTML = `
+                <div class="text-xs text-gray-500 italic p-1">
+                    ${currentLanguage === 'es' ? 'Sin hallazgos específicos para este periodo.' : 'No specific findings for this period.'}
+                </div>
+            `;
+        }
         return;
     }
 
-    if (!itemToRender) return;
-
-    // Parse the text into sections
     const rawText = itemToRender.text || '';
-    
-    // Si no hay Aspecto Positivo/Negativo/Recomendación, crear una vista general
-    if (!rawText.includes('**Aspecto Positivo:**') && !rawText.includes('**Aspecto Negativo:**')) {
-        const tendenciaClean = rawText.replace(/^\*\*Tendencia\s*\d{4}-\d{4}:\*\*\s*/i, '').trim();
-        if (tendenciaClean) {
+    const sections = [
+        { id: 'positivo', label: 'POSITIVO', icon: 'check-circle', color: '#059669', title: 'FORTALEZA DETECTADA', regex: /\*\*Aspecto Positivo:\*\*\s*([\s\S]*?)(?=\*\*Aspecto Negativo:|\*\*Recomendación:|$)/ },
+        { id: 'negativo', label: 'ALERTA', icon: 'alert-triangle', color: '#dc2626', title: 'ALERTA DE SEGURIDAD', regex: /\*\*Aspecto Negativo:\*\*\s*([\s\S]*?)(?=\*\*Recomendación:|$)/ },
+        { id: 'recomendacion', label: 'ACCIÓN', icon: 'zap', color: '#2563eb', title: 'RECOMENDACIÓN DE AUDITORÍA', regex: /\*\*Recomendación:\*\*\s*([\s\S]*?)$/ }
+    ];
+
+    let buttonsAdded = 0;
+    sections.forEach(section => {
+        const match = rawText.match(section.regex);
+        const text = match ? match[1].trim() : '';
+        
+        if (text) {
             const btn = document.createElement('button');
             btn.className = 'insight-tab-btn';
-            btn.innerHTML = `<i data-lucide="bar-chart-2" style="color: #1e3a8a"></i> ANÁLISIS`;
-            btn.onclick = () => toggleInsightOverlay(indicatorKey, { 
-                id: 'general', label: 'ANÁLISIS', icon: 'bar-chart-2', color: '#1e3a8a', 
-                title: 'Análisis de Auditoría', text: tendenciaClean 
-            }, btn);
+            btn.innerHTML = `<i data-lucide="${section.icon}" style="color: ${section.color}"></i> ${section.label}`;
+            btn.onclick = () => toggleInsightOverlay(indicatorKey, { ...section, text }, btn);
             tabsContainer.appendChild(btn);
+            buttonsAdded++;
         }
-    } else {
-        const sections = [
-            { id: 'positivo', label: 'POSITIVO', icon: 'check-circle', color: '#059669', title: 'FORTALEZA DETECTADA', regex: /\*\*Aspecto Positivo:\*\*\s*([\s\S]*?)(?=\*\*Aspecto Negativo:|\*\*Recomendación:|$)/ },
-            { id: 'negativo', label: 'ALERTA', icon: 'alert-triangle', color: '#dc2626', title: 'ALERTA DE SEGURIDAD', regex: /\*\*Aspecto Negativo:\*\*\s*([\s\S]*?)(?=\*\*Recomendación:|$)/ },
-            { id: 'recomendacion', label: 'ACCIÓN', icon: 'zap', color: '#2563eb', title: 'RECOMENDACIÓN DE AUDITORÍA', regex: /\*\*Recomendación:\*\*\s*([\s\S]*?)$/ }
-        ];
+    });
 
-        sections.forEach(section => {
-            const match = rawText.match(section.regex);
-            const text = match ? match[1].trim() : '';
-            
-            if (text) {
-                const btn = document.createElement('button');
-                btn.className = 'insight-tab-btn';
-                btn.innerHTML = `<i data-lucide="${section.icon}" style="color: ${section.color}"></i> ${section.label}`;
-                btn.onclick = () => toggleInsightOverlay(indicatorKey, { ...section, text }, btn);
-                tabsContainer.appendChild(btn);
-            }
-        });
+    // Fallback si no hay secciones pero sí texto
+    if (buttonsAdded === 0 && rawText.trim()) {
+        const btn = document.createElement('button');
+        btn.className = 'insight-tab-btn';
+        btn.innerHTML = `<i data-lucide="info" style="color: #1e3a8a"></i> ANÁLISIS`;
+        btn.onclick = () => toggleInsightOverlay(indicatorKey, { id: 'general', label: 'ANÁLISIS', icon: 'info', color: '#1e3a8a', title: 'Análisis de Auditoría', text: rawText }, btn);
+        tabsContainer.appendChild(btn);
     }
 
     if (typeof lucide !== 'undefined') lucide.createIcons();
@@ -629,36 +632,50 @@ document.getElementById('languageFilter').addEventListener('change', (e) => {
     updateAllCharts();
 });
 
-// Inicialización
+// Inicialización — peticiones paralelas para minimizar tiempo de carga
 async function initializeDashboard() {
     if (empresaId !== 1) {
         liquidityDataSolvency = [];
         window.liquidityDataSolvency = [];
     }
-    updateAllCharts();
+
+    // Mostrar estado de carga en el dictamen sin bloquear UI
+    const dictamenEl = document.getElementById('dictamen-container');
+    if (dictamenEl) {
+        dictamenEl.innerHTML = `<div style="color:#94a3b8;font-size:0.8rem;padding:16px;text-align:center">
+            <svg style="animation:spin 1s linear infinite;display:inline-block;width:16px;height:16px;margin-right:6px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+            Cargando datos de solvencia...
+        </div>
+        <style>@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}</style>`;
+    }
 
     try {
-        const apiData = await DashboardAPI.getIndicadoresData(empresaId, 'solvencia');
+        // ✅ PARALELO: ambas peticiones se lanzan al mismo tiempo (~50% más rápido)
+        const [apiData, insightsRes] = await Promise.all([
+            DashboardAPI.getIndicadoresData(empresaId, 'solvencia'),
+            DashboardAPI.getInsights(empresaId, 'solvencia')
+        ]);
+
         if (apiData && apiData.length > 0) {
             liquidityDataSolvency = apiData;
-            window.liquidityDataSolvency = apiData; // FIX: Update window object
-            console.log(`[Dashboard] Dynamically loaded ${apiData.length} records for Solvencia`);
+            window.liquidityDataSolvency = apiData;
+            console.log(`[Dashboard] Cargados ${apiData.length} registros de Solvencia`);
         } else {
-            console.warn("[Dashboard] API returned empty indicators. Setting empty state.");
-            liquidityDataSolvency = []; 
+            console.warn("[Dashboard] API no retornó indicadores. Estado vacío.");
+            liquidityDataSolvency = [];
             window.liquidityDataSolvency = [];
         }
 
-        // Cargar Insights desde la BD
-        const insightsRes = await DashboardAPI.getInsights(empresaId, 'solvencia');
         if (insightsRes && insightsRes.insights) {
             dbInsights = insightsRes.insights;
-            console.log(`[Dashboard] Loaded ${dbInsights.length} AI insights for Solvencia from DB`);
+            console.log(`[Dashboard] Cargados ${dbInsights.length} insights AI de Solvencia`);
         }
     } catch (error) {
         dynamicDataError = true;
-        console.error("[Dashboard] Failed to fetch dynamic data from DB. Using static fallback.", error);
+        console.error("[Dashboard] Error al obtener datos del worker. Usando fallback estático.", error);
     }
+
+    // Un único render final con todos los datos listos
     updateAllCharts();
 }
 

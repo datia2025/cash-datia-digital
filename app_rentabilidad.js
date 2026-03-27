@@ -151,17 +151,22 @@ function updateDictamen() {
 
     if (!container) return;
 
+    const monthFilter = document.getElementById('monthFilter')?.value || 'all';
+    const isMonthSpecific = monthFilter !== 'all' && monthFilter !== 'Todos';
+
     let targetYear = (yearFilter === 'all' || yearFilter === 'Todos') ? 2025 : parseInt(yearFilter);
-    let periodKey = (quarterFilter === 'all' || quarterFilter === 'Todos') ? "Annual" : quarterFilter;
+    let periodKey = isMonthSpecific ? ('M' + monthFilter) : (quarterFilter === 'all' || quarterFilter === 'Todos' ? 'Annual' : quarterFilter);
 
     // 1. PRIORIDAD: Buscar en Insights dinámicos (Base de Datos)
     let dynamicReport = null;
     if (dbInsights && dbInsights.length > 0) {
-        dynamicReport = dbInsights.find(ins => 
-            (ins.year === targetYear || ins.periodo_ano === targetYear) && 
-            ins.period_key === periodKey &&
-            (ins.indicador_key === 'report' || ins.indicador_key === 'insight-rentabilidad-ai' || ins.indicador_key === 'rentabilidad')
-        );
+        dynamicReport = dbInsights.find(ins => {
+            const insYear = ins.year || ins.periodo_ano;
+            const insKey = (ins.indicador_key || '').toLowerCase();
+            return (insYear == targetYear) && 
+                   (ins.period_key === periodKey) &&
+                   (insKey === 'report' || insKey === 'insight-rentabilidad-ai' || insKey === 'rentabilidad');
+        });
     }
 
     const pos = dynamicReport?.analisis_positivo || (currentLanguage === 'es' ? "No se registran hallazgos positivos en rentabilidad para este periodo." : "No positive profitability findings recorded.");
@@ -301,27 +306,36 @@ function updateAnalysis(indicatorKey) {
     let itemToRender = null;
     let isComparative = (yearFilter === 'all' || yearFilter === 'Todos');
 
-    // 1. PRIORIDAD: Buscar en insights dinámicos de la BD
-    if (!isComparative && dbInsights && dbInsights.length > 0) {
-        const keyMapping = {
-            'ebitda': 'margen_ebitda',
-            'neto': 'margen_neto',
-            'operativo': 'margen_operacional',
-            'bruto': 'margen_bruto',
-            'utilidad': 'utilidad_acumulada'
-        };
-        const dbKey = keyMapping[indicatorKey] || indicatorKey;
-        const targetYear = parseInt(yearFilter);
+    const keyMapping = {
+        'ebitda': 'ebitda',
+        'operativo': 'operativo',
+        'bruto': 'bruto',
+        'neto': 'neto',
+        'patrimonio': 'patrimonio',
+        'roa': 'roa',
+        'roe': 'roe',
+        'utilidad': 'utilidad'
+    };
+    const dbKey = keyMapping[indicatorKey] || indicatorKey;
 
-        const dynamicInsight = dbInsights.find(ins => 
-            (ins.year === targetYear || ins.periodo_ano === targetYear) && 
-            (ins.period_key === quarterFilter || (quarterFilter === 'all' && ins.period_key === 'Annual')) &&
-            (ins.indicador_key === indicatorKey || ins.indicador_key === dbKey)
-        );
+    // 1. PRIORIDAD: Buscar en insights dinámicos de la BD
+    if (dbInsights && dbInsights.length > 0) {
+        const targetYear = (yearFilter === 'all' || yearFilter === 'Todos') ? 2025 : parseInt(yearFilter);
+        const isMonthSpecific = monthFilter !== 'all' && monthFilter !== 'Todos';
+        const expectedPeriodKey = isMonthSpecific ? ('M' + monthFilter) : (quarterFilter === 'all' || quarterFilter === 'Todos' ? 'Annual' : quarterFilter);
+
+        const dynamicInsight = dbInsights.find(ins => {
+            const insYear = ins.year || ins.periodo_ano;
+            const insKey = (ins.indicador_key || '').toLowerCase();
+            return (insYear == targetYear) && 
+                   (ins.period_key === expectedPeriodKey) &&
+                   (insKey === indicatorKey.toLowerCase() || insKey === dbKey.toLowerCase());
+        });
+
         if (dynamicInsight) {
             itemToRender = {
                 title: dynamicInsight.titulo || "Análisis AI",
-                text: (
+                text: dynamicInsight.contenido || (
                     (dynamicInsight.analisis_positivo ? `**Aspecto Positivo:** ${dynamicInsight.analisis_positivo}\n\n` : '') +
                     (dynamicInsight.analisis_negativo ? `**Aspecto Negativo:** ${dynamicInsight.analisis_negativo}\n\n` : '') +
                     (dynamicInsight.recomendacion ? `**Recomendación:** ${dynamicInsight.recomendacion}` : '')
@@ -350,51 +364,46 @@ function updateAnalysis(indicatorKey) {
         }
     }
 
-    if (!itemToRender && empresaId === 1) {
-        tabsContainer.innerHTML = `
-            <div class="text-xs text-gray-500 italic p-1">
-                ${currentLanguage === 'es' ? 'Sin hallazgos específicos para este periodo.' : 'No specific findings for this period.'}
-            </div>
-        `;
+    if (!itemToRender) {
+        if (empresaId === 1) {
+            tabsContainer.innerHTML = `
+                <div class="text-xs text-gray-500 italic p-1">
+                    ${currentLanguage === 'es' ? 'Sin hallazgos específicos para este periodo.' : 'No specific findings for this period.'}
+                </div>
+            `;
+        }
         return;
     }
 
-    if (!itemToRender) return;
-
     const rawText = itemToRender.text || '';
-    
-    // Si no hay Aspecto Positivo/Negativo/Recomendación, crear una vista general
-    if (!rawText.includes('**Aspecto Positivo:**') && !rawText.includes('**Aspecto Negativo:**')) {
-        const tendenciaClean = rawText.replace(/^\*\*Tendencia\s*\d{4}-\d{4}:\*\*\s*/i, '').trim();
-        if (tendenciaClean) {
+    const sections = [
+        { id: 'positivo', label: 'POSITIVO', icon: 'check-circle', color: '#059669', title: 'FORTALEZA DETECTADA', regex: /\*\*Aspecto Positivo:\*\*\s*([\s\S]*?)(?=\*\*Aspecto Negativo:|\*\*Recomendación:|$)/ },
+        { id: 'negativo', label: 'ALERTA', icon: 'alert-triangle', color: '#dc2626', title: 'ALERTA DE SEGURIDAD', regex: /\*\*Aspecto Negativo:\*\*\s*([\s\S]*?)(?=\*\*Recomendación:|$)/ },
+        { id: 'recomendacion', label: 'ACCIÓN', icon: 'zap', color: '#2563eb', title: 'RECOMENDACIÓN DE AUDITORÍA', regex: /\*\*Recomendación:\*\*\s*([\s\S]*?)$/ }
+    ];
+
+    let buttonsAdded = 0;
+    sections.forEach(section => {
+        const match = rawText.match(section.regex);
+        const text = match ? match[1].trim() : '';
+        
+        if (text) {
             const btn = document.createElement('button');
             btn.className = 'insight-tab-btn';
-            btn.innerHTML = `<i data-lucide="bar-chart-2" style="color: #1e3a8a"></i> ANÁLISIS`;
-            btn.onclick = () => toggleInsightOverlay(indicatorKey, { 
-                id: 'general', label: 'ANÁLISIS', icon: 'bar-chart-2', color: '#1e3a8a', 
-                title: 'Análisis de Auditoría', text: tendenciaClean 
-            }, btn);
+            btn.innerHTML = `<i data-lucide="${section.icon}" style="color: ${section.color}"></i> ${section.label}`;
+            btn.onclick = () => toggleInsightOverlay(indicatorKey, { ...section, text }, btn);
             tabsContainer.appendChild(btn);
+            buttonsAdded++;
         }
-    } else {
-        const sections = [
-            { id: 'positivo', label: 'POSITIVO', icon: 'check-circle', color: '#059669', title: 'FORTALEZA DETECTADA', regex: /\*\*Aspecto Positivo:\*\*\s*([\s\S]*?)(?=\*\*Aspecto Negativo:|\*\*Recomendación:|$)/ },
-            { id: 'negativo', label: 'ALERTA', icon: 'alert-triangle', color: '#dc2626', title: 'ALERTA DE SEGURIDAD', regex: /\*\*Aspecto Negativo:\*\*\s*([\s\S]*?)(?=\*\*Recomendación:|$)/ },
-            { id: 'recomendacion', label: 'ACCIÓN', icon: 'zap', color: '#2563eb', title: 'RECOMENDACIÓN DE AUDITORÍA', regex: /\*\*Recomendación:\*\*\s*([\s\S]*?)$/ }
-        ];
+    });
 
-        sections.forEach(section => {
-            const match = rawText.match(section.regex);
-            const text = match ? match[1].trim() : '';
-            
-            if (text) {
-                const btn = document.createElement('button');
-                btn.className = 'insight-tab-btn';
-                btn.innerHTML = `<i data-lucide="${section.icon}" style="color: ${section.color}"></i> ${section.label}`;
-                btn.onclick = () => toggleInsightOverlay(indicatorKey, { ...section, text }, btn);
-                tabsContainer.appendChild(btn);
-            }
-        });
+    // Fallback si no hay secciones pero sí texto
+    if (buttonsAdded === 0 && rawText.trim()) {
+        const btn = document.createElement('button');
+        btn.className = 'insight-tab-btn';
+        btn.innerHTML = `<i data-lucide="info" style="color: #1e3a8a"></i> ANÁLISIS`;
+        btn.onclick = () => toggleInsightOverlay(indicatorKey, { id: 'general', label: 'ANÁLISIS', icon: 'info', color: '#1e3a8a', title: 'Análisis de Auditoría', text: rawText }, btn);
+        tabsContainer.appendChild(btn);
     }
 
     if (typeof lucide !== 'undefined') lucide.createIcons();
@@ -688,7 +697,7 @@ async function initializeDashboard() {
         }
 
         // Cargar Insights desde la BD
-        const insightsRes = await DashboardAPI.getInsights(empresaId);
+        const insightsRes = await DashboardAPI.getInsights(empresaId, 'rentabilidad');
         if (insightsRes && insightsRes.insights) {
             dbInsights = insightsRes.insights;
             console.log(`[Dashboard] Loaded ${dbInsights.length} AI insights for Rentabilidad from DB`);

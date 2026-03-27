@@ -259,7 +259,7 @@
                 </div>
                 <div class="insight-box blue-theme">
                     <div class="insight-col">
-                        <div class="it-head"><i data-lucide="brain"></i> EL CFO DICE</div>
+                        <div class="it-head"><i data-lucide="brain"></i> ANÁLISIS CASH</div>
                         <div class="it-body" id="insight-liquidez-ai">Cargando diagnóstico de liquidez...</div>
                     </div>
                     <div class="insight-col">
@@ -302,7 +302,7 @@
                 </div>
                 <div class="insight-box blue-theme">
                     <div class="insight-col">
-                        <div class="it-head"><i data-lucide="brain"></i> EL CFO DICE</div>
+                        <div class="it-head"><i data-lucide="brain"></i> ANÁLISIS CASH</div>
                         <div class="it-body" id="insight-actividad-ai">Cargando diagnóstico de eficiencia operativa...</div>
                     </div>
                     <div class="insight-col">
@@ -345,7 +345,7 @@
                 </div>
                 <div class="insight-box blue-theme">
                     <div class="insight-col">
-                        <div class="it-head"><i data-lucide="brain"></i> EL CFO DICE</div>
+                        <div class="it-head"><i data-lucide="brain"></i> ANÁLISIS CASH</div>
                         <div class="it-body" id="insight-rentabilidad-ai">Generando análisis de rentabilidad...</div>
                     </div>
                     <div class="insight-col">
@@ -384,7 +384,7 @@
                 </div>
                 <div class="insight-box blue-theme">
                     <div class="insight-col" style="grid-column: span 2;">
-                        <div class="it-head"><i data-lucide="brain"></i> EL CFO DICE</div>
+                        <div class="it-head"><i data-lucide="brain"></i> ANÁLISIS CASH</div>
                         <div class="it-body" id="insight-solvencia-ai">Analizando estructura de deuda y solvencia...</div>
                     </div>
                 </div>
@@ -431,7 +431,7 @@
                 </div>
                 <div class="insight-box blue-theme" style="margin-top:10px;">
                     <div class="insight-col" style="grid-column: span 2;">
-                        <div class="it-head"><i data-lucide="brain"></i> EL CFO DICE</div>
+                        <div class="it-head"><i data-lucide="brain"></i> ANÁLISIS CASH</div>
                         <div class="it-body" id="insight-estructura-ai">Generando diagnóstico de estructura de capital...</div>
                     </div>
                 </div>
@@ -527,17 +527,42 @@ document.addEventListener('DOMContentLoaded', async () => {
         options: { cutout: '80%', plugins: { legend: { display: false } } }
     });
 
-    /* El perfil operativo ahora se carga dinámicamente desde la BD de Insights */
-    if (typeof currentCompany !== 'undefined') {
-        document.getElementById('company-name').textContent = currentCompany.name;
-        document.getElementById('company-sector').textContent = `Sector: ${currentCompany.sector || 'Consultoría / Servicios Profesionales'}`;
-        // document.getElementById('perfil-operativo').textContent = currentCompany.description;
+    // 0. Identificación Dinámica y Fetching Paralelo para minimizar tiempo de carga (Promise.all)
+    let currentCompany = undefined;
+    let data = [];
+    let insightsData = null;
+
+    try {
+        if (typeof DashboardAPI !== 'undefined' && typeof empresaId !== 'undefined') {
+            // Animación de carga en los contenedores principales
+            document.getElementById('perfil-operativo').innerHTML = '<div style="color:#94a3b8;font-size:0.8rem;display:flex;align-items:center"><svg style="animation:spin 1s linear infinite;width:14px;height:14px;margin-right:6px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg> Sincronizando modelo...</div><style>@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}</style>';
+            
+            // 🔥 PARALELISMO: Las 3 peticiones masivas se disparan al mismo tiempo
+            const [companyRes, indRes, insRes] = await Promise.all([
+                DashboardAPI.fetchCompanyMetadata(empresaId).catch(e => { console.warn("Error empresa", e); return undefined; }),
+                DashboardAPI.getIndicadoresData(empresaId).catch(e => { console.warn("Error indicadores", e); return []; }),
+                DashboardAPI.getInsights(empresaId).catch(e => { console.warn("Error insights", e); return null; })
+            ]);
+
+            currentCompany = companyRes;
+            data = indRes;
+            insightsData = insRes;
+        }
+    } catch (e) {
+        console.error("Error crítico durante fetching paralelo:", e);
     }
 
-    // API Integration with guards
+    // 1. Render Perfil de la Empresa
+    if (typeof currentCompany !== 'undefined' && currentCompany) {
+        const nameEl = document.getElementById('company-name');
+        const sectorEl = document.getElementById('company-sector');
+        if (nameEl) nameEl.textContent = currentCompany.name;
+        if (sectorEl) sectorEl.textContent = `Sector: ${currentCompany.sector || 'Consultoría / Servicios Profesionales'}`;
+    }
+
+    // 2. Render Indicadores
     try {
         if (typeof DashboardAPI !== 'undefined') {
-            const data = await DashboardAPI.getIndicadoresData(empresaId);
             
             const clearDashboard = () => {
                 // Reset KPIs
@@ -857,8 +882,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 clearDashboard();
             }
 
-            // Fetch AI Insights — mapeo completo por indicador_key
-            const insightsData = await DashboardAPI.getInsights(empresaId);
+            // 3. Render AI Insights
             if (insightsData && insightsData.insights) {
                 // IDs de paneles compactos: solo texto corto
                 const compactIds = ['posicion-financiera-status', 'bolsillo-status'];
@@ -882,8 +906,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                             // Qué hacer hoy: recomendación
                             directEl.textContent = ins.recomendacion;
                         } else if (key.startsWith('insight-')) {
-                            // El CFO Dice: análisis positivo
+                            // ANÁLISIS CASH: análisis positivo
                             directEl.textContent = ins.analisis_positivo;
+                            // Qué hacer hoy: mapear recomendación al elemento action correspondiente
+                            const actionId = key.replace('insight-', 'action-').replace('-ai', '');
+                            const actionEl = document.getElementById(actionId);
+                            if (actionEl) actionEl.textContent = ins.recomendacion;
                         }
                     }
 

@@ -170,22 +170,16 @@ function updateAnalysis(indicatorKey) {
 
     // 1. PRIORIDAD: Búsqueda dinámica en BD
     if (dbInsights && dbInsights.length > 0) {
-        let dynamicInsight = null;
+        const targetYear = isAllYears ? 2025 : parseInt(yearFilter);
+        const expectedPeriodKey = isSpecificMonth ? ('M' + monthFilter) : (quarterFilter === 'all' || quarterFilter === 'Todos' ? 'Annual' : quarterFilter);
 
-        if (!isAllYears) {
-            // AÑO ESPECÍFICO: Buscar por año + periodo (Q o Annual)
-            dynamicInsight = dbInsights.find(ins => 
-                ins.year === parseInt(yearFilter) && 
-                (ins.period_key === quarterFilter || (quarterFilter === 'all' && ins.period_key === 'Annual')) &&
-                ins.indicador_key === dbKey
-            );
-        } else if (isSpecificMonth) {
-            // MODO INTERANUAL: Buscar llave comparativa del mes (ej: RAZON_CORRIENTE_M2)
-            const monthKey = `${dbKey}_M${monthFilter}`.toUpperCase();
-            dynamicInsight = dbInsights.find(ins => 
-                ins.indicador_key.toUpperCase() === monthKey
-            );
-        }
+        let dynamicInsight = dbInsights.find(ins => {
+            const insYear = ins.year || ins.periodo_ano;
+            const insKey = (ins.indicador_key || '').toLowerCase();
+            return (insYear == targetYear) && 
+                   (ins.period_key === expectedPeriodKey) &&
+                   (insKey === indicatorKey.toLowerCase() || insKey === dbKey.toLowerCase());
+        });
 
         if (dynamicInsight) {
             itemToRender = mapDbInsight(dynamicInsight);
@@ -435,7 +429,7 @@ function updateSingleChart(indicatorKey) {
                                 if (indicatorKey === 'capital') {
                                     return (value / 1000000).toFixed(0) + ' MM';
                                 }
-                                return value;
+                                return Number.isInteger(value) ? value : Number(value.toFixed(2));
                             }
                         },
                         grid: { borderDash: [2, 2] }
@@ -520,7 +514,7 @@ function updateSingleChart(indicatorKey) {
                                 if (indicatorKey === 'capital') {
                                     return (value / 1000000).toFixed(0) + ' MM';
                                 }
-                                return value;
+                                return Number.isInteger(value) ? value : Number(value.toFixed(2));
                             }
                         },
                         grid: { borderDash: [2, 2] }
@@ -598,20 +592,25 @@ function updateAnnualReality() {
     const container = document.getElementById('annual-reality-container');
     const yearFilter = document.getElementById('yearFilter')?.value || 'all';
     const quarterFilter = document.getElementById('quarterFilter')?.value || 'all';
-
+    const monthFilter = document.getElementById('monthFilter')?.value || 'all';
+    
     if (!container) return;
 
+    const isMonthSpecific = monthFilter !== 'all' && monthFilter !== 'Todos';
+
     let targetYear = (yearFilter === 'all' || yearFilter === 'Todos') ? 2025 : parseInt(yearFilter);
-    let periodKey = (quarterFilter === 'all' || quarterFilter === 'Todos') ? "Annual" : quarterFilter;
+    let periodKey = isMonthSpecific ? ('M' + monthFilter) : (quarterFilter === 'all' || quarterFilter === 'Todos' ? 'Annual' : quarterFilter);
 
     let dynamicDictamen = null;
 
     if (typeof dbInsights !== 'undefined' && dbInsights.length > 0) {
-        dynamicDictamen = dbInsights.find(ins => 
-            ins.year === targetYear && 
-            ins.period_key === periodKey &&
-            ins.indicador_key === 'insight-liquidez-ai'
-        );
+        dynamicDictamen = dbInsights.find(ins => {
+            const insYear = ins.year || ins.periodo_ano;
+            const insKey = (ins.indicador_key || '').toLowerCase();
+            return (insYear == targetYear) && 
+                   (ins.period_key === periodKey) &&
+                   (insKey === 'insight-liquidez-ai' || insKey === 'report' || insKey === 'liquidez');
+        });
     }
 
     const pos = dynamicDictamen?.analisis_positivo || (currentLanguage === 'es' ? "No se registran hallazgos positivos." : "No positive findings.");
@@ -806,7 +805,7 @@ async function initializeDashboard() {
         }
         
         // Cargar Insights desde la BD
-        const insightsRes = await DashboardAPI.getInsights(empresaId);
+        const insightsRes = await DashboardAPI.getInsights(empresaId, 'liquidez');
         if (insightsRes && insightsRes.insights) {
             dbInsights = insightsRes.insights;
             console.log(`[Dashboard] Loaded ${dbInsights.length} AI insights from DB`);

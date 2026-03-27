@@ -37,6 +37,18 @@ const companiesMetadata = {
             estructura: []
         }
     },
+    3099: {
+        name: "CARLOS TAMAYO Y ASOCIADOS S.A.S",
+        sector: "Consultoría / Servicios Profesionales",
+        description: "Firma de consultoría técnica y servicios profesionales especializada en asesoría empresarial.",
+        risks: {
+            actividad: [],
+            liquidez: [],
+            rentabilidad: [],
+            solvencia: [],
+            estructura: []
+        }
+    },
     3105: {
         name: "COMPULEARNING SAS",
         sector: "Educación / Formación Profesional",
@@ -55,9 +67,30 @@ const companiesMetadata = {
 
 const urlParams = new URLSearchParams(window.location.search);
 const empresaId = parseInt(urlParams.get('empresa')) || 1;
-const currentCompany = companiesMetadata[empresaId] || companiesMetadata[1];
+let currentCompany = companiesMetadata[empresaId] || companiesMetadata[1];
 
 class DashboardAPI {
+    /**
+     * Fetch all companies from the API to get the current one's metadata.
+     */
+    static async fetchCompanyMetadata(id) {
+        try {
+            const response = await this.fetchWithRetry(`${API_CONFIG.BASE_URL}/api/empresas`);
+            if (!response.ok) throw new Error('Failed to fetch companies');
+            const data = await response.json();
+            const found = data.empresas.find(e => parseInt(e.id) === parseInt(id));
+            if (found) {
+                return {
+                    name: found.razon_social,
+                    sector: "Consultoría / Servicios Profesionales", // Default or map if available
+                    description: "Firma de servicios profesionales consultada vía API."
+                };
+            }
+        } catch (error) {
+            console.error("Error fetching company metadata:", error);
+        }
+        return companiesMetadata[id] || companiesMetadata[1];
+    }
     /**
      * Helper to map a month to a quarter.
      */
@@ -68,26 +101,6 @@ class DashboardAPI {
         return "4Q";
     }
 
-    /**
-     * Fetch all indicators for a specific company and transform them into the legacy row-based format.
-     */
-    static async getIndicadoresData(empresaId = 1, modulo = null) {
-        try {
-            // Se elimina el parámetro modulo para descargar los 33 indicadores SIEMPRE.
-            let url = `${API_CONFIG.BASE_URL}/api/indicadores/${empresaId}`;
-
-            const response = await fetch(url);
-            if (!response.ok) {
-                throw new Error(`API returned status ${response.status}`);
-            }
-
-            const result = await response.json();
-            return this.transformIndicadoresToRows(result.indicadores);
-        } catch (error) {
-            console.error("API Error - getIndicadoresData:", error);
-            throw error;
-        }
-    }
 
     /**
      * Transforms the API response (grouped by indicator_key) into an array of rows 
@@ -233,6 +246,28 @@ class DashboardAPI {
     }
 
     /**
+     * Helper with exponential backoff retry for spotty backend connections.
+     */
+    static async fetchWithRetry(url, options = {}, retries = 3, backoff = 1000) {
+        for (let i = 0; i < retries; i++) {
+            try {
+                const response = await fetch(url, options);
+                if (response.ok) return response;
+                // Retry only on 5xx or 429
+                if (response.status < 500 && response.status !== 429) {
+                    return response;
+                }
+                console.warn(`[API] Retrying fetch (${i + 1}/${retries}) due to status ${response.status}`);
+            } catch (error) {
+                console.warn(`[API] Retrying fetch (${i + 1}/${retries}) due to network error:`, error);
+                if (i === retries - 1) throw error;
+            }
+            await new Promise(res => setTimeout(res, backoff * Math.pow(1.5, i)));
+        }
+        throw new Error(`Falló la conexión con el servidor luego de múltiples intentos.`);
+    }
+
+    /**
      * Fetch all indicators for a specific company and transform them into the legacy row-based format.
      */
     static async getIndicadoresData(empresa_id = 1, modulo = null) {
@@ -243,7 +278,7 @@ class DashboardAPI {
             if (modulo) {
                 url += `?modulo=${modulo}`;
             }
-            const response = await fetch(url);
+            const response = await this.fetchWithRetry(url);
             if (!response.ok) {
                 throw new Error(`API returned status ${response.status}`);
             }
@@ -266,32 +301,57 @@ class DashboardAPI {
             if (modulo) {
                 url += `?modulo=${modulo}`;
             }
-            const response = await fetch(url);
+            const response = await this.fetchWithRetry(url);
             if (!response.ok) {
                 throw new Error(`API returned status ${response.status}`);
             }
             const result = await response.json();
             
-            // Normalize for frontend: periodo_ano -> year, handle quarterly suffixes in indicador_key
+            // Normalize for frontend: periodo_ano -> year, handle quarterly/monthly descriptors
             if (result.insights) {
                 result.insights = result.insights.map(ins => {
-                    let extracted = 'Annual';
-                    let final_indicador_key = ins.indicador_key;
+                    let extracted = null;
+                    let cleanKey = (ins.indicador_key || '');
                     
-                    if (ins.indicador_key.match(/_(1Q|2Q|3Q|4Q)$/)) {
-                        extracted = ins.indicador_key.slice(-2);
-                        final_indicador_key = ins.indicador_key.slice(0, -3);
-                    } else if (ins.metodologia && ins.metodologia.includes('- 1Q')) extracted = '1Q';
-                    else if (ins.metodologia && ins.metodologia.includes('- 2Q')) extracted = '2Q';
-                    else if (ins.metodologia && ins.metodologia.includes('- 3Q')) extracted = '3Q';
-                    else if (ins.metodologia && ins.metodologia.includes('- 4Q')) extracted = '4Q';
+                    // 1. Detect period from indicador_key suffix
+                    if (cleanKey.match(/_(1Q|2Q|3Q|4Q)$/i)) {
+                        extracted = cleanKey.slice(-2).toUpperCase();
+                        cleanKey = cleanKey.slice(0, -3);
+                    } else if (cleanKey.match(/_M(1[0-2]|[1-9])$/i)) {
+                        extracted = 'M' + RegExp.$1;
+                        cleanKey = cleanKey.replace(/_M(1[0-2]|[1-9])$/i, '');
+                    }
                     
-                    return {
+                    // 2. Prioritize period_key from DB, then extracted suffix.
+                    //    Only fall back to periodo_mes when a suffix was actually detected
+                    //    (i.e., key had _M1, _1Q, etc.). Otherwise, treat as 'Annual'.
+                    let pKey = ins.period_key || extracted || 'Annual';
+                    
+                    // 3. Standardize '1' / '1M' / 'M1' / 'M01'
+                    if (typeof pKey === 'string' || typeof pKey === 'number') {
+                        let sKey = String(pKey).toUpperCase();
+                        // Handle '1', '2' ... '12'
+                        if (sKey.match(/^([1-9]|1[0-2])$/)) {
+                            pKey = 'M' + sKey;
+                        }
+                        // Standardize '1M' -> 'M1'
+                        else if (sKey.match(/^([1-9]|1[0-2])M$/)) {
+                            pKey = 'M' + sKey.replace('M', '');
+                        }
+                        // Standardize 'M01' -> 'M1'
+                        else if (sKey.match(/^M0([1-9])$/)) {
+                            pKey = 'M' + RegExp.$1;
+                        }
+                    }
+
+                    const normalized = {
                         ...ins,
-                        year: ins.periodo_ano,
-                        period_key: ins.period_key || extracted,
-                        indicador_key: final_indicador_key
+                        year: ins.year || ins.periodo_ano,
+                        period_key: pKey,
+                        indicador_key: cleanKey.toLowerCase()
                     };
+                    console.log(`[API] Normalized Insight: ${ins.indicador_key} -> ${normalized.indicador_key} | Period: ${pKey}`);
+                    return normalized;
                 });
             }
             return result;

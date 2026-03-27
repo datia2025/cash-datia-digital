@@ -1,0 +1,1062 @@
+{
+  "empresa_id": 3099,
+  "total": 200,
+  "indicadores": [
+    {
+      "indicador_key": "ebitda",
+      "unidad": "$",
+      "modulo": "rentabilidad",
+      "data": [
+        {
+          "year": 2023,
+          "month": 12,
+          "valor": 0.0
+        },
+        {
+          "year": 2024,
+          "month": 1,
+          "valor": -24982870.89
+        },
+        {
+          "year": 2024,
+          "month": 2,
+          "valor": -23877771.13
+        },
+        {
+          "year": 2024,
+          "month": 3,
+          "valor": -34056944.6
+        },
+        {
+          "year": 2024,
+          "month": 4,
+          "valor": -11396470.28
+        },
+        {
+          "year": 2024,
+          "month": 5,
+          "valor": 117647.55
+        },
+        {
+          "year": 2024,
+          "month": 6,
+          "valor": -13195140.82
+        },
+        {
+          "year": 2024,
+          "month": 7,
+          "valor": 10701343.04
+        },
+        {
+          "year": 2024,
+          "month": 8,
+          "valor": 2160064.64
+        },
+        {
+          "year": 2024,
+          "month": 9,
+          "valor": 20373473.22
+        },
+        {
+          "year": 2024,
+          "month": 10,
+          "valor": 27382746.87
+        },
+        {
+          "year": 2024,
+          "month": 11,
+          "valor": 46149357.55
+        },
+        {
+          "year": 2024,
+          "month": 12,
+          "valor": 0.0
+        },
+        {
+          "year": 2025,
+          "month": 1,
+          "valor": 10314999.6
+        },
+        {
+          "year": 2025,
+          "month": 2,
+          "valor": -10117744.41
+        },
+        {
+          "year": 2025,
+          "month": 3,
+          "valor": -16915570.03
+        },
+        {
+          "year": 2025,
+          "month": 4,
+          "valor": -12989277.25
+        },
+        {
+          "year": 2025,
+          "month": 5,
+          "valor": -13762685.24
+        },
+        {
+          "year": 2025,
+          "month": 6,
+          "valor": 23821925.65
+        },
+        {
+          "year": 2025,
+          "month": 7,
+          "valor": 62046982.71
+        },
+        {
+          "year": 2025,
+          "month": 8,
+          "valor": 66409008.97
+        },
+        {
+          "year": 2025,
+          "month": 9,
+          "valor": 87260013.23
+        },
+        {
+          "year": 2025,
+          "month": 10,
+          "valor": 74954880.89
+        },
+        {
+          "year": 2025,
+          "month": 11,
+          "valor": 71980914.37
+        },
+        {
+          "year": 2025,
+          "month": 12,
+          "valor": 76010532.11
+        }
+      ]
+    },
+    {
+      "indicador_key": "margen_bruto",
+      "unidad": "$",
+      "modulo": "rentabilidad",
+      "data": [
+        {
+          "year": 2023,
+          "month": 12,
+          "valor": 1.0
+        },
+        {
+          "year": 2024,
+          "month": 1,
+          "valor": 1.0
+        },
+        {
+          "year": 2024,
+          "month": 2,
+          "valor": 1.0
+        },
+        {
+          "year": 2024,
+          "month": 3,
+          "valor": 1.0
+        },
+        {
+          "year": 2024,
+          "month": 4,
+          "valor": 1.0
+        },
+        {
+          "year": 2024,
+          "month": 5,
+          "valor": 1.0
+        },
+        {
+          "year": 2024,
+          "month": 6,
+          "valor": 1.0
+        },
+        {
+          "year": 2024,
+          "month": 7,
+          "valor": 1.0
+        },
+        {
+          "year": 2024,
+          "month": 8,
+          "valor": 1.0
+        },
+        {
+          "year": 2024,
+          "month": 9,
+          "valor": 1.0
+        },
+        {
+          "year": 2024,
+          "month": 10,
+          "valor": 1.0
+        },
+        {
+          "year": 2024,
+          "month": 11,
+          "valor": 1.0
+        },
+        {
+          "year": 2024,
+          "month": 12,
+          "valor": 1.0
+        },
+        {
+          "year": 2025,
+          "month": 1,
+          "valor": 1.0
+        },
+        {
+          "year": 2025,
+          "month": 2,
+          "valor": 1.0
+        },
+        {
+          "year": 2025,
+          "month": 3,
+          "valor": 1.0
+        },
+        {
+          "year": 2025,
+          "month": 4,
+          "valor": 1.0
+        },
+        {
+          "year": 2025,
+          "month": 5,
+          "valor": 1.0
+        },
+        {
+          "year": 2025,
+          "month": 6,
+          "valor": 1.0
+        },
+        {
+          "year": 2025,
+          "month": 7,
+          "valor": 1.0
+        },
+        {
+          "year": 2025,
+          "month": 8,
+          "valor": 1.0
+        },
+        {
+          "year": 2025,
+          "month": 9,
+          "valor": 1.0
+        },
+        {
+          "year": 2025,
+          "month": 10,
+          "valor": 1.0
+        },
+        {
+          "year": 2025,
+          "month": 11,
+          "valor": 1.0
+        },
+        {
+          "year": 2025,
+          "month": 12,
+          "valor": 1.0
+        }
+      ]
+    },
+    {
+      "indicador_key": "margen_ebitda",
+      "unidad": "x",
+      "modulo": "rentabilidad",
+      "data": [
+        {
+          "year": 2023,
+          "month": 12,
+          "valor": -0.2989
+        },
+        {
+          "year": 2024,
+          "month": 1,
+          "valor": 1.044
+        },
+        {
+          "year": 2024,
+          "month": 2,
+          "valor": 0.3229
+        },
+        {
+          "year": 2024,
+          "month": 3,
+          "valor": 0.2915
+        },
+        {
+          "year": 2024,
+          "month": 4,
+          "valor": 0.0513
+        },
+        {
+          "year": 2024,
+          "month": 5,
+          "valor": -0.0066
+        },
+        {
+          "year": 2024,
+          "month": 6,
+          "valor": 0.0371
+        },
+        {
+          "year": 2024,
+          "month": 7,
+          "valor": -0.035
+        },
+        {
+          "year": 2024,
+          "month": 8,
+          "valor": -0.0125
+        },
+        {
+          "year": 2024,
+          "month": 9,
+          "valor": -0.0503
+        },
+        {
+          "year": 2024,
+          "month": 10,
+          "valor": -0.0578
+        },
+        {
+          "year": 2024,
+          "month": 11,
+          "valor": -0.0867
+        },
+        {
+          "year": 2024,
+          "month": 12,
+          "valor": -0.1436
+        },
+        {
+          "year": 2025,
+          "month": 1,
+          "valor": -0.2142
+        },
+        {
+          "year": 2025,
+          "month": 2,
+          "valor": 0.1066
+        },
+        {
+          "year": 2025,
+          "month": 3,
+          "valor": 0.1205
+        },
+        {
+          "year": 2025,
+          "month": 4,
+          "valor": 0.0514
+        },
+        {
+          "year": 2025,
+          "month": 5,
+          "valor": 0.0313
+        },
+        {
+          "year": 2025,
+          "month": 6,
+          "valor": -0.0983
+        },
+        {
+          "year": 2025,
+          "month": 7,
+          "valor": -0.172
+        },
+        {
+          "year": 2025,
+          "month": 8,
+          "valor": -0.1692
+        },
+        {
+          "year": 2025,
+          "month": 9,
+          "valor": -0.1859
+        },
+        {
+          "year": 2025,
+          "month": 10,
+          "valor": -0.1518
+        },
+        {
+          "year": 2025,
+          "month": 11,
+          "valor": -0.1371
+        },
+        {
+          "year": 2025,
+          "month": 12,
+          "valor": -0.1814
+        }
+      ]
+    },
+    {
+      "indicador_key": "margen_neto",
+      "unidad": "$",
+      "modulo": "rentabilidad",
+      "data": [
+        {
+          "year": 2023,
+          "month": 12,
+          "valor": 0.0
+        },
+        {
+          "year": 2024,
+          "month": 1,
+          "valor": 1.0575
+        },
+        {
+          "year": 2024,
+          "month": 2,
+          "valor": 0.3317
+        },
+        {
+          "year": 2024,
+          "month": 3,
+          "valor": 0.2999
+        },
+        {
+          "year": 2024,
+          "month": 4,
+          "valor": 0.0577
+        },
+        {
+          "year": 2024,
+          "month": 5,
+          "valor": -0.0005
+        },
+        {
+          "year": 2024,
+          "month": 6,
+          "valor": 0.0434
+        },
+        {
+          "year": 2024,
+          "month": 7,
+          "valor": -0.0289
+        },
+        {
+          "year": 2024,
+          "month": 8,
+          "valor": -0.0053
+        },
+        {
+          "year": 2024,
+          "month": 9,
+          "valor": -0.0434
+        },
+        {
+          "year": 2024,
+          "month": 10,
+          "valor": -0.0512
+        },
+        {
+          "year": 2024,
+          "month": 11,
+          "valor": -0.0769
+        },
+        {
+          "year": 2024,
+          "month": 12,
+          "valor": 0.0
+        },
+        {
+          "year": 2025,
+          "month": 1,
+          "valor": -0.199
+        },
+        {
+          "year": 2025,
+          "month": 2,
+          "valor": 0.1307
+        },
+        {
+          "year": 2025,
+          "month": 3,
+          "valor": 0.14
+        },
+        {
+          "year": 2025,
+          "month": 4,
+          "valor": 0.0782
+        },
+        {
+          "year": 2025,
+          "month": 5,
+          "valor": 0.0536
+        },
+        {
+          "year": 2025,
+          "month": 6,
+          "valor": -0.076
+        },
+        {
+          "year": 2025,
+          "month": 7,
+          "valor": -0.1514
+        },
+        {
+          "year": 2025,
+          "month": 8,
+          "valor": -0.1472
+        },
+        {
+          "year": 2025,
+          "month": 9,
+          "valor": -0.1645
+        },
+        {
+          "year": 2025,
+          "month": 10,
+          "valor": -0.1299
+        },
+        {
+          "year": 2025,
+          "month": 11,
+          "valor": -0.1149
+        },
+        {
+          "year": 2025,
+          "month": 12,
+          "valor": -0.101
+        }
+      ]
+    },
+    {
+      "indicador_key": "margen_operacional",
+      "unidad": "x",
+      "modulo": "rentabilidad",
+      "data": [
+        {
+          "year": 2023,
+          "month": 12,
+          "valor": 0.2929
+        },
+        {
+          "year": 2024,
+          "month": 1,
+          "valor": -1.0575
+        },
+        {
+          "year": 2024,
+          "month": 2,
+          "valor": -0.3317
+        },
+        {
+          "year": 2024,
+          "month": 3,
+          "valor": -0.2999
+        },
+        {
+          "year": 2024,
+          "month": 4,
+          "valor": -0.0577
+        },
+        {
+          "year": 2024,
+          "month": 5,
+          "valor": 0.0005
+        },
+        {
+          "year": 2024,
+          "month": 6,
+          "valor": -0.0434
+        },
+        {
+          "year": 2024,
+          "month": 7,
+          "valor": 0.0289
+        },
+        {
+          "year": 2024,
+          "month": 8,
+          "valor": 0.0062
+        },
+        {
+          "year": 2024,
+          "month": 9,
+          "valor": 0.0442
+        },
+        {
+          "year": 2024,
+          "month": 10,
+          "valor": 0.0518
+        },
+        {
+          "year": 2024,
+          "month": 11,
+          "valor": 0.0809
+        },
+        {
+          "year": 2024,
+          "month": 12,
+          "valor": 0.1387
+        },
+        {
+          "year": 2025,
+          "month": 1,
+          "valor": 0.199
+        },
+        {
+          "year": 2025,
+          "month": 2,
+          "valor": -0.1269
+        },
+        {
+          "year": 2025,
+          "month": 3,
+          "valor": -0.1336
+        },
+        {
+          "year": 2025,
+          "month": 4,
+          "valor": -0.0705
+        },
+        {
+          "year": 2025,
+          "month": 5,
+          "valor": -0.0468
+        },
+        {
+          "year": 2025,
+          "month": 6,
+          "valor": 0.0831
+        },
+        {
+          "year": 2025,
+          "month": 7,
+          "valor": 0.1586
+        },
+        {
+          "year": 2025,
+          "month": 8,
+          "valor": 0.1554
+        },
+        {
+          "year": 2025,
+          "month": 9,
+          "valor": 0.1728
+        },
+        {
+          "year": 2025,
+          "month": 10,
+          "valor": 0.1385
+        },
+        {
+          "year": 2025,
+          "month": 11,
+          "valor": 0.1238
+        },
+        {
+          "year": 2025,
+          "month": 12,
+          "valor": 0.1694
+        }
+      ]
+    },
+    {
+      "indicador_key": "patrimonio_relativo",
+      "unidad": "$",
+      "modulo": "rentabilidad",
+      "data": [
+        {
+          "year": 2023,
+          "month": 12,
+          "valor": 532480342.09
+        },
+        {
+          "year": 2024,
+          "month": 1,
+          "valor": 511705471.28
+        },
+        {
+          "year": 2024,
+          "month": 2,
+          "valor": 512810571.04
+        },
+        {
+          "year": 2024,
+          "month": 3,
+          "valor": 502631397.57
+        },
+        {
+          "year": 2024,
+          "month": 4,
+          "valor": 427494692.89
+        },
+        {
+          "year": 2024,
+          "month": 5,
+          "valor": 439008810.72
+        },
+        {
+          "year": 2024,
+          "month": 6,
+          "valor": 425696022.35
+        },
+        {
+          "year": 2024,
+          "month": 7,
+          "valor": 449592506.21
+        },
+        {
+          "year": 2024,
+          "month": 8,
+          "valor": 441051227.81
+        },
+        {
+          "year": 2024,
+          "month": 9,
+          "valor": 459264636.39
+        },
+        {
+          "year": 2024,
+          "month": 10,
+          "valor": 466273910.04
+        },
+        {
+          "year": 2024,
+          "month": 11,
+          "valor": 485040520.72
+        },
+        {
+          "year": 2024,
+          "month": 12,
+          "valor": 496870024.58
+        },
+        {
+          "year": 2025,
+          "month": 1,
+          "valor": 507185024.18
+        },
+        {
+          "year": 2025,
+          "month": 2,
+          "valor": 486752280.17
+        },
+        {
+          "year": 2025,
+          "month": 3,
+          "valor": 479954454.55
+        },
+        {
+          "year": 2025,
+          "month": 4,
+          "valor": 437880747.33
+        },
+        {
+          "year": 2025,
+          "month": 5,
+          "valor": 437107339.34
+        },
+        {
+          "year": 2025,
+          "month": 6,
+          "valor": 474691950.23
+        },
+        {
+          "year": 2025,
+          "month": 7,
+          "valor": 512917007.29
+        },
+        {
+          "year": 2025,
+          "month": 8,
+          "valor": 517279033.55
+        },
+        {
+          "year": 2025,
+          "month": 9,
+          "valor": 538130037.81
+        },
+        {
+          "year": 2025,
+          "month": 10,
+          "valor": 525824905.47
+        },
+        {
+          "year": 2025,
+          "month": 11,
+          "valor": 522850938.95
+        },
+        {
+          "year": 2025,
+          "month": 12,
+          "valor": 526880556.69
+        }
+      ]
+    },
+    {
+      "indicador_key": "roa",
+      "unidad": "x",
+      "modulo": "rentabilidad",
+      "data": [
+        {
+          "year": 2023,
+          "month": 12,
+          "valor": 0.0
+        },
+        {
+          "year": 2024,
+          "month": 1,
+          "valor": -0.0334
+        },
+        {
+          "year": 2024,
+          "month": 2,
+          "valor": -0.0318
+        },
+        {
+          "year": 2024,
+          "month": 3,
+          "valor": -0.0447
+        },
+        {
+          "year": 2024,
+          "month": 4,
+          "valor": -0.0147
+        },
+        {
+          "year": 2024,
+          "month": 5,
+          "valor": 0.0002
+        },
+        {
+          "year": 2024,
+          "month": 6,
+          "valor": -0.019
+        },
+        {
+          "year": 2024,
+          "month": 7,
+          "valor": 0.0151
+        },
+        {
+          "year": 2024,
+          "month": 8,
+          "valor": 0.003
+        },
+        {
+          "year": 2024,
+          "month": 9,
+          "valor": 0.0267
+        },
+        {
+          "year": 2024,
+          "month": 10,
+          "valor": 0.0331
+        },
+        {
+          "year": 2024,
+          "month": 11,
+          "valor": 0.0636
+        },
+        {
+          "year": 2024,
+          "month": 12,
+          "valor": 0.0
+        },
+        {
+          "year": 2025,
+          "month": 1,
+          "valor": 0.0145
+        },
+        {
+          "year": 2025,
+          "month": 2,
+          "valor": -0.0147
+        },
+        {
+          "year": 2025,
+          "month": 3,
+          "valor": -0.025
+        },
+        {
+          "year": 2025,
+          "month": 4,
+          "valor": -0.019
+        },
+        {
+          "year": 2025,
+          "month": 5,
+          "valor": -0.0189
+        },
+        {
+          "year": 2025,
+          "month": 6,
+          "valor": 0.0328
+        },
+        {
+          "year": 2025,
+          "month": 7,
+          "valor": 0.0773
+        },
+        {
+          "year": 2025,
+          "month": 8,
+          "valor": 0.0896
+        },
+        {
+          "year": 2025,
+          "month": 9,
+          "valor": 0.1088
+        },
+        {
+          "year": 2025,
+          "month": 10,
+          "valor": 0.0921
+        },
+        {
+          "year": 2025,
+          "month": 11,
+          "valor": 0.0934
+        },
+        {
+          "year": 2025,
+          "month": 12,
+          "valor": 0.0988
+        }
+      ]
+    },
+    {
+      "indicador_key": "roe",
+      "unidad": "$",
+      "modulo": "rentabilidad",
+      "data": [
+        {
+          "year": 2023,
+          "month": 12,
+          "valor": 0.0
+        },
+        {
+          "year": 2024,
+          "month": 1,
+          "valor": -0.0488
+        },
+        {
+          "year": 2024,
+          "month": 2,
+          "valor": -0.0466
+        },
+        {
+          "year": 2024,
+          "month": 3,
+          "valor": -0.0678
+        },
+        {
+          "year": 2024,
+          "month": 4,
+          "valor": -0.0267
+        },
+        {
+          "year": 2024,
+          "month": 5,
+          "valor": 0.0003
+        },
+        {
+          "year": 2024,
+          "month": 6,
+          "valor": -0.031
+        },
+        {
+          "year": 2024,
+          "month": 7,
+          "valor": 0.0238
+        },
+        {
+          "year": 2024,
+          "month": 8,
+          "valor": 0.0049
+        },
+        {
+          "year": 2024,
+          "month": 9,
+          "valor": 0.0444
+        },
+        {
+          "year": 2024,
+          "month": 10,
+          "valor": 0.0587
+        },
+        {
+          "year": 2024,
+          "month": 11,
+          "valor": 0.0951
+        },
+        {
+          "year": 2024,
+          "month": 12,
+          "valor": 0.0
+        },
+        {
+          "year": 2025,
+          "month": 1,
+          "valor": 0.0203
+        },
+        {
+          "year": 2025,
+          "month": 2,
+          "valor": -0.0208
+        },
+        {
+          "year": 2025,
+          "month": 3,
+          "valor": -0.0352
+        },
+        {
+          "year": 2025,
+          "month": 4,
+          "valor": -0.0297
+        },
+        {
+          "year": 2025,
+          "month": 5,
+          "valor": -0.0315
+        },
+        {
+          "year": 2025,
+          "month": 6,
+          "valor": 0.0502
+        },
+        {
+          "year": 2025,
+          "month": 7,
+          "valor": 0.121
+        },
+        {
+          "year": 2025,
+          "month": 8,
+          "valor": 0.1284
+        },
+        {
+          "year": 2025,
+          "month": 9,
+          "valor": 0.1622
+        },
+        {
+          "year": 2025,
+          "month": 10,
+          "valor": 0.1425
+        },
+        {
+          "year": 2025,
+          "month": 11,
+          "valor": 0.1377
+        },
+        {
+          "year": 2025,
+          "month": 12,
+          "valor": 0.1443
+        }
+      ]
+    }
+  ]
+}

@@ -11,6 +11,7 @@ Changes v2.0:
 """
 from fastapi import FastAPI, HTTPException, BackgroundTasks, Query
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from pydantic import BaseModel
 from typing import Optional, List
 import httpx
@@ -45,6 +46,48 @@ async def lifespan(app: FastAPI):
                 server_settings={"search_path": db_schema}
             )
             print(f"✅ PostgreSQL pool created ({db_schema})")
+            
+            # --- Auto-Migration Hook (Fase 2) ---
+            # Se ejecuta al iniciar para asegurar que el Dashboard tenga las columnas necesarias.
+            migration_sql = """
+            -- Migration: Add modulo column to insights_ai
+            ALTER TABLE insights_ai 
+            ADD COLUMN IF NOT EXISTS modulo VARCHAR(30);
+
+            UPDATE insights_ai i
+            SET modulo = c.modulo
+            FROM indicador_catalogo c
+            WHERE i.indicador_key = c.indicador_key;
+
+            UPDATE insights_ai 
+            SET modulo = 'liquidez' 
+            WHERE indicador_key IN ('insight-liquidez-ai', 'report', 'liquidez') AND (modulo IS NULL OR modulo = '');
+
+            UPDATE insights_ai 
+            SET modulo = 'rentabilidad' 
+            WHERE indicador_key ILIKE '%rentabilidad%' AND (modulo IS NULL OR modulo = '');
+
+            UPDATE insights_ai 
+            SET modulo = 'actividad' 
+            WHERE indicador_key ILIKE '%actividad%' AND (modulo IS NULL OR modulo = '');
+
+            UPDATE insights_ai 
+            SET modulo = 'solvencia' 
+            WHERE indicador_key ILIKE '%solvencia%' AND (modulo IS NULL OR modulo = '');
+
+            CREATE INDEX IF NOT EXISTS idx_insights_modulo 
+            ON insights_ai(empresa_id, modulo, periodo_ano, periodo_mes);
+            """
+            
+            print(f"🚀 Ejecutando migración integrada v1...")
+            try:
+                async with db_pool.acquire() as conn:
+                    await conn.execute(migration_sql)
+                print("✅ Migración aplicada exitosamente.")
+            except Exception as e:
+                print(f"⚠️ Error en migración: {str(e)}")
+            # ------------------------------------
+
         except Exception as e:
             print(f"⚠️ PostgreSQL connection failed: {e}")
             db_pool = None
@@ -68,6 +111,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# ── Performance: Compresión (GZip) ──────────────────────────
+# Reduce payload size up to 80% for large indicator/insight JSONs.
+app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 # ── Configuration ──────────────────────────────────────────────
 NOCODB_URL = os.getenv("NOCODB_URL", "http://nocodb:8080")
@@ -1078,17 +1125,22 @@ async def get_insights(
     empresa_id: int,
     periodo_ano: Optional[int] = Query(None),
     periodo_mes: Optional[int] = Query(None),
-    indicador_key: Optional[str] = Query(None)
+    indicador_key: Optional[str] = Query(None),
+    modulo: Optional[str] = Query(None, description="Filter by module: liquidez, actividad, etc.")
 ):
-    """Fetch AI-generated insights for a company. Supports month filtering for interannual comparison."""
+    """Fetch AI-generated insights for a company. Supports module and month filtering."""
     if not db_pool:
         raise HTTPException(status_code=503, detail="Database not available")
 
     async with db_pool.acquire() as conn:
-        query = "SELECT * FROM insights_ai WHERE empresa_id = $1"
+        query = "SELECT id, empresa_id, indicador_key, periodo_ano, periodo_mes, tipo, analisis_positivo, analisis_negativo, recomendacion, metodologia, modulo FROM insights_ai WHERE empresa_id = $1"
         params = [empresa_id]
         idx = 2
 
+        if modulo:
+            query += f" AND modulo = ${idx}"
+            params.append(modulo)
+            idx += 1
         if periodo_ano:
             query += f" AND periodo_ano = ${idx}"
             params.append(periodo_ano)

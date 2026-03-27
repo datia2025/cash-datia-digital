@@ -1,8 +1,8 @@
-# Liquidity Dashboard - Protocolo de Insights y Estándares Visuales (v4.6 - AUDITADO)
+# Liquidity Dashboard - Protocolo de Insights y Estándares Visuales (v5.0 - AUDITADO)
 
-Este documento detalla la arquitectura de insights implementada y certificada tras la consolidación de la pestaña de **Liquidez**.
+Este documento detalla la arquitectura de insights implementada y certificada tras la consolidación de la pestaña de **Liquidez** y **Actividad**.
 
-> **Historial de versiones:** v4.5 → v4.6: Corrección de incoherencias detectadas en auditoría técnica (IC-01, IC-02, IC-03, IC-04, EN-04, EN-05). Ver detalle al final del documento.
+> **Historial de versiones:** v4.9 → v5.0: Inyección de registros trimestrales históricos (2023-2024) en Bloque A. Ver detalle al final del documento.
 
 ---
 
@@ -12,6 +12,7 @@ Para que una pestaña sea considerada "Terminada", debe cumplir con su Matriz de
 - 🏗️ **[Pestaña Actividad (Matriz 231)](PROTOCOLO_MASTER_ACTIVIDAD.md)**: Estándar global de auditoría para los 8 indicadores operativos.
 - 📊 **Pestaña Liquidez (Matriz 123)**: Protocolo certificado (8 indicadores + Auditoría).
 - 📈 **[Pestaña Rentabilidad (Matriz 231)](PROTOCOLO_MASTER_RENTABILIDAD.md)**: Estándar global de auditoría para los 8 indicadores de márgenes.
+- 🛡️ **[Pestaña Solvencia (Matriz 177)](PROTOCOLO_MASTER_SOLVENCIA.md)**: Estándar de auditoría técnica para 6 indicadores (**CERTIFICADA 100% - Empresa 3099 y 3104**).
 
 | Componente | Cálculo de Periodos | Cant. Registros | Comentarios UI |
 | :--- | :--- | :---: | :---: |
@@ -107,7 +108,24 @@ Para acelerar la entrega de insights en futuros módulos o empresas, el protocol
     python run_injection_d.py --empresa_id 3104 --target_year 2025
     ```
 5.  **Regla de las 40 Palabras**: Umbral mínimo innegociable por sección para garantizar profundidad gerencial.
-6.  **Workflow AI-to-SQL (Enfoque Local)**: Para mitigar la fatiga de la API y el descalce de red en inyecciones masivas (específicamente en el módulo Rentabilidad), se prioriza la generación de archivos `.sql` locales. Esto permite que el agente se enfoque 100% en la calidad analítica y el conteo de palabras, delegando la inyección a una ejecución atómica mediante sentencias `INSERT ... ON CONFLICT (UPSERT)`.
+6.  **Workflow AI-to-SQL (Enfoque Local)**: Para mitigar la fatiga de la API y el descalce de red en inyecciones masivas, se prioriza la generación de archivos `.sql` locales. Los lotes de generación (Regla de 8) deben consolidarse finalmente en un único archivo maestro por bloque (ej: `solvencia_bloque_c_3099.sql`) para facilitar la ejecución atómica mediante sentencias `INSERT ... ON CONFLICT (UPSERT)`. **Queda terminantemente prohibido fraccionar la construcción de un mismo bloque en múltiples archivos anuales o temporales; cada bloque debe residir en un solo archivo definitivo para evitar la fragmentación y pérdida de integridad.**
+
+### Protocolo "Cero Reprocesos" (Insight Generation Excellence)
+Para eliminar la necesidad de auditorías manuales o correcciones post-inyección, todo proceso de generación debe seguir estos filtros de salida:
+
+0.  **Validación de Identidad (Tenant Verification):** Antes de iniciar cualquier generación o inyección, es **OBLIGATORIO** verificar la correspondencia entre el `ID_EMPRESA` y la razón social en el maestro de empresas. En plataformas multi-tenant, un error en el ID despliega información confidencial al cliente equivocado. Verifique siempre con: `SELECT razon_social FROM liquidity.empresas WHERE id = [ID];`
+
+1.  **Validación de Conteo (Target-Match):** Antes de la inyección, el script debe validar que el archivo SQL contenga el número exacto de registros exigido por la matriz (ej. Bloque C = 72, Bloque D = 72/96). Ni uno más, ni uno menos.
+2.  **Higiene del Tono Gerencia-Gerencia:**
+    - **Prohibido:** Fórmulas matemáticas, PUC, nombres de ratios en el texto ("DSO subió"), o listas de viñetas genéricas.
+    - **Obligatorio:** Narrativa fluida en segunda persona ("tú"), enfocada en decisiones de negocio (caja, personal, tecnología, estrategia).
+    - **Umbral de Riqueza:** Mínimo **40 palabras** por sección. Registros de <40 palabras son rechazados automáticamente por el motor de calidad.
+3.  **Integridad de Llaves Técnicas (Case Standardization):**
+    - **Bloques A, B, C (Trimestral/Anual):** Llave en minúsculas + sufijo opcional (ej. `indicador_key_1Q`).
+    - **Bloque D (Mensual Comparativo):** Llave en **MAYÚSCULAS** (ej. `INDICADOR_KEY_M1`).
+    - El incumplimiento de este estándar rompe la visualización en el frontend.
+4.  **Autonomía de Datos:** El insight debe ser autoexplicativo basándose solo en los deltas financieros del periodo. No debe referenciar "el archivo excel enviado" o "según el contador", sino hablar como un socio estratégico en sesión de junta directiva.
+
 
 Para garantizar una calidad del 100% de principio a fin y evitar la degradación del tono gerencial por saturación de contexto (Fatiga IA), se aplican estas reglas estrictas:
 
@@ -115,6 +133,7 @@ Para garantizar una calidad del 100% de principio a fin y evitar la degradación
 2.  **Análisis Basado en Datos Real:** Cada insight debe derivarse UNICAMENTE de los datos técnicos del periodo analizado (Anual, Trimestral o Mensual).
 3.  **Higiene del Tono (Word Count):** Se audita mediante script el conteo de palabras para asegurar que ningún registro baje del umbral de **40 palabras**.
 4.  **Time Dilation:** Retardo obligatorio de **4 segundos** entre peticiones individuales para permitir la persistencia correcta en el backend.
+5.  **Mandato de UPSERT:** Todo comando SQL generado debe usar `INSERT ... ON CONFLICT (empresa_id, indicador_key, periodo_ano, period_key) DO UPDATE SET...` para asegurar que el sistema sea autoreparable y resiliente a ejecuciones repetidas.
 
 ---
 
@@ -139,6 +158,17 @@ Para asegurar la visualización dinámica, los `indicador_key` en la base de dat
 | **EN-05** | `README.md` Sección 4 | Documentada la discrepancia entre los 6 indicadores actuales de `data_rentabilidad.js` y los 8 requeridos para la Matriz 231. Pendiente de resolución en `PROTOCOLO_MASTER_RENTABILIDAD.md`. |
 | **EN-06** | `README.md` Sección 5 | Implementación del **Workflow AI-to-SQL** para desacoplar la generación heurística de la escritura en BD, eliminando latencias de red en bloques masivos. |
 | **IC-05** | `inject_renta_block_a.py`, `export...`, `README.md` Sec 6 | Bugfix preventivo: Adicionada concatenación obligatoria del sufijo trimestral (`_1Q`) al `indicador_key` en scripts de despliegue. Esto evita que el Backend agrupe los trimestres como duplicados del Annual y los sobrescriba, causando que la UI muestre `ERR` de registros al obligar a `api.js` a interpretar todo reporte mutilado como "Annual".  |
+| **UI-01** | `resumen_ejecutivo.html` | **Branding y Mapeo:** Reemplazado "EL CFO DICE" por "ANÁLISIS CASH". Corregida la lógica de mapeo en JavaScript para asegurar que las recomendaciones (`ins.recomendacion`) se desplieguen correctamente en la sección "QUÉ HACER HOY" del Resumen Ejecutivo. |
+| **IC-06** | `v46_sql_injector.py` | **Dynamic Column Mapping (v4.8):** Refactorizado para parsear dinámicamente el header `INSERT INTO` y mapear registros de 8 y 12 columnas. Resuelve el error 422 al soportar esquemas híbridos entre módulos. |
+| **IC-07** | `v46_sql_injector.py` | **Schema Parsing Support:** Se actualizó la expresión regular para que el script soporte declaraciones SQL con prefijo de esquema (ej: `liquidity.insights_ai`), reparando la extracción de columnas fallida. |
+| **IC-08** | `fix_keys.py`, Base de Datos | **Quarterly Key Mapping Fix:** Creado script reparador global que implementa forzosamente la Regla de Unicidad Trimestral (`_1Q`) sobre la base de cada `indicador_key` en los archivos SQL masivos, garantizando que el `UPSERT` no sobreescriba los hallazgos en la BD y asegurando la correcta lectura temporal de la visualización del layout. |
+| **UI-02** | `app.js` | **Y-Axis Floating Point Bugfix:** Implementado truncador `toFixed(2)` en las funciones de renderizado de `Chart.js` para neutralizar el desbordamiento de decimales flotantes irregulares (`1.450000002`) generados autónomamente por rangos algorítmicos. |
+| **IC-09** | Ecosistema Inyección | **Quarterly Injection Dependencies:** Normalizado en estándar operativo que, para habilitar correctamente el Dictamen Maestro en las vistas Trimestrales, la inyección del **Bloque A** es ineludible y obligatoria, pues el Bloque C inyecta estrictamente la narrativa de las 4 gráficas técnicas inferiores. |
+| **IC-10** | `v46_sql_injector.py` | **SQL Comment Stripping Fix:** Parcheada la lógica de parsing para ignorar comentarios SQL entre tuplas de `VALUES`. Anteriormente, la presencia de comentarios truncaba la extracción de columnas, provocando errores de desajuste (ej: "120 values vs 8 columns"). |
+| **IC-11** | `repair_actividad_keys.py` | **Actividad KPI Key Repair:** Ejecutada reparación masiva de las SQL de Actividad (Bloques A-D). Se implementó la sufijación forzosa `_1Q` para trimestres y la conversión a `UPPERCASE_M#` para meses. Esto resuelve el bug de sobrescritura en BD (Unique Constraint) y sincroniza las llaves con la lógica de búsqueda de `app_actividad.js`. |
+| **UI-03** | `*.html` (Filtros) | **Quarterly Filter Label Standardization:** Unificadas las etiquetas de los trimestres en todos los módulos a "Primer trimestre 1Q", "Segundo trimestre 2Q", etc. Se preservó el valor técnico (`1Q`, `2Q`) para mantener la compatibilidad con el motor JS. |
+| **IC-12** | `actividad_bloque_a_3099.sql` | **CRITICAL FIX**: Se detecto que la matriz de Dictamen (Bloque A) carecia de registros trimestrales para 2023 y 2024, provocando el error de "Diagnostico No Disponible" en anos previos. Se generaron e inyectaron los 8 registros faltantes (4 por ano) con narrativa Gerencia-a-Gerencia, asegurando cobertura 100% de la matriz 3x5 (3 anos x 5 periodos). |
+| **IC-13** | `rentabilidad_bloque_c_*.sql` | **Rentabilidad Quarterly Key Fix:** Se corrigió un error crítico donde los registros trimestrales se estaban insertando con llaves genéricas (ej. `ebitda` en lugar de `ebitda_1Q`). Esto causaba que la BD sobrescribiera todos los trimestres de un año dejando solo el último registro insertado, lo que impedía la renderización de insights en la UI. |
 
 ---
 

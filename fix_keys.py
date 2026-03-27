@@ -1,18 +1,24 @@
 import re
+import glob
 
-paths = ['export_bloque_a_sql.py', 'inject_renta_block_a.py']
-for path in paths:
-    with open(path, 'r', encoding='utf-8') as f:
+files = glob.glob('database/3099/Liquidez/liquidez_bloque_[a-c]_3099.sql')
+for file in files:
+    with open(file, 'r', encoding='utf-8') as f:
         content = f.read()
     
-    # Replace cases where period_key is 1Q, 2Q, 3Q, 4Q and indicador_key is insight-rentabilidad-ai
-    for year in ['2023', '2024', '2025']:
-        for q in ['1Q', '2Q', '3Q', '4Q']:
-            old_str = f'"indicador_key": "insight-rentabilidad-ai", "periodo_ano": {year}, "period_key": "{q}"'
-            new_str = f'"indicador_key": "insight-rentabilidad-ai_{q}", "periodo_ano": {year}, "period_key": "{q}"'
-            content = content.replace(old_str, new_str)
-            
-    with open(path, 'w', encoding='utf-8') as f:
-        f.write(content)
+    def repl(m):
+        emp_id = m.group(1)
+        key = m.group(2)
+        year = m.group(3)
+        q = m.group(4)
+        if q in ['1Q', '2Q', '3Q', '4Q']:
+             if not key.endswith('_' + q):
+                 key = f"{key}_{q}"
+        return f"VALUES ({emp_id}, '{key}', {year}, '{q}',"
 
-print('Fixed scripts!')
+    # Match exact VALUES (3099, 'razon_corriente', 2025, '1Q', ...
+    new_content = re.sub(r"VALUES\s*\(\s*(\d+)\s*,\s*'([^']+)'\s*,\s*(\d+)\s*,\s*'([^']+)'\s*,", repl, content)
+
+    with open(file, 'w', encoding='utf-8') as f:
+        f.write(new_content)
+    print('Fixed', file)
