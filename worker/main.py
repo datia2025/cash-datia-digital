@@ -1282,7 +1282,7 @@ async def health():
     return {
         "status": "ok",
         "service": "liquidity-worker",
-        "version": "2.0.0",
+        "version": "2.0.1-perf",
         "database": db_status,
         "timestamp": datetime.now().isoformat()
     }
