@@ -141,7 +141,7 @@ SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
 SMTP_USER = os.getenv("SMTP_USER", "datia_notificaciones@talentracking.com")
 SMTP_PASS = os.getenv("SMTP_PASS", "qdtt zzyg aqby iuoj")
 SMTP_FROM = os.getenv("SMTP_FROM", "datia_notificaciones@talentracking.com")
-DASHBOARD_URL = os.getenv("DASHBOARD_URL", "https://ia.talentracking.com/liquidity")
+DASHBOARD_URL = "https://cash.datia.digital"  # URL fija — no depende de variables de entorno
 
 # ── Indicator Name → DB Key Mapping ────────────────────────────
 # Maps display names from calculate_indicators.py to database slugs
@@ -750,7 +750,7 @@ async def process_record(record_id: str):
                     welcome_title, 
                     email_body, 
                     "Ver Dashboard", 
-                    f"{DASHBOARD_URL}/login.html"
+                    f"{DASHBOARD_URL}"
                 )
             )
 
