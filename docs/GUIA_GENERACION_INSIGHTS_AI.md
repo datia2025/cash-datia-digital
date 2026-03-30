@@ -209,30 +209,52 @@ Una vez deduzcas el sector y cruces con la realidad macroeconómica, ajusta tus 
 ```
 
 ## Paso 4: Inyección en la Base de Datos
-Una vez tengas el texto dictaminado de los 3 pilares, debes insertarlo en la tabla `insights_ai`. Aquí tienes el script SQL listo para ejecutar en tu consola de PostgreSQL (o vía NocoDB):
+Una vez tengas el texto dictaminado de los 3 pilares, debes insertarlo en la tabla `insights_ai`. A partir de **v2.2-perf**, el endpoint `POST /api/insights` acepta los campos `modulo` y `period_key` para clasificar correctamente cada insight.
+
+> [!IMPORTANT]
+> **Cambio Crítico (v2.2-perf):** El campo `modulo` ahora se persiste en la BD. Si no lo envías explícitamente, el backend lo auto-detecta a partir del `indicador_key`. Sin embargo, **se recomienda enviarlo siempre** para evitar posibles ambigüedades.
 
 ```sql
--- Inserción de Insight Maestro: Apalancamiento Crítico
+-- Inserción de Insight Maestro (v2.2 con modulo + period_key)
 INSERT INTO liquidity.insights_ai (
     empresa_id, 
     indicador_key, 
     periodo_ano, 
+    periodo_mes,
     tipo, 
     analisis_positivo, 
     analisis_negativo, 
     recomendacion, 
-    metodologia
+    metodologia,
+    modulo,
+    period_key
 ) VALUES (
-    1, 
-    'apalancamiento', 
-    2023, 
-    'danger', 
-    'El negocio está operando a una escala muy grande utilizando principalmente dinero que no es propio. Esto es excelente para crecer rápido usando recursos de terceros, ya que permite que la empresa mantenga sus proyectos activos y su operación funcionando sin que los dueños tengan que poner todo el capital de su propio bolsillo.', 
-    'Sin embargo, esta situación es riesgosa porque por cada peso que los dueños han puesto, el negocio debe más de 150 pesos a otros. Si las ventas bajan o los pagos se retrasan, la empresa tendría serias dificultades para cumplir con sus compromisos, poniendo en peligro la estabilidad y el control total de la operación.', 
-    'Es urgente inyectar capital propio o dejar gran parte de las utilidades dentro del negocio para fortalecer el patrimonio de los socios. También debemos buscar que los proveedores nos den más plazo para pagarles, evitando así que el negocio dependa tanto de deudas que generen presión inmediata sobre la caja diaria.', 
-    'Protocolo de 50 palabras - Lenguaje Gerencial (Auditado)'
-) ON CONFLICT DO NOTHING;
+    3104, 
+    'cargos_fijos_1Q', 
+    2025,
+    3,
+    'success', 
+    'La cobertura de cargos fijos en el primer trimestre refleja una capacidad sólida para cubrir los costos operativos básicos...', 
+    'Sin embargo, la volatilidad mensual dentro del mismo trimestre sugiere que hay meses específicos donde los ingresos no alcanzan...', 
+    'Revisa tus contratos de prestación de servicios y ajusta las tarifas para estabilizar la cobertura...', 
+    'Protocolo v4.6 — Lenguaje Gerencial',
+    'solvencia',
+    '1Q'
+) ON CONFLICT (empresa_id, indicador_key, periodo_ano, periodo_mes) 
+  DO UPDATE SET 
+    tipo = EXCLUDED.tipo,
+    analisis_positivo = EXCLUDED.analisis_positivo,
+    analisis_negativo = EXCLUDED.analisis_negativo,
+    recomendacion = EXCLUDED.recomendacion,
+    modulo = EXCLUDED.modulo,
+    period_key = EXCLUDED.period_key;
 ```
+
+**Auto-detección vía API (alternativa preferida):**
+Si inyectas vía `POST /api/insights`, puedes omitir `modulo` y `period_key` — el backend los deriva automáticamente:
+- `indicador_key = 'cargos_fijos_1Q'` → `modulo = 'solvencia'`, `period_key = '1Q'`
+- `indicador_key = 'margen_bruto'` → `modulo = 'rentabilidad'`, `period_key = 'Annual'`
+- `indicador_key = 'DSO_M5'` → `modulo = 'actividad'`, `period_key = 'M5'`
 
 ## Paso 4: Visualización en el Tablero SPA
 Tras ejecutar el SQL, el Dashboard refrescará automáticamente los modales de "Insights" para mostrar esta narrativa técnica al CFO.
@@ -273,14 +295,14 @@ Para asegurar que la base de datos procese y confirme cada escritura antes de re
 Antes de dar por terminada la carga de una empresa, ejecuta esta consulta de control para asegurar que no hubo "paquetes perdidos":
 
 ```sql
--- Verificar conteo de inteligencia por empresa y año
-SELECT periodo_ano, COUNT(*) as total_insights 
+-- Verificar conteo de inteligencia por empresa, año y módulo
+SELECT periodo_ano, modulo, COUNT(*) as total_insights 
 FROM liquidity.insights_ai 
 WHERE empresa_id = [ID]
-GROUP BY periodo_ano
-ORDER BY periodo_ano DESC;
+GROUP BY periodo_ano, modulo
+ORDER BY periodo_ano DESC, modulo;
 ```
-*   **Resultado esperado**: Un año completo con 12 meses + 4 Qs + 1 Anual debe devolver exactamente **N indicadores core + N dictámenes** (aprox. 660-700 registros por año si se cargan todos los niveles).
+*   **Resultado esperado**: Un año completo con 12 meses + 4 Qs + 1 Anual debe devolver exactamente **N indicadores core + N dictámenes** (aprox. 660-700 registros por año si se cargan todos los niveles). Cada registro debe tener `modulo` distinto de `NULL` o `'general'` para garantizar la correcta visualización en el Dashboard.
 
 ---
 
