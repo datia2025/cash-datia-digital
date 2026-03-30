@@ -1,7 +1,7 @@
 # Documento de Arquitectura de Solución (SAD)
 **Proyecto**: Liquidity Dashboard — Automation Suite
-**Versión**: 2.0 (Direct Integration)
-**Estado**: Definitivo para Auditoría
+**Versión**: 3.1 (Modular High-Performance + Persistence Fix)
+**Estado**: Definitivo para Auditoría (v2.2-perf — Modulo Persistence Fix 2026-03-30)
 **Autor**: Arquitectura de Sistemas Datia
 
 ---
@@ -19,7 +19,7 @@ El sistema cubre el ciclo de vida completo de la información financiera bajo un
 4. **Persistencia de Grado Industrial**: Almacenamiento relacional en PostgreSQL con integridad referencial.
 5. **Capa de Seguridad y Multi-Tenancy**: Sistema de autenticación `auth.js` que segrega el acceso por `empresa_id`.
 6. **Capa de Análisis (IA Zero-Cost)**: Generación de insights estratégicos asistidos por el protocolo Antigravity.
-7. **Entrega de Datos (Capa de Presentación)**: Dashboards interactivos que consumen la API REST del Worker.
+7. **Entrega de Datos (Capa de Presentación)**: Dashboards interactivos que consumen la API REST del Worker con filtrado modular estricto (`AND modulo = $X`).
 8. **Capa de Comunicación (Notificaciones)**: Sistema de feedback vía Email que acompaña el ciclo de vida de la carga.
 
 ---
@@ -31,6 +31,8 @@ El sistema cubre el ciclo de vida completo de la información financiera bajo un
 - **Integridad Contable Superior**: Implementación de validaciones per-account en el motor Python, asegurando un match del 100% contra los libros oficiales antes de la persistencia.
 - **Resiliencia Basada en Estados**: El sistema utiliza la base de datos para controlar el ciclo de vida de cada carga, evitando ejecuciones duplicadas (idempotencia) mediante un mecanismo de "Anti-loop" in-memory.
 - **Eficiencia de Costos Operativos**: Operación completa bajo software de código abierto y modelos de IA operados localmente o bajo protocolos manuales (Zero-Cost).
+- **Optimización de Latencia Extrema**: Implementación de segmentación modular (fetching por pestaña) y compresión GZip en tránsito para garantizar un TTFB (Time to First Byte) inferior a 200ms.
+- **Integridad de Clasificación**: Persistencia explícita de `modulo` y `period_key` en cada inyección de insight, con auto-detección inteligente para garantizar que cada registro esté correctamente clasificado desde el momento de escritura.
 
 ### 2.2 Restricciones Técnicas
 
@@ -84,7 +86,8 @@ graph TD
 
     subgraph Visualization_Layer [Capa de Presentación]
         S -->|Iframe Request| D[🖼️ Dashboard Principal]
-        API -->|JSON Feed| D
+        API -->|GZip JSON Fragment| D
+        D -->|?modulo=X| API
     end
 
     subgraph Communication_Layer [Capa de Feedback]
@@ -153,6 +156,25 @@ La integridad de los datos se basa en la consistencia de las llaves primarias y 
 | `periodo_mes` | INT | Mes específico del cálculo (1-12) para series temporales. |
 | `valor` | NUMERIC | Precisión de 4 decimales para cálculos financieros sensibles. |
 
+#### Tabla: `insights_ai` (PostgreSQL — v2.2-perf)
+| Columna | Tipo | Racional de Diseño |
+| :--- | :--- | :--- |
+| `id` | SERIAL PK | Identificador único del insight. |
+| `empresa_id` | INT NOT NULL | FK de segregación por cliente. |
+| `indicador_key` | VARCHAR NOT NULL | Llave técnica del indicador (ej: `cargos_fijos_1Q`). |
+| `periodo_ano` | INT NOT NULL | Año fiscal del insight. |
+| `periodo_mes` | INT | Mes específico (1-12). Default: 12. |
+| `tipo` | VARCHAR(10) | Clasificación: `success`, `warning`, `danger`. |
+| `analisis_positivo` | TEXT | Narrativa de fortaleza (mín. 40 palabras). |
+| `analisis_negativo` | TEXT | Narrativa de alerta/riesgo (mín. 40 palabras). |
+| `recomendacion` | TEXT | Acción gerencial recomendada (mín. 40 palabras). |
+| `metodologia` | VARCHAR | Versión del protocolo (ej: `v4.6`). |
+| `modulo` | VARCHAR(30) | Módulo destino: `liquidez`, `actividad`, `rentabilidad`, `solvencia`, `estructura`. |
+| `period_key` | VARCHAR(10) | Temporalidad: `Annual`, `1Q`-`4Q`, `M1`-`M12`. |
+
+> [!IMPORTANT]
+> **Constraint de Unicidad**: `UNIQUE (empresa_id, indicador_key, periodo_ano, periodo_mes)`. El campo `modulo` se persiste explícitamente en cada INSERT (v2.2-perf), eliminando la dependencia de la migración ILIKE para clasificación.
+
 #### Tabla: `usuarios` (PostgreSQL)
 | Columna | Tipo | Racional de Diseño |
 | :--- | :--- | :--- |
@@ -211,6 +233,33 @@ Este enfoque permite la implementación de **Overlays de Auditoría** complejos 
 
 ---
 
+## 9. Integridad de Clasificación Modular (v2.2-perf)
+
+Tras el sprint de corrección IC-22/IC-23 (2026-03-30), el sistema implementa un modelo de **persistencia explícita** para la clasificación de insights.
+
+### 9.1 Auto-Detección de Módulo (Reverse Catalog)
+El endpoint `POST /api/insights` implementa un catálogo inverso de 33 llaves técnicas mapeadas a 5 módulos. Cuando el payload no incluye `modulo`, el backend:
+1. Stripea sufijos temporales del `indicador_key` (`_1Q`, `_M3`, etc.)
+2. Busca la llave base en el catálogo inverso
+3. Asigna el módulo correspondiente antes del INSERT
+
+### 9.2 Auto-Extracción de Period Key
+Si el payload no incluye `period_key`, el backend extrae automáticamente el sufijo temporal:
+- `cargos_fijos_1Q` → `period_key = '1Q'`
+- `DEUDA_EBITDA_M5` → `period_key = 'M5'`
+- `margen_bruto` (sin sufijo) → `period_key = 'Annual'`
+
+### 9.3 Migración Protegida (Startup Guard)
+La migración SQL ejecutada al iniciar el Worker:
+- **Solo opera sobre registros con `modulo IS NULL`** — nunca sobreescribe módulos ya asignados
+- Usa un pipeline de 3 pasos: catálogo directo → catálogo con sufijo → ILIKE fallback
+- Asigna `'general'` solo a registros verdaderamente inclasificables
+
+### 9.4 Filtrado Estricto (GET Endpoint)
+El endpoint `GET /api/insights/{empresa_id}` utiliza **match estricto** (`AND modulo = $X`) en lugar del match amplio anterior que incluía `modulo IS NULL`. Esto requiere que todos los insights tengan `modulo` correctamente asignado en el momento de la inyección.
+
+---
+
 > [!NOTE]
-> **Certificación de Versión**: Este SAD Versión 2.1 refleja la arquitectura optimizada de integración directa y la transición hacia el modelo SPA para una experiencia ejecutiva de alta gama.
+> **Certificación de Versión**: Este SAD Versión 3.1 refleja la arquitectura optimizada de integración directa, la transición hacia el modelo SPA, y el fix de persistencia de `modulo`/`period_key` que elimina el bug sistémico de reclasificación entre módulos (IC-22/IC-23).
 
