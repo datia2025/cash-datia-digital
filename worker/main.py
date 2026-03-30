@@ -23,6 +23,7 @@ import zipfile
 import tempfile
 import shutil
 import traceback
+import re
 from datetime import datetime
 from contextlib import asynccontextmanager
 import smtplib
@@ -50,41 +51,54 @@ async def lifespan(app: FastAPI):
             # --- Auto-Migration Hook (Fase 2) ---
             # Se ejecuta al iniciar para asegurar que el Dashboard tenga las columnas necesarias.
             migration_sql = """
-            -- Migration: Add modulo column to insights_ai
+            -- Migration: Add modulo + period_key columns to insights_ai
             ALTER TABLE insights_ai 
             ADD COLUMN IF NOT EXISTS modulo VARCHAR(30);
 
+            ALTER TABLE insights_ai 
+            ADD COLUMN IF NOT EXISTS period_key VARCHAR(10);
+
+            -- Step 1: Catalog-based mapping (most reliable source)
             UPDATE insights_ai i
             SET modulo = c.modulo
             FROM indicador_catalogo c
-            WHERE i.indicador_key = c.indicador_key;
+            WHERE i.indicador_key = c.indicador_key
+            AND (i.modulo IS NULL OR i.modulo = '');
 
+            -- Step 2: Also match suffixed keys (cargos_fijos_1Q → cargos_fijos)
+            UPDATE insights_ai i
+            SET modulo = c.modulo
+            FROM indicador_catalogo c
+            WHERE i.indicador_key LIKE c.indicador_key || '_%'
+            AND (i.modulo IS NULL OR i.modulo = '');
+
+            -- Step 3: ILIKE fallbacks ONLY for truly NULL modulos
             UPDATE insights_ai 
             SET modulo = 'liquidez' 
-            WHERE (indicador_key ILIKE '%liquidez%' OR indicador_key IN ('report', 'insight-liquidez-ai')) 
+            WHERE (indicador_key ILIKE '%liquidez%' OR indicador_key ILIKE '%razon_corriente%' OR indicador_key ILIKE '%capital_trabajo%' OR indicador_key ILIKE '%prueba_acida%' OR indicador_key ILIKE '%ratio_efectivo%' OR indicador_key IN ('report', 'insight-liquidez-ai')) 
             AND (modulo IS NULL OR modulo = '');
 
             UPDATE insights_ai 
             SET modulo = 'rentabilidad' 
-            WHERE (indicador_key ILIKE '%rentabilidad%' OR indicador_key ILIKE '%bruto%' OR indicador_key ILIKE '%neto%' OR indicador_key ILIKE '%roe%' OR indicador_key ILIKE '%roa%') 
+            WHERE (indicador_key ILIKE '%rentabilidad%' OR indicador_key ILIKE '%margen_bruto%' OR indicador_key ILIKE '%margen_neto%' OR indicador_key ILIKE '%margen_operacional%' OR indicador_key ILIKE '%margen_ebitda%' OR indicador_key ILIKE '%roe%' OR indicador_key ILIKE '%roa%' OR indicador_key ILIKE '%utilidad_acumulada%' OR indicador_key ILIKE '%patrimonio_relativo%') 
             AND (modulo IS NULL OR modulo = '');
 
             UPDATE insights_ai 
             SET modulo = 'actividad' 
-            WHERE (indicador_key ILIKE '%actividad%' OR indicador_key ILIKE '%dso%' OR indicador_key ILIKE '%dpo%' OR indicador_key ILIKE '%rotacion%' OR indicador_key ILIKE '%cartera%') 
+            WHERE (indicador_key ILIKE '%actividad%' OR indicador_key ILIKE '%dso%' OR indicador_key ILIKE '%dpo%' OR indicador_key ILIKE '%dio%' OR indicador_key ILIKE '%rotacion%' OR indicador_key ILIKE '%cartera%' OR indicador_key ILIKE '%ciclo_conversion%') 
             AND (modulo IS NULL OR modulo = '');
 
             UPDATE insights_ai 
             SET modulo = 'solvencia' 
-            WHERE (indicador_key ILIKE '%solvencia%' OR indicador_key ILIKE '%cobertura%' OR indicador_key ILIKE '%deuda%') 
+            WHERE (indicador_key ILIKE '%solvencia%' OR indicador_key ILIKE '%cobertura%' OR indicador_key ILIKE '%deuda_ebitda%' OR indicador_key ILIKE '%servicio_deuda%' OR indicador_key ILIKE '%endeudamiento_total%' OR indicador_key ILIKE '%cargos_fijos%' OR indicador_key ILIKE '%intereses%') 
             AND (modulo IS NULL OR modulo = '');
 
             UPDATE insights_ai 
             SET modulo = 'estructura' 
-            WHERE (indicador_key ILIKE '%estructura%' OR indicador_key ILIKE '%fondeo%' OR indicador_key ILIKE '%capital%') 
+            WHERE (indicador_key ILIKE '%estructura%' OR indicador_key ILIKE '%fondeo%' OR indicador_key ILIKE '%multiplicador_capital%' OR indicador_key ILIKE '%capitalizacion%' OR indicador_key ILIKE '%deuda_patrimonio%' OR indicador_key ILIKE '%deuda_tangibles%' OR indicador_key ILIKE '%propiedad_autonomia%' OR indicador_key ILIKE '%cobertura_fijos%') 
             AND (modulo IS NULL OR modulo = '');
 
-            -- Default to 'general' if still null after mapping
+            -- Default to 'general' ONLY if truly unclassifiable after all steps
             UPDATE insights_ai SET modulo = 'general' WHERE modulo IS NULL OR modulo = '';
 
             CREATE INDEX IF NOT EXISTS idx_insights_modulo 
@@ -236,6 +250,8 @@ class InsightPayload(BaseModel):
     analisis_negativo: str
     recomendacion: str
     metodologia: Optional[str] = "Protocolo 50 Palabras - Lenguaje Gerencial"
+    modulo: Optional[str] = None  # liquidez|actividad|rentabilidad|solvencia|estructura
+    period_key: Optional[str] = None  # Annual|1Q|2Q|3Q|4Q|M1-M12
 
 class StatusResponse(BaseModel):
     status: str
@@ -986,7 +1002,34 @@ async def inject_insight(payload: InsightPayload):
                 )
             )
 
-        # DELETE existing by empresa+key+año+mes, then INSERT with mes
+        # Derive modulo from payload or from INDICATOR_KEY_MAP reverse lookup
+        modulo = payload.modulo
+        if not modulo:
+            # Auto-detect modulo from indicador_key using the reverse catalog
+            base_key = re.sub(r'_(1Q|2Q|3Q|4Q|M\d{1,2})$', '', payload.indicador_key, flags=re.IGNORECASE).lower()
+            modulo_map = {
+                'razon_corriente': 'liquidez', 'capital_trabajo': 'liquidez', 'prueba_acida': 'liquidez', 'ratio_efectivo': 'liquidez',
+                'dso': 'actividad', 'dio': 'actividad', 'dpo': 'actividad', 'ciclo_conversion_efectivo': 'actividad',
+                'rotacion_activos': 'actividad', 'rotacion_cartera': 'actividad', 'rotacion_inventarios': 'actividad', 'rotacion_proveedores': 'actividad',
+                'margen_bruto': 'rentabilidad', 'margen_operacional': 'rentabilidad', 'margen_neto': 'rentabilidad', 'margen_ebitda': 'rentabilidad',
+                'roe': 'rentabilidad', 'roa': 'rentabilidad', 'utilidad_acumulada': 'rentabilidad', 'patrimonio_relativo': 'rentabilidad',
+                'cargos_fijos': 'solvencia', 'cobertura_intereses': 'solvencia', 'servicio_deuda': 'solvencia',
+                'deuda_ebitda': 'solvencia', 'endeudamiento_total': 'solvencia', 'solvencia_patrimonial': 'solvencia', 'intereses': 'solvencia',
+                'cobertura_fijos': 'estructura', 'estructura_deuda': 'estructura', 'multiplicador_capital': 'estructura',
+                'capitalizacion': 'estructura', 'deuda_tangibles': 'estructura', 'propiedad_autonomia': 'estructura', 'deuda_patrimonio': 'estructura',
+            }
+            modulo = modulo_map.get(base_key)
+
+        # Derive period_key from payload or from indicador_key suffix
+        period_key = payload.period_key
+        if not period_key:
+            suffix_match = re.search(r'_(1Q|2Q|3Q|4Q|M\d{1,2})$', payload.indicador_key, re.IGNORECASE)
+            if suffix_match:
+                period_key = suffix_match.group(1).upper()
+            else:
+                period_key = 'Annual'
+
+        # DELETE existing by empresa+key+año+mes, then INSERT with modulo + period_key
         await conn.execute("""
             DELETE FROM insights_ai
             WHERE empresa_id=$1 AND indicador_key=$2 AND periodo_ano=$3 AND periodo_mes=$4
@@ -995,12 +1038,14 @@ async def inject_insight(payload: InsightPayload):
         await conn.execute("""
             INSERT INTO insights_ai (
                 empresa_id, indicador_key, periodo_ano, periodo_mes,
-                tipo, analisis_positivo, analisis_negativo, recomendacion, metodologia
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+                tipo, analisis_positivo, analisis_negativo, recomendacion, metodologia,
+                modulo, period_key
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
         """,
             payload.empresa_id, payload.indicador_key, payload.periodo_ano, payload.periodo_mes,
             tipo_db, payload.analisis_positivo,
-            payload.analisis_negativo, payload.recomendacion, payload.metodologia
+            payload.analisis_negativo, payload.recomendacion, payload.metodologia,
+            modulo, period_key
         )
 
     print(f"Insight inyectado: empresa={payload.empresa_id} | key={payload.indicador_key} | {payload.periodo_ano}")
@@ -1146,12 +1191,12 @@ async def get_insights(
         raise HTTPException(status_code=503, detail="Database not available")
 
     async with db_pool.acquire() as conn:
-        query = "SELECT id, empresa_id, indicador_key, periodo_ano, periodo_mes, tipo, analisis_positivo, analisis_negativo, recomendacion, metodologia, modulo FROM insights_ai WHERE empresa_id = $1"
+        query = "SELECT id, empresa_id, indicador_key, periodo_ano, periodo_mes, tipo, analisis_positivo, analisis_negativo, recomendacion, metodologia, modulo, period_key FROM insights_ai WHERE empresa_id = $1"
         params = [empresa_id]
         idx = 2
 
         if modulo:
-            query += f" AND (modulo = ${idx} OR modulo IS NULL OR modulo = '')" # Temporarily broad during migration
+            query += f" AND modulo = ${idx}"  # Strict match — modulo is now reliably set on INSERT
             params.append(modulo)
             idx += 1
         if periodo_ano:
